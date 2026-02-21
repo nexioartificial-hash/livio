@@ -15,14 +15,16 @@ export async function POST(request: NextRequest) {
         const body = await request.json().catch(() => ({})) as { profesionalId?: string };
         const supabase = createAdminClient();
 
-        // Load all sync-enabled profesionals (or just one)
+        // Load all sync-enabled profesionals (or just one specific)
         let query = supabase
             .from('professional')
-            .select('id, full_name, google_calendar_id, calendar_sync_enabled')
-            .eq('calendar_sync_enabled', true);
+            .select('id, full_name, google_calendar_id, calendar_sync_enabled');
 
         if (body.profesionalId) {
-            query = query.eq('id', body.profesionalId) as typeof query;
+            query = query.eq('id', body.profesionalId);
+        } else {
+            // General background sync: only those who enabled it
+            query = query.eq('calendar_sync_enabled', true);
         }
 
         const { data: profs, error } = await query;

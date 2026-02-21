@@ -630,7 +630,15 @@ export default function AgendaPage() {
                                                     {/* Bloqueos externos — grey, non-clickable */}
                                                     {bloqueos.filter(b => {
                                                         const bStart = DateTime.fromISO(b.bloqueo_desde);
-                                                        return bStart.toISODate() === dayDate && bStart.toFormat('HH:00') === hour;
+                                                        const bEnd = DateTime.fromISO(b.bloqueo_hasta);
+                                                        const slotStart = dayObj.date.set({
+                                                            hour: parseInt(hour.split(':')[0]),
+                                                            minute: 0
+                                                        });
+                                                        const slotEnd = slotStart.plus({ hours: 1 });
+
+                                                        // Intersection check: block starts before slot ends AND block ends after slot starts
+                                                        return bStart < slotEnd && bEnd > slotStart;
                                                     }).map(b => (
                                                         <div key={b.id} title={b.descripcion} className="rounded-md border-l-[3px] border-slate-400 bg-slate-100 p-2 text-xs text-slate-500 mb-1 select-none">
                                                             <p className="font-semibold truncate">🔒 {b.descripcion || 'Bloqueado'}</p>
@@ -675,7 +683,13 @@ export default function AgendaPage() {
                             const appts = filteredAppointments.filter(a => a.date === dateStr && a.time === hour);
                             const dayBloqueos = bloqueos.filter(b => {
                                 const bStart = DateTime.fromISO(b.bloqueo_desde);
-                                return bStart.toISODate() === dateStr && bStart.toFormat('HH:00') === hour;
+                                const bEnd = DateTime.fromISO(b.bloqueo_hasta);
+                                const slotStart = currentDate.set({
+                                    hour: parseInt(hour.split(':')[0]),
+                                    minute: 0
+                                });
+                                const slotEnd = slotStart.plus({ hours: 1 });
+                                return bStart < slotEnd && bEnd > slotStart;
                             });
                             return (
                                 <div key={hour} className="flex border-b last:border-b-0 min-h-[56px]">
@@ -738,6 +752,19 @@ export default function AgendaPage() {
                                     <div key={i} className={`rounded-lg p-2 min-h-[80px] text-xs border ${isToday ? "bg-[#76D7B6]/5 border-[#76D7B6]" : "border-transparent hover:bg-slate-50"}`}>
                                         <span className={`font-medium ${isToday ? "text-[#76D7B6] font-bold" : "text-slate-600"}`}>{dayNum}</span>
                                         <div className="mt-1 space-y-0.5">
+                                            {/* Bloqueos */}
+                                            {bloqueos.filter(b => {
+                                                const bStart = DateTime.fromISO(b.bloqueo_desde);
+                                                const bEnd = DateTime.fromISO(b.bloqueo_hasta);
+                                                const dStart = date.startOf('day');
+                                                const dEnd = date.endOf('day');
+                                                return bStart < dEnd && bEnd > dStart;
+                                            }).map(b => (
+                                                <div key={b.id} className="rounded px-1.5 py-0.5 text-[10px] truncate bg-slate-100 text-slate-500 border-l-2 border-slate-300">
+                                                    🔒 {b.descripcion || 'Bloqueado'}
+                                                </div>
+                                            ))}
+
                                             {dayAppts.slice(0, 2).map(a => (
                                                 <div
                                                     key={a.id}
@@ -747,7 +774,7 @@ export default function AgendaPage() {
                                                     {a.time} {a.patient.split(" ")[0]}
                                                 </div>
                                             ))}
-                                            {dayAppts.length > 2 && <span className="text-[10px] text-slate-400">+{dayAppts.length - 2} más</span>}
+                                            {(dayAppts.length > 2) && <span className="text-[10px] text-slate-400">+{dayAppts.length - 2} más</span>}
                                         </div>
                                     </div>
                                 );
