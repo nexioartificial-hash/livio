@@ -20,6 +20,7 @@ import { DateTime } from "luxon";
 interface Patient {
     id: string;
     name: string;
+    lastName: string;
     dni: string;
     phone: string;
     obraSocial: string;
@@ -29,14 +30,14 @@ interface Patient {
 }
 
 const mockPatients: Patient[] = [
-    { id: "1", name: "Sofia Martinez", dni: "38.456.789", phone: "+54 11 5678-1234", obraSocial: "OSDE", tags: ["Ortodoncia"], nextAppointment: "2026-02-20 10:30", email: "sofia@email.com" },
-    { id: "2", name: "Carlos Ruiz", dni: "35.123.456", phone: "+54 11 4567-8901", obraSocial: "Swiss Medical", tags: ["Implantes", "Prótesis"], nextAppointment: "2026-02-22 14:00", email: "carlos@email.com" },
-    { id: "3", name: "Ana García", dni: "40.789.012", phone: "+54 11 3456-7890", obraSocial: "OSDE", tags: ["Limpieza"], nextAppointment: null, email: "ana@email.com" },
-    { id: "4", name: "Pedro López", dni: "33.654.321", phone: "+54 11 2345-6789", obraSocial: "Galeno", tags: ["Endodoncia"], nextAppointment: "2026-02-19 09:00", email: "pedro@email.com" },
-    { id: "5", name: "Lucía Fernández", dni: "42.987.654", phone: "+54 11 1234-5678", obraSocial: "Medifé", tags: ["Estética", "Blanqueamiento"], nextAppointment: "2026-02-25 16:00", email: "lucia@email.com" },
-    { id: "6", name: "Juan Martínez", dni: "36.321.987", phone: "+54 11 9876-5432", obraSocial: "OSDE", tags: ["Control"], nextAppointment: "2026-03-01 11:00", email: "juan@email.com" },
-    { id: "7", name: "María Torres", dni: "39.654.123", phone: "+54 11 8765-4321", obraSocial: "Swiss Medical", tags: ["Ortodoncia", "Limpieza"], nextAppointment: null, email: "maria@email.com" },
-    { id: "8", name: "Diego Sánchez", dni: "41.147.258", phone: "+54 11 7654-3210", obraSocial: "Galeno", tags: ["Cirugía"], nextAppointment: "2026-02-28 08:30", email: "diego@email.com" },
+    { id: "1", name: "Sofia", lastName: "Martinez", dni: "38.456.789", phone: "+54 11 5678-1234", obraSocial: "OSDE", tags: ["Ortodoncia"], nextAppointment: "2026-02-20 10:30", email: "sofia@email.com" },
+    { id: "2", name: "Carlos", lastName: "Ruiz", dni: "35.123.456", phone: "+54 11 4567-8901", obraSocial: "Swiss Medical", tags: ["Implantes", "Prótesis"], nextAppointment: "2026-02-22 14:00", email: "carlos@email.com" },
+    { id: "3", name: "Ana", lastName: "García", dni: "40.789.012", phone: "+54 11 3456-7890", obraSocial: "OSDE", tags: ["Limpieza"], nextAppointment: null, email: "ana@email.com" },
+    { id: "4", name: "Pedro", lastName: "López", dni: "33.654.321", phone: "+54 11 2345-6789", obraSocial: "Galeno", tags: ["Endodoncia"], nextAppointment: "2026-02-19 09:00", email: "pedro@email.com" },
+    { id: "5", name: "Lucía", lastName: "Fernández", dni: "42.987.654", phone: "+54 11 1234-5678", obraSocial: "Medifé", tags: ["Estética", "Blanqueamiento"], nextAppointment: "2026-02-25 16:00", email: "lucia@email.com" },
+    { id: "6", name: "Juan", lastName: "Martínez", dni: "36.321.987", phone: "+54 11 9876-5432", obraSocial: "OSDE", tags: ["Control"], nextAppointment: "2026-03-01 11:00", email: "juan@email.com" },
+    { id: "7", name: "María", lastName: "Torres", dni: "39.654.123", phone: "+54 11 8765-4321", obraSocial: "Swiss Medical", tags: ["Ortodoncia", "Limpieza"], nextAppointment: null, email: "maria@email.com" },
+    { id: "8", name: "Diego", lastName: "Sánchez", dni: "41.147.258", phone: "+54 11 7654-3210", obraSocial: "Galeno", tags: ["Cirugía"], nextAppointment: "2026-02-28 08:30", email: "diego@email.com" },
 ];
 
 type SortField = "name" | "dni" | "obraSocial" | "nextAppointment";
@@ -64,7 +65,7 @@ export default function PacientesPage() {
                 .select('*', { count: 'exact' });
 
             if (search) {
-                query = query.or(`full_name.ilike.%${search}%,dni.ilike.%${search}%`);
+                query = query.or(`full_name.ilike.%${search}%,last_name.ilike.%${search}%,dni.ilike.%${search}%`);
             }
 
             const { data, count, error } = await query
@@ -76,6 +77,7 @@ export default function PacientesPage() {
             setPatients((data || []).map(p => ({
                 id: p.id,
                 name: p.full_name,
+                lastName: p.last_name || "",
                 dni: p.dni || "-",
                 phone: p.phone || "-",
                 obraSocial: p.obra_social || "-",
@@ -124,7 +126,7 @@ export default function PacientesPage() {
             <div className="relative max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
-                    placeholder="Buscar por nombre o DNI..."
+                    placeholder="Buscar por nombre, apellido o DNI..."
                     className="pl-10"
                     value={search}
                     onChange={e => { setSearch(e.target.value); setPage(1); }}
@@ -137,7 +139,7 @@ export default function PacientesPage() {
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-slate-50">
-                                <TableHead className="w-[260px]">
+                                <TableHead className="w-[280px]">
                                     <button className="flex items-center gap-1 text-xs" onClick={() => toggleSort("name")}>
                                         Paciente <ArrowUpDown className="h-3 w-3" />
                                     </button>
@@ -176,11 +178,11 @@ export default function PacientesPage() {
                                         <div className="flex items-center gap-3">
                                             <Avatar className="h-8 w-8">
                                                 <AvatarFallback className="bg-[#76D7B6]/10 text-[#76D7B6] text-xs font-bold">
-                                                    {patient.name.split(" ").map(n => n[0]).join("")}
+                                                    {patient.name[0]}{patient.lastName[0] || ""}
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div>
-                                                <p className="font-medium text-sm text-slate-900">{patient.name}</p>
+                                                <p className="font-medium text-sm text-slate-900">{patient.name} {patient.lastName}</p>
                                                 <p className="text-xs text-slate-400">{patient.email}</p>
                                             </div>
                                         </div>
@@ -252,7 +254,11 @@ export default function PacientesPage() {
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label className="text-right text-sm">Nombre</Label>
-                            <Input className="col-span-3" placeholder="Nombre completo" />
+                            <Input className="col-span-3" placeholder="Nombre" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label className="text-right text-sm">Apellido</Label>
+                            <Input className="col-span-3" placeholder="Apellido" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label className="text-right text-sm">DNI</Label>

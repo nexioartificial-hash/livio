@@ -35,7 +35,8 @@ const TEMPLATE_HEADERS = [
 ];
 
 const DB_FIELDS = [
-    { value: "full_name", label: "Nombre Completo" },
+    { value: "full_name", label: "Nombre" },
+    { value: "last_name", label: "Apellido" },
     { value: "dni", label: "DNI" },
     { value: "phone", label: "Teléfono" },
     { value: "email", label: "Email" },
@@ -80,6 +81,26 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
     const [overwrite, setOverwrite] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [progress, setProgress] = useState(0);
+
+    // Get combined display name for a row based on current mapping
+    const getDisplayName = (row: any) => {
+        const nameHeader = Object.keys(mapping).find(k => mapping[k] === 'full_name');
+        const surnameHeader = Object.keys(mapping).find(k => mapping[k] === 'last_name');
+
+        let name = nameHeader ? String(row[nameHeader] || "") : "";
+        let surname = surnameHeader ? String(row[surnameHeader] || "") : "";
+
+        // Smart split if only name is mapped and contains a space
+        if (name && !surname) {
+            const parts = name.trim().split(/\s+/);
+            if (parts.length > 1) {
+                surname = parts.pop() || "";
+                name = parts.join(" ");
+            }
+        }
+
+        return `${name} ${surname}`.trim() || "-";
+    };
 
     // --- Step 1: Upload & Parse ---
     const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -162,7 +183,8 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
 
         fileHeaders.forEach(header => {
             const h = header.toLowerCase().trim();
-            if (h === "nombre" || h === "name" || h === "full name" || h === "apellido") newMapping[header] = "full_name";
+            if (h === "nombre" || h === "name" || h === "full name" || h === "first name") newMapping[header] = "full_name";
+            else if (h === "apellido" || h === "last name" || h === "surname") newMapping[header] = "last_name";
             else if (h === "dni" || h === "documento" || h === "id") newMapping[header] = "dni";
             else if (h === "telefono" || h === "phone" || h === "celular") newMapping[header] = "phone";
             else if (h === "email" || h === "correo") newMapping[header] = "email";
@@ -219,6 +241,16 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                     if (dbField === 'dni') value = String(value).replace(/[^0-9]/g, '');
                     patient[dbField] = value;
                 });
+
+                // Smart split logic: if last_name is empty but full_name has spaces
+                if (patient.full_name && !patient.last_name) {
+                    const parts = String(patient.full_name).trim().split(/\s+/);
+                    if (parts.length > 1) {
+                        patient.last_name = parts.pop();
+                        patient.full_name = parts.join(" ");
+                    }
+                }
+
                 return patient;
             });
 
@@ -358,6 +390,9 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                                     <Table>
                                         <TableHeader>
                                             <TableRow className="bg-slate-50 divide-x">
+                                                <TableHead className="min-w-[150px] max-w-[200px] py-3 px-3 bg-slate-100/50 sticky left-0 z-10 border-r">
+                                                    <span className="text-[11px] font-black uppercase text-slate-600">Representación Final</span>
+                                                </TableHead>
                                                 {headers.map((header) => (
                                                     <TableHead key={header} className="min-w-[140px] max-w-[180px] py-2 px-3">
                                                         <div className="space-y-2">
@@ -397,6 +432,9 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                                         <TableBody className="divide-y">
                                             {rawData.slice(0, 10).map((row, i) => (
                                                 <TableRow key={i} className="divide-x hover:bg-slate-50/50">
+                                                    <TableCell className="py-2 px-3 bg-slate-50/30 sticky left-0 z-10 border-r">
+                                                        <span className="text-xs font-bold text-slate-800">{getDisplayName(row)}</span>
+                                                    </TableCell>
                                                     {headers.map((h) => (
                                                         <TableCell key={h} className="py-2 px-3">
                                                             <TruncatedCell value={row[h]} />
