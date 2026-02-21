@@ -62,7 +62,7 @@ import { supabase } from "@/lib/supabase/client";
  * Small component that reads OAuth redirect result from URL params.
  * Must be isolated so it can be wrapped in <Suspense> (Next.js requirement for useSearchParams).
  */
-function GoogleOAuthHandler({ onSuccess }: { onSuccess: (email: string) => void }) {
+function GoogleOAuthHandler({ onSuccess }: { onSuccess?: (email: string) => void }) {
     const searchParams = useSearchParams();
     const router = useRouter();
 
@@ -71,7 +71,7 @@ function GoogleOAuthHandler({ onSuccess }: { onSuccess: (email: string) => void 
         const emailParam = searchParams.get('email');
         if (googleParam === 'success') {
             toast.success(`✅ Google Calendar conectado${emailParam ? ` (${decodeURIComponent(emailParam)})` : ''}`);
-            if (emailParam) onSuccess(decodeURIComponent(emailParam));
+            if (emailParam && onSuccess) onSuccess(decodeURIComponent(emailParam));
             router.replace('/config');
         } else if (googleParam === 'error') {
             const reason = searchParams.get('reason') || 'desconocido';
@@ -235,10 +235,6 @@ function ConfigPageContent() {
 
     return (
         <div className="space-y-6">
-            {/* Handles ?google=success|error after OAuth redirect */}
-            <Suspense fallback={null}>
-                <GoogleOAuthHandler onSuccess={(email) => setGoogleProfile(p => ({ ...p, email, connected: true }))} />
-            </Suspense>
 
             <div className="flex flex-col gap-2">
                 <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Configuración</h1>
@@ -556,6 +552,7 @@ export default function ConfigPage() {
                 <div className="h-8 w-8 rounded-full border-b-2 border-[#76D7B6] animate-spin" />
             </div>
         }>
+            <GoogleOAuthHandler onSuccess={() => { }} />
             <ConfigPageContent />
         </Suspense>
     );
