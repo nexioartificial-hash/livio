@@ -199,11 +199,15 @@ export default function ConfigPage() {
         if (result.success) setTeam(result.data || []);
     };
 
-    if (loading) {
+    // Only show the blocking loading spinner if we don't even have a user session yet.
+    // If we have a user, we can proceed to show the page even if background auth tasks are "loading".
+    if (loading && !user) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#76D7B6]"></div>
-                <p className="text-sm text-slate-400 animate-pulse">{debugInfo === "Iniciando..." ? "Cargando configuración..." : debugInfo}</p>
+                <p className="text-sm text-slate-400 animate-pulse">
+                    {debugInfo === "Iniciando..." ? "Cargando configuración..." : debugInfo}
+                </p>
                 {debugInfo !== "Iniciando..." && (
                     <Button variant="ghost" size="sm" onClick={() => window.location.reload()}>
                         Reintentar
