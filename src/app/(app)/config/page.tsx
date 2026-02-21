@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
     Card,
     CardContent,
@@ -22,7 +23,13 @@ import {
     Send,
     Crown,
     MessageSquare,
-    Stethoscope
+    Stethoscope,
+    CalendarDays,
+    RefreshCw,
+    CheckCircle2,
+    XCircle,
+    Loader2,
+    Link as LinkIcon,
 } from "lucide-react";
 import {
     Tabs,
@@ -49,10 +56,95 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { updateMemberRole, deleteMember, getTeamMembers } from "@/app/actions/team";
 import InviteModal from "@/components/team/InviteModal";
+import { supabase } from "@/lib/supabase/client";
 
 export default function ConfigPage() {
     const { user, loading } = useAuth();
     const isSuperAdmin = user?.role === 'superadmin';
+    const searchParams = useSearchParams();
+    const router = useRouter();
+
+    // Google Calendar integration state
+    const [googleProfile, setGoogleProfile] = useState<{
+        email: string | null;
+        syncEnabled: boolean;
+        connected: boolean;
+    }>({ email: null, syncEnabled: false, connected: false });
+    const [isSyncToggling, setIsSyncToggling] = useState(false);
+    const [isPulling, setIsPulling] = useState(false);
+
+    // Handle OAuth redirect result
+    useEffect(() => {
+        const googleParam = searchParams.get('google');
+        const emailParam = searchParams.get('email');
+        if (googleParam === 'success') {
+            toast.success(`✅ Google Calendar conectado${emailParam ? ` (${decodeURIComponent(emailParam)})` : ''}`);
+            if (emailParam) setGoogleProfile(p => ({ ...p, email: decodeURIComponent(emailParam), connected: true }));
+            router.replace('/config');
+        } else if (googleParam === 'error') {
+            const reason = searchParams.get('reason') || 'desconocido';
+            toast.error(`Error al conectar Google Calendar: ${reason}`);
+            router.replace('/config');
+        }
+    }, [searchParams, router]);
+
+    // Load current Google profile from DB
+    useEffect(() => {
+        if (!user) return;
+        supabase
+            .from('professional')
+            .select('google_user_email, calendar_sync_enabled')
+            .eq('id', user.id)
+            .single()
+            .then(({ data }) => {
+                if (data) {
+                    setGoogleProfile({
+                        email: data.google_user_email,
+                        syncEnabled: data.calendar_sync_enabled ?? false,
+                        connected: !!data.google_user_email,
+                    });
+                }
+            });
+    }, [user]);
+
+    const handleSyncToggle = async (enabled: boolean) => {
+        if (!user) return;
+        setIsSyncToggling(true);
+        const { error } = await supabase
+            .from('professional')
+            .update({ calendar_sync_enabled: enabled })
+            .eq('id', user.id);
+        if (!error) {
+            setGoogleProfile(p => ({ ...p, syncEnabled: enabled }));
+            toast.success(enabled ? 'Sincronización automática activada' : 'Sincronización automática desactivada');
+        } else {
+            toast.error('Error al actualizar configuración');
+        }
+        setIsSyncToggling(false);
+    };
+
+    const handlePullNow = async () => {
+        if (!user) return;
+        setIsPulling(true);
+        try {
+            const res = await fetch('/api/integrations/google/pull', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ profesionalId: user.id }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                const r = data.results?.[0];
+                toast.success(`Sync completado — ${r?.inserted ?? 0} bloqueos importados, ${r?.deleted ?? 0} eliminados`);
+            } else {
+                toast.error(data.error || 'Error al sincronizar');
+            }
+        } catch {
+            toast.error('Error de red al sincronizar');
+        } finally {
+            setIsPulling(false);
+        }
+    };
 
     const [clinicData, setClinicData] = useState({
         name: "Consultorios Dentales Livio",
@@ -139,11 +231,12 @@ export default function ConfigPage() {
             </div>
 
             <Tabs defaultValue="clinica" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 max-w-md bg-slate-100 p-1">
+                <TabsList className="grid w-full grid-cols-3 max-w-lg bg-slate-100 p-1">
                     <TabsTrigger value="clinica" className="data-[state=active]:bg-white data-[state=active]:text-[#76D7B6] data-[state=active]:shadow-sm">Mi Clínica</TabsTrigger>
                     {isSuperAdmin && (
                         <TabsTrigger value="equipo" className="data-[state=active]:bg-white data-[state=active]:text-[#76D7B6] data-[state=active]:shadow-sm">Equipo</TabsTrigger>
                     )}
+                    <TabsTrigger value="integraciones" className="data-[state=active]:bg-white data-[state=active]:text-[#76D7B6] data-[state=active]:shadow-sm">Integraciones</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="clinica" className="mt-6 space-y-6">
@@ -347,6 +440,92 @@ export default function ConfigPage() {
                                     ))}
                                 </TableBody>
                             </Table>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* ─── Integraciones Tab ─────────────────────────────────────── */}
+                <TabsContent value="integraciones" className="mt-6 space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-base">
+                                <CalendarDays className="h-5 w-5 text-[#76D7B6]" />
+                                Google Calendar
+                            </CardTitle>
+                            <CardDescription>
+                                Sincronizá tus turnos con Google Calendar y visualizá tus eventos externos como bloqueos en la agenda.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-5">
+                            {/* Connection status */}
+                            <div className="flex items-center justify-between p-4 rounded-xl border bg-slate-50">
+                                <div className="flex items-center gap-3">
+                                    {googleProfile.connected ? (
+                                        <CheckCircle2 className="h-5 w-5 text-green-500" />
+                                    ) : (
+                                        <XCircle className="h-5 w-5 text-slate-300" />
+                                    )}
+                                    <div>
+                                        <p className="text-sm font-semibold text-slate-900">
+                                            {googleProfile.connected ? 'Cuenta conectada' : 'Sin conexión'}
+                                        </p>
+                                        {googleProfile.email && (
+                                            <p className="text-xs text-slate-500 flex items-center gap-1">
+                                                <LinkIcon className="h-3 w-3" /> {googleProfile.email}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                                <a href="/api/integrations/google/auth">
+                                    <Button variant="outline" size="sm" className="gap-2 border-[#76D7B6] text-[#76D7B6] hover:bg-[#76D7B6]/10">
+                                        <CalendarDays className="h-4 w-4" />
+                                        {googleProfile.connected ? 'Reconectar' : 'Conectar Google Calendar'}
+                                    </Button>
+                                </a>
+                            </div>
+
+                            {/* Sync toggle */}
+                            {googleProfile.connected && (
+                                <div className="flex items-center justify-between p-4 rounded-xl border">
+                                    <div>
+                                        <p className="text-sm font-semibold text-slate-900">Sincronización automática</p>
+                                        <p className="text-xs text-slate-500">Los turnos nuevos se crearán automáticamente en tu Google Calendar.</p>
+                                    </div>
+                                    <button
+                                        onClick={() => handleSyncToggle(!googleProfile.syncEnabled)}
+                                        disabled={isSyncToggling}
+                                        className={cn(
+                                            'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none',
+                                            googleProfile.syncEnabled ? 'bg-[#76D7B6]' : 'bg-slate-200'
+                                        )}
+                                    >
+                                        <span className={cn(
+                                            'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
+                                            googleProfile.syncEnabled ? 'translate-x-6' : 'translate-x-1'
+                                        )} />
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Manual pull sync */}
+                            {googleProfile.connected && (
+                                <div className="flex items-center justify-between p-4 rounded-xl border">
+                                    <div>
+                                        <p className="text-sm font-semibold text-slate-900">Importar eventos ahora</p>
+                                        <p className="text-xs text-slate-500">Importá eventos de Google Calendar como bloqueos en la agenda (próximos 30 días).</p>
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handlePullNow}
+                                        disabled={isPulling}
+                                        className="gap-2"
+                                    >
+                                        {isPulling ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                                        Sincronizar
+                                    </Button>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </TabsContent>

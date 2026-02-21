@@ -88,6 +88,7 @@ export default function AgendaPage() {
     });
     const [isCreating, setIsCreating] = useState(false);
     const [appointments, setAppointments] = useState<Appointment[]>([]);
+    const [bloqueos, setBloqueos] = useState<{ id: string; profesional_id: string; bloqueo_desde: string; bloqueo_hasta: string; descripcion: string; tipo: string }[]>([]);
     const [obrasSociales, setObrasSociales] = useState<ObraSocial[]>([]);
     const [obraSearch, setObraSearch] = useState("");
     const [obraOpen, setObraOpen] = useState(false);
@@ -129,6 +130,16 @@ export default function AgendaPage() {
                 obra_social: t.obra_social || null,
             })));
         }
+
+        // Also fetch bloqueos for the same date range
+        const startISO = (view === 'dia' ? currentDate : view === 'semana' ? currentDate.startOf('week') : currentDate.startOf('month')).toISO();
+        const endISO = (view === 'dia' ? currentDate : view === 'semana' ? currentDate.endOf('week') : currentDate.endOf('month')).toISO();
+        const { data: bloqueosData } = await supabase
+            .from('bloqueo_horario')
+            .select('*')
+            .gte('bloqueo_hasta', startISO)
+            .lte('bloqueo_desde', endISO);
+        if (bloqueosData) setBloqueos(bloqueosData);
     }, [currentDate, view, supabase]);
 
     useEffect(() => {
@@ -166,7 +177,21 @@ export default function AgendaPage() {
                     ? obrasSociales.find(o => o.id === newAppointment.obrasocial_id)?.nombre ?? null
                     : null;
 
-            const { error } = await supabase.from('turno').insert({
+            // Check for overlap with bloqueo_horario
+            const newStart = DateTime.fromISO(`${newAppointment.date}T${newAppointment.time}`);
+            const newEnd = newStart.plus({ minutes: parseInt(newAppointment.duration) });
+            const overlap = bloqueos.some(b => {
+                const bStart = DateTime.fromISO(b.bloqueo_desde);
+                const bEnd = DateTime.fromISO(b.bloqueo_hasta);
+                return newStart < bEnd && newEnd > bStart;
+            });
+            if (overlap) {
+                toast.warning("⚠️ El horario se superpone con un bloqueo externo (Google Calendar u otro)");
+                setIsCreating(false);
+                return;
+            }
+
+            const { data: inserted, error } = await supabase.from('turno').insert({
                 patient_name: newAppointment.patient,
                 professional_name: profName,
                 date: newAppointment.date,
@@ -177,9 +202,18 @@ export default function AgendaPage() {
                 sucursal: newAppointment.sucursal,
                 source: 'manual',
                 obra_social: obraNombre,
-            });
+            }).select('id').single();
 
             if (error) throw error;
+
+            // Push to Google Calendar asynchronously (fire and forget)
+            if (inserted?.id) {
+                fetch('/api/integrations/google/push', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ turnoId: inserted.id, action: 'create' }),
+                }).catch(() => { }); // silent — don't block UX
+            }
 
             toast.success("Turno agendado correctamente");
             setIsModalOpen(false);
@@ -598,6 +632,16 @@ export default function AgendaPage() {
 
                                             return (
                                                 <div key={dayIdx} className={`border-r last:border-r-0 p-1 ${isToday ? "bg-[#76D7B6]/[0.02]" : ""}`}>
+                                                    {/* Bloqueos externos — grey, non-clickable */}
+                                                    {bloqueos.filter(b => {
+                                                        const bStart = DateTime.fromISO(b.bloqueo_desde);
+                                                        return bStart.toISODate() === dayDate && bStart.toFormat('HH:00') === hour;
+                                                    }).map(b => (
+                                                        <div key={b.id} title={b.descripcion} className="rounded-md border-l-[3px] border-slate-400 bg-slate-100 p-2 text-xs text-slate-500 mb-1 select-none">
+                                                            <p className="font-semibold truncate">🔒 {b.descripcion || 'Bloqueado'}</p>
+                                                            <p className="text-[10px] opacity-60">{b.tipo === 'externo_google' ? 'Google Calendar' : b.tipo}</p>
+                                                        </div>
+                                                    ))}
                                                     {dayAppts.map(appt => (
                                                         <div
                                                             key={appt.id}
@@ -634,10 +678,23 @@ export default function AgendaPage() {
                         {hours.map(hour => {
                             const dateStr = currentDate.toISODate();
                             const appts = filteredAppointments.filter(a => a.date === dateStr && a.time === hour);
+                            const dayBloqueos = bloqueos.filter(b => {
+                                const bStart = DateTime.fromISO(b.bloqueo_desde);
+                                return bStart.toISODate() === dateStr && bStart.toFormat('HH:00') === hour;
+                            });
                             return (
                                 <div key={hour} className="flex border-b last:border-b-0 min-h-[56px]">
                                     <div className="w-20 p-2 text-xs text-slate-400 border-r flex items-start justify-end pr-3 pt-2 flex-shrink-0">{hour}</div>
                                     <div className="flex-1 p-1.5">
+                                        {/* Bloqueos externos */}
+                                        {dayBloqueos.map(b => (
+                                            <div key={b.id} title={b.descripcion} className="rounded-lg border-l-[3px] border-slate-400 bg-slate-100 p-3 text-slate-500 mb-1 select-none">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="font-semibold text-sm">🔒 {b.descripcion || 'Bloqueado'}</span>
+                                                    <span className="text-[10px] opacity-60">{b.tipo === 'externo_google' ? 'Google Calendar' : b.tipo}</span>
+                                                </div>
+                                            </div>
+                                        ))}
                                         {appts.map(appt => (
                                             <div
                                                 key={appt.id}
