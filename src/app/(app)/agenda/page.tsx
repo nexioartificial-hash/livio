@@ -313,8 +313,8 @@ export default function AgendaPage() {
 
     // --- GOOGLE INTEGRATION ---
     const handleGoogleConnect = () => {
-        const width = 500;
-        const height = 600;
+        const width = 600;
+        const height = 700;
         const left = window.screen.width / 2 - width / 2;
         const top = window.screen.height / 2 - height / 2;
 
@@ -325,37 +325,29 @@ export default function AgendaPage() {
         );
 
         const handleMessage = async (event: MessageEvent) => {
-            if (event.data.type === 'GOOGLE_CALENDAR_SUCCESS' && event.data.events) {
+            if (event.data.type === 'GOOGLE_AUTH_SUCCESS') {
                 window.removeEventListener('message', handleMessage);
                 setIsImporting(true);
 
                 try {
-                    const events = event.data.events;
-                    const turnosToInsert = events.map((evt: any) => ({
-                        patient_name: evt.summary || "Evento Google",
-                        professional_name: "Google Calendar",
-                        date: evt.start.dateTime ? evt.start.dateTime.split('T')[0] : evt.start.date,
-                        time: evt.start.dateTime ? evt.start.dateTime.split('T')[1].substring(0, 5) : "09:00",
-                        reason: evt.description || "Importado de Google",
-                        source: 'google',
-                        status: 'pendiente',
-                        sucursal: 'Sede Central'
-                    }));
+                    // Trigger server-side pull
+                    const res = await fetch('/api/integrations/google/pull', {
+                        method: 'POST',
+                        body: JSON.stringify({ profesionalId: user?.id })
+                    });
 
-                    if (turnosToInsert.length > 0) {
-                        const { error } = await supabase.from('turno').insert(turnosToInsert);
-                        if (error) throw error;
-                        toast.success(`¡${turnosToInsert.length} turnos importados de Google!`);
-                        setIsImportModalOpen(false);
-                    } else {
-                        toast.info("No se encontraron eventos cercanos para importar.");
-                    }
+                    if (!res.ok) throw new Error('Error al sincronizar con Google');
 
+                    toast.success("✅ Google Calendar conectado y sincronizado!");
+                    setIsImportModalOpen(false);
+                    fetchAppointments(); // Refresh grid
                 } catch (error: any) {
-                    toast.error("Error al guardar eventos: " + error.message);
+                    toast.error("Error al sincronizar eventos: " + error.message);
                 } finally {
                     setIsImporting(false);
                 }
+            } else if (event.data.type === 'GOOGLE_AUTH_ERROR') {
+                toast.error(`Error de Google: ${event.data.reason}`);
             }
         };
 

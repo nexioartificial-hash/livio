@@ -103,6 +103,12 @@ export default function ConfigPage() {
                 const email = event.data.email;
                 toast.success(`✅ Google Calendar conectado (${email})`);
                 setGoogleProfile(p => ({ ...p, email, connected: true }));
+
+                // Trigger auto-pull after connection
+                fetch('/api/integrations/google/pull', {
+                    method: 'POST',
+                    body: JSON.stringify({ profesionalId: user?.id })
+                }).catch(console.error);
             } else if (event.data?.type === 'GOOGLE_AUTH_ERROR') {
                 const reason = event.data.reason;
                 const debugUri = event.data.debug_uri;
