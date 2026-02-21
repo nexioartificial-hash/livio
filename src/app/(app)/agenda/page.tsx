@@ -133,8 +133,18 @@ export default function AgendaPage() {
         }
 
         // Also fetch bloqueos for the same date range
-        const startISO = (view === 'dia' ? currentDate : view === 'semana' ? currentDate.startOf('week') : currentDate.startOf('month')).toISO();
-        const endISO = (view === 'dia' ? currentDate : view === 'semana' ? currentDate.endOf('week') : currentDate.endOf('month')).toISO();
+        const startISO = (
+            view === 'dia' ? currentDate.startOf('day') :
+                view === 'semana' ? currentDate.startOf('week') :
+                    currentDate.startOf('month')
+        ).toISO();
+
+        const endISO = (
+            view === 'dia' ? currentDate.endOf('day') :
+                view === 'semana' ? currentDate.endOf('week') :
+                    currentDate.endOf('month')
+        ).toISO();
+
         const { data: bloqueosData } = await supabase
             .from('bloqueo_horario')
             .select('*')
@@ -338,7 +348,10 @@ export default function AgendaPage() {
 
                     if (!res.ok) throw new Error('Error al sincronizar con Google');
 
-                    toast.success("✅ Google Calendar conectado y sincronizado!");
+                    const syncData = await res.json();
+                    const syncedCount = syncData.results?.[0]?.found || 0;
+
+                    toast.success(`✅ Google Calendar conectado! Se encontraron ${syncedCount} eventos.`);
                     setIsImportModalOpen(false);
                     fetchAppointments(); // Refresh grid
                 } catch (error: any) {
