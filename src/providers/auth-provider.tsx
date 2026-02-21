@@ -27,50 +27,64 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const fetchProfile = async (userId: string) => {
         console.log("🔍 [Auth] Intentando obtener perfil para ID:", userId);
-        try {
-            const { data: profile, error } = await supabase
-                .from("professional")
-                .select("role")
-                .eq("id", userId)
-                .maybeSingle();
 
-            if (error) {
-                console.error("❌ [Auth] Error en Supabase Query");
-                console.error("--- Error Details ---");
-                console.error("Message:", error.message || "n/a");
-                console.error("Code:", error.code || "n/a");
-                console.error("Details:", error.details || "n/a");
-                console.error("Hint:", error.hint || "n/a");
-                console.error("---------------------");
-                return null;
-            }
-
-            if (!profile) {
-                console.warn("⚠️ [Auth] Registro no encontrado. Creando perfil superadmin automáticamente...");
-                const { data: newProfile, error: insertError } = await supabase
+        // Timeout protection for the profile fetch
+        const profilePromise = (async () => {
+            try {
+                const { data: profile, error } = await supabase
                     .from("professional")
-                    .insert({ id: userId, role: 'superadmin', is_onboarded: false })
                     .select("role")
-                    .single();
+                    .eq("id", userId)
+                    .maybeSingle();
 
-                if (insertError) {
-                    console.error("❌ [Auth] Error al crear perfil:", insertError.message);
+                if (error) {
+                    console.error("❌ [Auth] Error en Supabase Query:", error);
                     return null;
                 }
-                console.log("✅ [Auth] Perfil superadmin creado:", newProfile);
-                return newProfile;
-            }
 
-            console.log("✅ [Auth] Perfil cargado satisfactoriamente:", profile);
-            return profile;
-        } catch (err) {
-            console.error("🔥 [Auth] Error inesperado (Exception):", err);
-            return null;
-        }
+                if (!profile) {
+                    console.warn("⚠️ [Auth] Registro no encontrado. Creando perfil superadmin...");
+                    const { data: newProfile, error: insertError } = await supabase
+                        .from("professional")
+                        .insert({ id: userId, role: 'superadmin', is_onboarded: false })
+                        .select("role")
+                        .single();
+
+                    if (insertError) {
+                        console.error("❌ [Auth] Error al crear perfil:", insertError.message);
+                        return null;
+                    }
+                    return newProfile;
+                }
+
+                return profile;
+            } catch (err) {
+                console.error("🔥 [Auth] Error inesperado en fetchProfile:", err);
+                return null;
+            }
+        })();
+
+        const timeoutPromise = new Promise<null>((resolve) =>
+            setTimeout(() => {
+                console.warn("🕒 [Auth] Profile fetch timed out (4s)");
+                resolve(null);
+            }, 4000)
+        );
+
+        return Promise.race([profilePromise, timeoutPromise]);
     };
 
     useEffect(() => {
         console.log("DEBUG: Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+
+        // Global safety timeout to ensure setLoading(false) always happens
+        const globalTimeout = setTimeout(() => {
+            if (loading) {
+                console.warn("🚨 [Auth] Auth initialization took too long (8s). Forcing loading: false");
+                setLoading(false);
+            }
+        }, 8000);
+
         // Get initial session
         supabase.auth.getSession().then(async ({ data: { session } }) => {
             console.log("🔐 [Auth] Sesión inicial detectada:", session?.user?.email);
@@ -78,7 +92,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 setSession(session);
                 if (session?.user) {
                     const profile = await fetchProfile(session.user.id);
-                    console.log("👤 [Auth] Perfil cargado, rol:", profile?.role);
+                    console.log("👤 [Auth] Perfil procesado, rol:", profile?.role);
                     setUser({ ...session.user, role: profile?.role });
                 } else {
                     console.log("👤 [Auth] No hay usuario en sesión");
@@ -88,6 +102,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 console.error("❌ [Auth] Error en flujo inicial:", err);
             } finally {
                 setLoading(false);
+                clearTimeout(globalTimeout);
                 console.log("🔓 [Auth] Loading set to false");
             }
         });
@@ -95,6 +110,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (_event, session) => {
+                console.log("🔄 [Auth] Cambio de estado:", _event, session?.user?.email);
                 try {
                     setSession(session);
                     if (session?.user) {
@@ -113,13 +129,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 if (_event === "SIGNED_OUT") {
                     setUser(null);
                     setSession(null);
-                    // Hard redirect is handled by signOut() below
                 }
             }
         );
 
         return () => {
             subscription.unsubscribe();
+            clearTimeout(globalTimeout);
         };
     }, []);
 
