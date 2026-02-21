@@ -41,8 +41,10 @@ const DB_FIELDS = [
     { value: "phone", label: "Teléfono" },
     { value: "email", label: "Email" },
     { value: "obra_social", label: "Obra Social" },
+    { value: "obra_social_plan", label: "Plan / Prepaga" },
+    { value: "affiliate_number", label: "N° Afiliado" },
     { value: "birth_date", label: "Fecha Nacimiento" },
-    { value: "tags", label: "Tags" },
+    { value: "tags", label: "Tags / Etiquetas" },
     { value: "gender", label: "Género" },
 ].sort((a, b) => a.label.localeCompare(b.label));
 
@@ -137,7 +139,8 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                     const data = results.data as any[];
                     if (data && data.length > 0) {
                         setRawData(data);
-                        const firstRowHeaders = Object.keys(data[0] as object);
+                        // Filter out technical headers like __PARSED_EXTRA
+                        const firstRowHeaders = Object.keys(data[0] as object).filter(h => h !== "__parsed_extra" && h !== "__PARSED_EXTRA");
                         setHeaders(firstRowHeaders);
                         autoMap(firstRowHeaders);
                     }
@@ -182,14 +185,17 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
         const newMapping: Record<string, string> = {};
 
         fileHeaders.forEach(header => {
-            const h = header.toLowerCase().trim();
-            if (h === "nombre" || h === "name" || h === "full name" || h === "first name") newMapping[header] = "full_name";
-            else if (h === "apellido" || h === "last name" || h === "surname") newMapping[header] = "last_name";
-            else if (h === "dni" || h === "documento" || h === "id") newMapping[header] = "dni";
-            else if (h === "telefono" || h === "phone" || h === "celular") newMapping[header] = "phone";
-            else if (h === "email" || h === "correo") newMapping[header] = "email";
-            else if (h.includes("obra") || h.includes("social")) newMapping[header] = "obra_social";
-            else if (h.includes("nacimiento") || h.includes("birth") || h === "fecha") newMapping[header] = "birth_date";
+            const h = header.toLowerCase().trim().replace(/[\s\-_]/g, ''); // Aggressive normalization: remove spaces, dashes, underscores
+
+            if (h === "nombre" || h === "name" || h === "fullname" || h === "firstname") newMapping[header] = "full_name";
+            else if (h === "apellido" || h === "lastname" || h === "surname") newMapping[header] = "last_name";
+            else if (h === "dni" || h === "documento" || h === "id" || h === "doc") newMapping[header] = "dni";
+            else if (h === "telefono" || h === "phone" || h === "celular" || h === "tel") newMapping[header] = "phone";
+            else if (h === "email" || h === "correo" || h === "mail") newMapping[header] = "email";
+            else if (h === "obrasocial" || h === "prepaga") newMapping[header] = "obra_social";
+            else if (h === "plan" || h === "planprepaga") newMapping[header] = "obra_social_plan";
+            else if (h === "numeroafiliado" || h === "afiliado" || h === "nroafiliado") newMapping[header] = "affiliate_number";
+            else if (h.includes("nacimiento") || h.includes("birth") || h === "fecha" || h === "fechanac") newMapping[header] = "birth_date";
             else if (h === "tags" || h === "etiquetas") newMapping[header] = "tags";
             else if (h === "genero" || h === "sexo" || h === "gender") newMapping[header] = "gender";
         });
@@ -242,6 +248,9 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
             const patientsToUpsert = rawData.map(row => {
                 const patient: any = { clinic_id: clinicId };
                 Object.entries(mapping).forEach(([fileHeader, dbField]) => {
+                    // Critical fix: Skip headers that are explicitly ignored or not mapped
+                    if (!dbField || dbField === "ignore") return;
+
                     let value = row[fileHeader];
                     if (dbField === 'tags' && typeof value === 'string') {
                         value = value.split(',').map(t => t.trim()).filter(Boolean);
