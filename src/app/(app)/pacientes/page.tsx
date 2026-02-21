@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,7 +10,12 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, Plus, FileText, Calendar, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Plus, FileText, Calendar, ArrowUpDown, ChevronLeft, ChevronRight, Upload, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase/client";
+import { ImportPatientsModal } from "@/components/patients/import-patients-modal";
+import { useAuth } from "@/providers/auth-provider";
+import { toast } from "sonner";
+import { DateTime } from "luxon";
 
 interface Patient {
     id: string;
@@ -38,28 +43,62 @@ type SortField = "name" | "dni" | "obraSocial" | "nextAppointment";
 type SortDir = "asc" | "desc";
 
 export default function PacientesPage() {
+    const { user, loading: authLoading } = useAuth();
     const [search, setSearch] = useState("");
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [patients, setPatients] = useState<Patient[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [sortField, setSortField] = useState<SortField>("name");
     const [sortDir, setSortDir] = useState<SortDir>("asc");
     const [page, setPage] = useState(1);
-    const perPage = 6;
+    const [totalCount, setTotalCount] = useState(0);
+    const perPage = 10;
 
-    const filtered = useMemo(() => {
-        const q = search.toLowerCase();
-        let result = mockPatients.filter(p =>
-            p.name.toLowerCase().includes(q) || p.dni.includes(q)
-        );
-        result.sort((a, b) => {
-            const aVal = a[sortField] ?? "";
-            const bVal = b[sortField] ?? "";
-            return sortDir === "asc" ? String(aVal).localeCompare(String(bVal)) : String(bVal).localeCompare(String(aVal));
-        });
-        return result;
-    }, [search, sortField, sortDir]);
+    const fetchPatients = useCallback(async () => {
+        if (!user) return;
+        setIsLoading(true);
+        try {
+            let query = supabase
+                .from('patient')
+                .select('*', { count: 'exact' });
 
-    const totalPages = Math.ceil(filtered.length / perPage);
-    const paginated = filtered.slice((page - 1) * perPage, page * perPage);
+            if (search) {
+                query = query.or(`full_name.ilike.%${search}%,dni.ilike.%${search}%`);
+            }
+
+            const { data, count, error } = await query
+                .order(sortField === 'name' ? 'full_name' : sortField, { ascending: sortDir === 'asc' })
+                .range((page - 1) * perPage, page * perPage - 1);
+
+            if (error) throw error;
+
+            setPatients((data || []).map(p => ({
+                id: p.id,
+                name: p.full_name,
+                dni: p.dni || "-",
+                phone: p.phone || "-",
+                obraSocial: p.obra_social || "-",
+                tags: p.tags || [],
+                nextAppointment: null, // Would require another join/query
+                email: p.email || "-",
+            })));
+            setTotalCount(count || 0);
+        } catch (error: any) {
+            console.error("Error fetching patients:", error);
+            toast.error("Error al cargar pacientes");
+        } finally {
+            setIsLoading(false);
+        }
+    }, [user, search, sortField, sortDir, page]);
+
+    useEffect(() => {
+        if (!authLoading && user) {
+            fetchPatients();
+        }
+    }, [authLoading, user, fetchPatients]);
+
+    const totalPages = Math.ceil(totalCount / perPage);
 
     const toggleSort = (field: SortField) => {
         if (sortField === field) setSortDir(prev => prev === "asc" ? "desc" : "asc");
@@ -71,9 +110,14 @@ export default function PacientesPage() {
             {/* Header */}
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <h1 className="text-3xl font-bold text-slate-900">Pacientes</h1>
-                <Button className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 font-bold gap-2" onClick={() => setIsModalOpen(true)}>
-                    <Plus className="h-4 w-4" /> Nuevo Paciente
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" className="gap-2" onClick={() => setIsImportModalOpen(true)}>
+                        <Upload className="h-4 w-4" /> Importar
+                    </Button>
+                    <Button className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 font-bold gap-2" size="sm" onClick={() => setIsCreateModalOpen(true)}>
+                        <Plus className="h-4 w-4" /> Nuevo Paciente
+                    </Button>
+                </div>
             </div>
 
             {/* Search */}
@@ -119,7 +163,14 @@ export default function PacientesPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginated.map(patient => (
+                            {isLoading ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="text-center py-20">
+                                        <Loader2 className="h-8 w-8 animate-spin mx-auto text-[#76D7B6] mb-2" />
+                                        <p className="text-sm text-slate-400">Cargando pacientes...</p>
+                                    </TableCell>
+                                </TableRow>
+                            ) : patients.map(patient => (
                                 <TableRow key={patient.id} className="hover:bg-slate-50/50">
                                     <TableCell>
                                         <div className="flex items-center gap-3">
@@ -163,9 +214,9 @@ export default function PacientesPage() {
                                     </TableCell>
                                 </TableRow>
                             ))}
-                            {paginated.length === 0 && (
+                            {!isLoading && patients.length === 0 && (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-center py-8 text-slate-400 text-sm">
+                                    <TableCell colSpan={7} className="text-center py-20 text-slate-400 text-sm">
                                         No se encontraron pacientes.
                                     </TableCell>
                                 </TableRow>
@@ -178,7 +229,7 @@ export default function PacientesPage() {
             {/* Pagination */}
             {totalPages > 1 && (
                 <div className="flex items-center justify-between">
-                    <p className="text-xs text-slate-500">{filtered.length} pacientes encontrados</p>
+                    <p className="text-xs text-slate-500">{totalCount} pacientes encontrados</p>
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
                             <ChevronLeft className="h-4 w-4" />
@@ -192,7 +243,7 @@ export default function PacientesPage() {
             )}
 
             {/* New Patient Modal */}
-            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
                 <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader>
                         <DialogTitle>Nuevo Paciente</DialogTitle>
@@ -221,13 +272,20 @@ export default function PacientesPage() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-                        <Button className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 font-bold" onClick={() => setIsModalOpen(false)}>
+                        <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>Cancelar</Button>
+                        <Button className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 font-bold" onClick={() => setIsCreateModalOpen(false)}>
                             Registrar Paciente
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Import Modal */}
+            <ImportPatientsModal
+                open={isImportModalOpen}
+                onOpenChange={setIsImportModalOpen}
+                onSuccess={fetchPatients}
+            />
         </div>
     );
 }
