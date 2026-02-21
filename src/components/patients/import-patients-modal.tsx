@@ -277,7 +277,7 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
 
             const clinicId = profData?.clinic_id;
             if (!clinicId) {
-                throw new Error("No se encontró una clínica asociada a tu usuario. Por favor contactá a soporte.");
+                console.warn("⚠️ [Import] No se encontró clínica asociada. Se procederá con clinic_id = null.");
             }
 
             // Transform data
