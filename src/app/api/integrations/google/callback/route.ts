@@ -1,19 +1,23 @@
 import { google } from 'googleapis';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { buildOAuth2Client } from '@/lib/google';
 import { createAdminClient } from '@/lib/supabase/admin';
 
-
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const stateRaw = searchParams.get('state');
-  const origin = new URL(request.url).origin;
+  const origin = request.nextUrl.origin;
+  const redirect_uri = `${origin}/api/integrations/google/callback`;
 
   const errorResponse = (reason: string) => {
     return new NextResponse(
       `<html><body><script>
-        window.opener.postMessage({ type: 'GOOGLE_AUTH_ERROR', reason: '${reason}' }, '*');
+        window.opener.postMessage({ 
+          type: 'GOOGLE_AUTH_ERROR', 
+          reason: '${reason}',
+          debug_uri: '${redirect_uri}'
+        }, '*');
         window.close();
       </script></body></html>`,
       { headers: { 'Content-Type': 'text/html' } }

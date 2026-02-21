@@ -99,7 +99,7 @@ export function turnoToGoogleEvent(turno: {
         end: { dateTime: end.toISOString(), timeZone: 'America/Argentina/Buenos_Aires' },
         source: {
             title: 'Livio Dental',
-            url: 'https://www.liviodental.com',
+            url: 'https://liviodental.com',
         },
     };
 }

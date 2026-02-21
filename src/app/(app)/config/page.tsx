@@ -104,7 +104,19 @@ export default function ConfigPage() {
                 toast.success(`✅ Google Calendar conectado (${email})`);
                 setGoogleProfile(p => ({ ...p, email, connected: true }));
             } else if (event.data?.type === 'GOOGLE_AUTH_ERROR') {
-                toast.error(`Error al conectar Google Calendar: ${event.data.reason}`);
+                const reason = event.data.reason;
+                const debugUri = event.data.debug_uri;
+                toast.error(
+                    <div className="flex flex-col gap-1">
+                        <span className="font-bold">Error de Google: {reason}</span>
+                        {debugUri && (
+                            <span className="text-xs opacity-80">
+                                URI esperada: {debugUri}
+                            </span>
+                        )}
+                    </div>,
+                    { duration: 10000 }
+                );
             }
         };
 
