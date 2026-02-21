@@ -75,37 +75,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     useEffect(() => {
-        console.log("DEBUG: Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
-
-        // Global safety timeout to ensure setLoading(false) always happens
+        // Aggressive safety timeout to ensure setLoading(false) always happens
         const globalTimeout = setTimeout(() => {
-            if (loading) {
-                console.warn("🚨 [Auth] Auth initialization took too long (8s). Forcing loading: false");
-                setLoading(false);
-            }
-        }, 8000);
+            console.warn("🚨 [Auth] Auth initialization took too long (4s). Forcing ready.");
+            setLoading(false);
+        }, 4000);
 
-        // Get initial session
-        supabase.auth.getSession().then(async ({ data: { session } }) => {
-            console.log("🔐 [Auth] Sesión inicial detectada:", session?.user?.email);
+        // Get initial session with a racing timeout
+        const getSessionWithTimeout = async () => {
+            const sessionPromise = supabase.auth.getSession();
+            const timeoutPromise = new Promise<any>((resolve) =>
+                setTimeout(() => resolve({ data: { session: null }, error: 'timeout' }), 3000)
+            );
+
             try {
+                const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]);
+                if (error === 'timeout') console.warn("🕒 [Auth] getSession() timed out");
+
+                console.log("🔐 [Auth] Sesión detectada:", session?.user?.email || "Ninguna");
                 setSession(session);
+
                 if (session?.user) {
                     const profile = await fetchProfile(session.user.id);
-                    console.log("👤 [Auth] Perfil procesado, rol:", profile?.role);
                     setUser({ ...session.user, role: profile?.role });
                 } else {
-                    console.log("👤 [Auth] No hay usuario en sesión");
                     setUser(null);
                 }
             } catch (err) {
-                console.error("❌ [Auth] Error en flujo inicial:", err);
+                console.error("❌ [Auth] Error en getSession:", err);
+                setUser(null);
             } finally {
                 setLoading(false);
                 clearTimeout(globalTimeout);
-                console.log("🔓 [Auth] Loading set to false");
             }
-        });
+        };
+
+        getSessionWithTimeout();
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -120,15 +125,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         setUser(null);
                     }
                 } catch (err) {
-                    console.error("❌ [Auth] Error en cambio de estado:", err);
+                    console.error("❌ [Auth] Error en onAuthStateChange:", err);
                 } finally {
                     setLoading(false);
-                    console.log("🔓 [Auth] Loading set to false (onAuthStateChange)");
-                }
-
-                if (_event === "SIGNED_OUT") {
-                    setUser(null);
-                    setSession(null);
                 }
             }
         );

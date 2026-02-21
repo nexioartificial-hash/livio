@@ -74,12 +74,21 @@ export default function ConfigPage() {
     const [isSyncToggling, setIsSyncToggling] = useState(false);
     const [isPulling, setIsPulling] = useState(false);
     const [debugInfo, setDebugInfo] = useState<string>("Iniciando...");
+    const [safetyBypass, setSafetyBypass] = useState(false);
 
-    // Safety timeout for loading state
+    // Local safety bypass: force show page after 3 seconds no matter what
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            console.warn("🕒 [Config] Safety bypass activado (3s).");
+            setSafetyBypass(true);
+        }, 3000);
+        return () => clearTimeout(timer);
+    }, []);
+
+    // Safety timeout for loading state text
     useEffect(() => {
         if (loading) {
             const timer = setTimeout(() => {
-                console.error("🕒 [Config] El estado de carga excedió los 5s. Forzando revisión...");
                 setDebugInfo("El sistema de autenticación está tardando más de lo habitual.");
             }, 5000);
             return () => clearTimeout(timer);
@@ -87,8 +96,8 @@ export default function ConfigPage() {
     }, [loading]);
 
     useEffect(() => {
-        console.log("📋 [Config] Render state:", { hasUser: !!user, loading, userId: user?.id });
-    }, [user, loading]);
+        console.log("📋 [Config] Render state:", { hasUser: !!user, loading, userId: user?.id, safetyBypass });
+    }, [user, loading, safetyBypass]);
 
     // ─── Google OAuth Redirect Handler ──────────────────────────────────────
     // Using vanilla window.location to avoid Suspense/Router stalls during mount
@@ -199,9 +208,12 @@ export default function ConfigPage() {
         if (result.success) setTeam(result.data || []);
     };
 
-    // Only show the blocking loading spinner if we don't even have a user session yet.
-    // If we have a user, we can proceed to show the page even if background auth tasks are "loading".
-    if (loading && !user) {
+    // Aggressive rendering strategy:
+    // If we have a user, show the page immediately.
+    // If we are still loading but the 3s safety bypass expired, show the page anyway.
+    const isShowingSpinner = loading && !user && !safetyBypass;
+
+    if (isShowingSpinner) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#76D7B6]"></div>
@@ -217,13 +229,17 @@ export default function ConfigPage() {
         );
     }
 
+    // If we reached here and still have no user, show the Access Restricted view
     if (!user) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
                 <ShieldCheck className="h-12 w-12 text-slate-300" />
                 <h2 className="text-xl font-semibold text-slate-900">Acceso restringido</h2>
                 <p className="text-slate-500 max-w-xs">Debes iniciar sesión para configurar tu clínica.</p>
-                <Button onClick={() => window.location.href = '/login'}>Ir al Login</Button>
+                <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => window.location.reload()}>Refrescar</Button>
+                    <Button onClick={() => window.location.href = '/login'}>Ir al Login</Button>
+                </div>
             </div>
         );
     }
