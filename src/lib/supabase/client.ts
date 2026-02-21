@@ -12,7 +12,16 @@ export function createClient() {
         )
     }
 
-    return createBrowserClient(supabaseUrl, supabaseKey)
+    return createBrowserClient(supabaseUrl, supabaseKey, {
+        auth: {
+            // Disable browser locking to avoid "Navigator LockManager lock timed out" in Chromium.
+            // Using a flexible signature to handle different library versions.
+            lock: async (...args: any[]) => {
+                const acquire = args.find(arg => typeof arg === 'function');
+                if (acquire) return await acquire();
+            },
+        }
+    })
 }
 
 // Singleton for client-side usage
