@@ -193,6 +193,10 @@ export default function AgendaPage() {
                     ? obrasSociales.find(o => o.id === newAppointment.obrasocial_id)?.nombre ?? null
                     : null;
 
+            // 0. Calculate new appointment timeframe
+            const newStart = DateTime.fromISO(`${newAppointment.date}T${newAppointment.time}`);
+            const newEnd = newStart.plus({ minutes: parseInt(newAppointment.duration) });
+
             // 1. Check for overlap with internal appointments (same professional)
             const internalOverlap = appointments.some(a => {
                 // Only check for the same professional and active appointments
@@ -266,8 +270,9 @@ export default function AgendaPage() {
             setObraSearch("");
             fetchAppointments(); // Refresh grid
         } catch (error: any) {
-            console.error("Error creating appointment:", JSON.stringify(error));
-            toast.error("Error al agendar turno: " + (error.message || JSON.stringify(error)));
+            console.error("Error creating appointment:", error);
+            const errorMsg = error.message || (typeof error === 'string' ? error : JSON.stringify(error));
+            toast.error("Error al agendar turno: " + (errorMsg === '{}' ? "Error interno de validación" : errorMsg));
         } finally {
             setIsCreating(false);
         }
