@@ -665,26 +665,35 @@ export default function AgendaPage() {
                                     <div key={hour} className="grid grid-cols-[80px_repeat(7,1fr)] border-b last:border-b-0 min-h-[60px]">
                                         <div className="p-2 text-xs text-slate-400 border-r flex items-start justify-end pr-3 pt-1">{hour}</div>
                                         {weekDays.map((dayObj, dayIdx) => {
-                                            // Filter by exact date
                                             const dayDate = dayObj.date.toISODate();
-                                            const dayAppts = filteredAppointments.filter(a => a.date === dayDate && a.time === hour);
                                             const isToday = dayObj.date.hasSame(DateTime.now(), 'day');
+
+                                            // Slots boundaries
+                                            const slotStart = dayObj.date.set({
+                                                hour: parseInt(hour.split(':')[0]),
+                                                minute: 0
+                                            });
+                                            const slotEnd = slotStart.plus({ hours: 1 });
+
+                                            // Filter appointments that intersect with this hour slot
+                                            const dayAppts = filteredAppointments.filter(a => {
+                                                if (a.date !== dayDate) return false;
+                                                const aStart = DateTime.fromISO(`${a.date}T${a.time}`);
+                                                const aEnd = aStart.plus({ minutes: a.duration });
+                                                return aStart < slotEnd && aEnd > slotStart;
+                                            });
+
+                                            // Filter bloqueos that intersect with this hour slot
+                                            const dayBloqueos = filteredBloqueos.filter(b => {
+                                                const bStart = DateTime.fromISO(b.bloqueo_desde);
+                                                const bEnd = DateTime.fromISO(b.bloqueo_hasta);
+                                                return bStart < slotEnd && bEnd > slotStart;
+                                            });
 
                                             return (
                                                 <div key={dayIdx} className={`border-r last:border-r-0 p-1 ${isToday ? "bg-[#76D7B6]/[0.02]" : ""}`}>
-                                                    {/* Bloqueos externos — grey, non-clickable */}
-                                                    {filteredBloqueos.filter(b => {
-                                                        const bStart = DateTime.fromISO(b.bloqueo_desde);
-                                                        const bEnd = DateTime.fromISO(b.bloqueo_hasta);
-                                                        const slotStart = dayObj.date.set({
-                                                            hour: parseInt(hour.split(':')[0]),
-                                                            minute: 0
-                                                        });
-                                                        const slotEnd = slotStart.plus({ hours: 1 });
-
-                                                        // Intersection check: block starts before slot ends AND block ends after slot starts
-                                                        return bStart < slotEnd && bEnd > slotStart;
-                                                    }).map(b => (
+                                                    {/* Bloqueos externos */}
+                                                    {dayBloqueos.map(b => (
                                                         <div
                                                             key={b.id}
                                                             onClick={(e) => {
@@ -737,15 +746,23 @@ export default function AgendaPage() {
                         </div>
                         {hours.map(hour => {
                             const dateStr = currentDate.toISODate();
-                            const appts = filteredAppointments.filter(a => a.date === dateStr && a.time === hour);
+
+                            const slotStart = currentDate.set({
+                                hour: parseInt(hour.split(':')[0]),
+                                minute: 0
+                            });
+                            const slotEnd = slotStart.plus({ hours: 1 });
+
+                            const appts = filteredAppointments.filter(a => {
+                                if (a.date !== dateStr) return false;
+                                const aStart = DateTime.fromISO(`${a.date}T${a.time}`);
+                                const aEnd = aStart.plus({ minutes: a.duration });
+                                return aStart < slotEnd && aEnd > slotStart;
+                            });
+
                             const dayBloqueos = filteredBloqueos.filter(b => {
                                 const bStart = DateTime.fromISO(b.bloqueo_desde);
                                 const bEnd = DateTime.fromISO(b.bloqueo_hasta);
-                                const slotStart = currentDate.set({
-                                    hour: parseInt(hour.split(':')[0]),
-                                    minute: 0
-                                });
-                                const slotEnd = slotStart.plus({ hours: 1 });
                                 return bStart < slotEnd && bEnd > slotStart;
                             });
                             return (
