@@ -385,16 +385,16 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                                 <Badge variant="outline" className="text-[10px] bg-white">{rawData.length} filas totales</Badge>
                             </div>
 
-                            <div className="rounded-lg border bg-white shadow-sm flex-1 flex flex-col overflow-hidden">
-                                <div className="w-full overflow-x-auto overflow-y-auto max-h-[450px] relative">
-                                    <Table className="min-w-[1200px] border-separate border-spacing-0">
+                            <div className="rounded-lg border bg-white shadow-sm flex-1 flex flex-col min-h-[400px] overflow-hidden">
+                                <div className="flex-1 overflow-auto relative scrollbar-thin scrollbar-thumb-slate-200">
+                                    <Table className="min-w-[1400px] border-separate border-spacing-0">
                                         <TableHeader className="sticky top-0 bg-white z-40 shadow-sm transition-shadow">
                                             <TableRow className="bg-slate-50">
-                                                <TableHead className="min-w-[150px] max-w-[200px] py-3 px-3 bg-slate-100/95 sticky left-0 z-50 border-r border-b backdrop-blur-md">
+                                                <TableHead className="min-w-[160px] max-w-[220px] py-3 px-3 bg-slate-100/95 sticky left-0 top-0 z-50 border-r border-b backdrop-blur-md">
                                                     <span className="text-[11px] font-black uppercase text-slate-600">Representación Final</span>
                                                 </TableHead>
                                                 {headers.map((header) => (
-                                                    <TableHead key={header} className="min-w-[150px] max-w-[200px] py-2 px-3 border-b bg-slate-50/95">
+                                                    <TableHead key={header} className="min-w-[150px] max-w-[200px] py-2 px-3 border-b bg-slate-50/95 sticky top-0 z-40">
                                                         <div className="space-y-2">
                                                             <TooltipProvider>
                                                                 <Tooltip>
@@ -430,7 +430,7 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody className="divide-y relative">
-                                            {rawData.slice(0, 10).map((row, i) => (
+                                            {rawData.slice(0, 20).map((row, i) => (
                                                 <TableRow key={i} className="hover:bg-slate-50/50 group transition-colors">
                                                     <TableCell className="py-2.5 px-3 bg-slate-50/95 sticky left-0 z-30 border-r border-b backdrop-blur-sm shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
                                                         <span className="text-xs font-bold text-slate-800">{getDisplayName(row)}</span>
