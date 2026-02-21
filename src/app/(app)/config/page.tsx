@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
     Card,
@@ -58,11 +58,35 @@ import { updateMemberRole, deleteMember, getTeamMembers } from "@/app/actions/te
 import InviteModal from "@/components/team/InviteModal";
 import { supabase } from "@/lib/supabase/client";
 
-export default function ConfigPage() {
-    const { user, loading } = useAuth();
-    const isSuperAdmin = user?.role === 'superadmin';
+/**
+ * Small component that reads OAuth redirect result from URL params.
+ * Must be isolated so it can be wrapped in <Suspense> (Next.js requirement for useSearchParams).
+ */
+function GoogleOAuthHandler({ onSuccess }: { onSuccess: (email: string) => void }) {
     const searchParams = useSearchParams();
     const router = useRouter();
+
+    useEffect(() => {
+        const googleParam = searchParams.get('google');
+        const emailParam = searchParams.get('email');
+        if (googleParam === 'success') {
+            toast.success(`✅ Google Calendar conectado${emailParam ? ` (${decodeURIComponent(emailParam)})` : ''}`);
+            if (emailParam) onSuccess(decodeURIComponent(emailParam));
+            router.replace('/config');
+        } else if (googleParam === 'error') {
+            const reason = searchParams.get('reason') || 'desconocido';
+            toast.error(`Error al conectar Google Calendar: ${reason}`);
+            router.replace('/config');
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    return null;
+}
+
+function ConfigPageContent() {
+    const { user, loading } = useAuth();
+    const isSuperAdmin = user?.role === 'superadmin';
 
     // Google Calendar integration state
     const [googleProfile, setGoogleProfile] = useState<{
@@ -73,20 +97,6 @@ export default function ConfigPage() {
     const [isSyncToggling, setIsSyncToggling] = useState(false);
     const [isPulling, setIsPulling] = useState(false);
 
-    // Handle OAuth redirect result
-    useEffect(() => {
-        const googleParam = searchParams.get('google');
-        const emailParam = searchParams.get('email');
-        if (googleParam === 'success') {
-            toast.success(`✅ Google Calendar conectado${emailParam ? ` (${decodeURIComponent(emailParam)})` : ''}`);
-            if (emailParam) setGoogleProfile(p => ({ ...p, email: decodeURIComponent(emailParam), connected: true }));
-            router.replace('/config');
-        } else if (googleParam === 'error') {
-            const reason = searchParams.get('reason') || 'desconocido';
-            toast.error(`Error al conectar Google Calendar: ${reason}`);
-            router.replace('/config');
-        }
-    }, [searchParams, router]);
 
     // Load current Google profile from DB
     useEffect(() => {
@@ -225,6 +235,11 @@ export default function ConfigPage() {
 
     return (
         <div className="space-y-6">
+            {/* Handles ?google=success|error after OAuth redirect */}
+            <Suspense fallback={null}>
+                <GoogleOAuthHandler onSuccess={(email) => setGoogleProfile(p => ({ ...p, email, connected: true }))} />
+            </Suspense>
+
             <div className="flex flex-col gap-2">
                 <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Configuración</h1>
                 <p className="text-slate-500 text-sm">Gestiona la información de tu clínica y equipo de trabajo.</p>
@@ -531,5 +546,17 @@ export default function ConfigPage() {
                 </TabsContent>
             </Tabs>
         </div>
+    );
+}
+
+export default function ConfigPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-h-[400px] animate-pulse bg-slate-50/50 rounded-xl">
+                <div className="h-8 w-8 rounded-full border-b-2 border-[#76D7B6] animate-spin" />
+            </div>
+        }>
+            <ConfigPageContent />
+        </Suspense>
     );
 }
