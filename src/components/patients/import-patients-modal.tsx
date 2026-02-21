@@ -386,15 +386,15 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                             </div>
 
                             <div className="rounded-lg border bg-white overflow-hidden shadow-sm flex-none">
-                                <ScrollArea className="w-full">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow className="bg-slate-50 divide-x">
-                                                <TableHead className="min-w-[150px] max-w-[200px] py-3 px-3 bg-slate-100/50 sticky left-0 z-10 border-r">
+                                <ScrollArea className="w-full h-full max-h-[400px]">
+                                    <Table className="min-w-[1000px] border-separate border-spacing-0">
+                                        <TableHeader className="sticky top-0 bg-white z-30 shadow-sm">
+                                            <TableRow className="bg-slate-50">
+                                                <TableHead className="min-w-[150px] max-w-[200px] py-3 px-3 bg-slate-100/80 sticky left-0 z-40 border-r backdrop-blur-sm">
                                                     <span className="text-[11px] font-black uppercase text-slate-600">Representación Final</span>
                                                 </TableHead>
                                                 {headers.map((header) => (
-                                                    <TableHead key={header} className="min-w-[140px] max-w-[180px] py-2 px-3">
+                                                    <TableHead key={header} className="min-w-[140px] max-w-[180px] py-2 px-3 border-b">
                                                         <div className="space-y-2">
                                                             <TooltipProvider>
                                                                 <Tooltip>
@@ -431,12 +431,12 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                                         </TableHeader>
                                         <TableBody className="divide-y">
                                             {rawData.slice(0, 10).map((row, i) => (
-                                                <TableRow key={i} className="divide-x hover:bg-slate-50/50">
-                                                    <TableCell className="py-2 px-3 bg-slate-50/30 sticky left-0 z-10 border-r">
+                                                <TableRow key={i} className="hover:bg-slate-50/50">
+                                                    <TableCell className="py-2 px-3 bg-slate-50/50 sticky left-0 z-10 border-r border-b backdrop-blur-sm">
                                                         <span className="text-xs font-bold text-slate-800">{getDisplayName(row)}</span>
                                                     </TableCell>
                                                     {headers.map((h) => (
-                                                        <TableCell key={h} className="py-2 px-3">
+                                                        <TableCell key={h} className="py-2 px-3 border-b border-r last:border-r-0">
                                                             <TruncatedCell value={row[h]} />
                                                         </TableCell>
                                                     ))}
@@ -444,7 +444,7 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                                             ))}
                                         </TableBody>
                                     </Table>
-                                    <ScrollBar orientation="horizontal" />
+                                    <ScrollBar orientation="horizontal" className="z-50" />
                                 </ScrollArea>
                             </div>
 
