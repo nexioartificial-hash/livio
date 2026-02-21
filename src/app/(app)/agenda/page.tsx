@@ -73,6 +73,9 @@ export default function AgendaPage() {
     const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
+    const [selectedBloqueo, setSelectedBloqueo] = useState<any>(null);
+    const [isBloqueoModalOpen, setIsBloqueoModalOpen] = useState(false);
+
     const { user, loading } = useAuth();
     const { DateTime } = require("luxon");
     const [currentDate, setCurrentDate] = useState(DateTime.now());
@@ -318,6 +321,11 @@ export default function AgendaPage() {
     const filteredAppointments = appointments.filter(a => {
         if (selectedProfessional !== "all" && a.professional !== professionals.find(p => p.id === selectedProfessional)?.name) return false;
         if (selectedStatus !== "all" && getDisplayStatus(a) !== selectedStatus) return false;
+        return true;
+    });
+
+    const filteredBloqueos = bloqueos.filter(b => {
+        if (selectedProfessional !== "all" && b.profesional_id !== selectedProfessional) return false;
         return true;
     });
 
@@ -641,7 +649,7 @@ export default function AgendaPage() {
                                             return (
                                                 <div key={dayIdx} className={`border-r last:border-r-0 p-1 ${isToday ? "bg-[#76D7B6]/[0.02]" : ""}`}>
                                                     {/* Bloqueos externos — grey, non-clickable */}
-                                                    {bloqueos.filter(b => {
+                                                    {filteredBloqueos.filter(b => {
                                                         const bStart = DateTime.fromISO(b.bloqueo_desde);
                                                         const bEnd = DateTime.fromISO(b.bloqueo_hasta);
                                                         const slotStart = dayObj.date.set({
@@ -653,9 +661,21 @@ export default function AgendaPage() {
                                                         // Intersection check: block starts before slot ends AND block ends after slot starts
                                                         return bStart < slotEnd && bEnd > slotStart;
                                                     }).map(b => (
-                                                        <div key={b.id} title={b.descripcion} className="rounded-md border-l-[3px] border-slate-400 bg-slate-100 p-2 text-xs text-slate-500 mb-1 select-none">
-                                                            <p className="font-semibold truncate">🔒 {b.descripcion || 'Bloqueado'}</p>
-                                                            <p className="text-[10px] opacity-60">{b.tipo === 'externo_google' ? 'Google Calendar' : b.tipo}</p>
+                                                        <div
+                                                            key={b.id}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setSelectedBloqueo(b);
+                                                                setIsBloqueoModalOpen(true);
+                                                            }}
+                                                            title={b.descripcion}
+                                                            className="rounded-md border-l-[3px] border-slate-300 bg-slate-50 p-2 text-xs text-slate-500 mb-1 cursor-pointer hover:bg-slate-100 transition-colors"
+                                                        >
+                                                            <p className="font-semibold truncate flex items-center gap-1.5">
+                                                                <span className="w-2 h-2 rounded-full bg-slate-300" />
+                                                                {b.descripcion || 'Bloqueado'}
+                                                            </p>
+                                                            <p className="text-[10px] opacity-60">Sincronizado</p>
                                                         </div>
                                                     ))}
                                                     {dayAppts.map(appt => (
@@ -694,7 +714,7 @@ export default function AgendaPage() {
                         {hours.map(hour => {
                             const dateStr = currentDate.toISODate();
                             const appts = filteredAppointments.filter(a => a.date === dateStr && a.time === hour);
-                            const dayBloqueos = bloqueos.filter(b => {
+                            const dayBloqueos = filteredBloqueos.filter(b => {
                                 const bStart = DateTime.fromISO(b.bloqueo_desde);
                                 const bEnd = DateTime.fromISO(b.bloqueo_hasta);
                                 const slotStart = currentDate.set({
@@ -710,10 +730,20 @@ export default function AgendaPage() {
                                     <div className="flex-1 p-1.5">
                                         {/* Bloqueos externos */}
                                         {dayBloqueos.map(b => (
-                                            <div key={b.id} title={b.descripcion} className="rounded-lg border-l-[3px] border-slate-400 bg-slate-100 p-3 text-slate-500 mb-1 select-none">
+                                            <div
+                                                key={b.id}
+                                                onClick={() => {
+                                                    setSelectedBloqueo(b);
+                                                    setIsBloqueoModalOpen(true);
+                                                }}
+                                                className="rounded-lg border-l-[3px] border-slate-300 bg-slate-50 p-3 text-slate-500 mb-1 cursor-pointer hover:bg-slate-100 transition-colors"
+                                            >
                                                 <div className="flex items-center justify-between">
-                                                    <span className="font-semibold text-sm">🔒 {b.descripcion || 'Bloqueado'}</span>
-                                                    <span className="text-[10px] opacity-60">{b.tipo === 'externo_google' ? 'Google Calendar' : b.tipo}</span>
+                                                    <span className="font-semibold text-sm flex items-center gap-2">
+                                                        <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
+                                                        {b.descripcion || 'Bloqueado'}
+                                                    </span>
+                                                    <span className="text-[10px] opacity-60">Google Calendar</span>
                                                 </div>
                                             </div>
                                         ))}
@@ -766,15 +796,23 @@ export default function AgendaPage() {
                                         <span className={`font-medium ${isToday ? "text-[#76D7B6] font-bold" : "text-slate-600"}`}>{dayNum}</span>
                                         <div className="mt-1 space-y-0.5">
                                             {/* Bloqueos */}
-                                            {bloqueos.filter(b => {
+                                            {filteredBloqueos.filter(b => {
                                                 const bStart = DateTime.fromISO(b.bloqueo_desde);
                                                 const bEnd = DateTime.fromISO(b.bloqueo_hasta);
                                                 const dStart = date.startOf('day');
                                                 const dEnd = date.endOf('day');
                                                 return bStart < dEnd && bEnd > dStart;
                                             }).map(b => (
-                                                <div key={b.id} className="rounded px-1.5 py-0.5 text-[10px] truncate bg-slate-100 text-slate-500 border-l-2 border-slate-300">
-                                                    🔒 {b.descripcion || 'Bloqueado'}
+                                                <div
+                                                    key={b.id}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSelectedBloqueo(b);
+                                                        setIsBloqueoModalOpen(true);
+                                                    }}
+                                                    className="rounded px-1.5 py-0.5 text-[10px] truncate bg-slate-100 text-slate-500 border-l-2 border-slate-300 cursor-pointer hover:bg-slate-200 transition-colors"
+                                                >
+                                                    {b.descripcion || 'Bloqueado'}
                                                 </div>
                                             ))}
 
@@ -1054,6 +1092,49 @@ export default function AgendaPage() {
                                 Restaurar Turno
                             </Button>
                         )}
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Bloqueo Detail Modal */}
+            <Dialog open={isBloqueoModalOpen} onOpenChange={setIsBloqueoModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <span className="w-3 h-3 rounded-full bg-slate-400" />
+                            Evento Externo
+                        </DialogTitle>
+                        <DialogDescription>
+                            Este es un evento sincronizado desde Google Calendar.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {selectedBloqueo && (
+                        <div className="space-y-4 py-4">
+                            <div className="grid grid-cols-3 items-start gap-2 text-sm">
+                                <span className="font-semibold text-slate-500">Título:</span>
+                                <span className="col-span-2 font-bold">{selectedBloqueo.descripcion}</span>
+                            </div>
+                            <div className="grid grid-cols-3 items-start gap-2 text-sm">
+                                <span className="font-semibold text-slate-500">Inicio:</span>
+                                <span className="col-span-2">
+                                    {DateTime.fromISO(selectedBloqueo.bloqueo_desde).toFormat("dd/MM/yyyy HH:mm")}hs
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-3 items-start gap-2 text-sm">
+                                <span className="font-semibold text-slate-500">Fin:</span>
+                                <span className="col-span-2">
+                                    {DateTime.fromISO(selectedBloqueo.bloqueo_hasta).toFormat("dd/MM/yyyy HH:mm")}hs
+                                </span>
+                            </div>
+                            <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 text-xs text-slate-500 italic">
+                                Sincronizado para proteger tu disponibilidad. Para editar este evento, hazlo directamente en tu Google Calendar.
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button className="w-full" onClick={() => setIsBloqueoModalOpen(false)}>
+                            Entendido
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

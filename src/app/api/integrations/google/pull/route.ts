@@ -73,8 +73,8 @@ export async function POST(request: NextRequest) {
                 for (const evt of events) {
                     if (!evt.start?.dateTime && !evt.start?.date) continue;
 
-                    const desde = evt.start.dateTime || `${evt.start.date}T00:00:00Z`;
-                    const hasta = evt.end?.dateTime || `${evt.end?.date}T23:59:59Z`;
+                    const desde = evt.start.dateTime || `${evt.start.date}T00:00:00`;
+                    const hasta = evt.end?.dateTime || `${evt.end?.date}T23:59:59`;
 
                     const { error: upsertErr } = await supabase.from('bloqueo_horario').upsert({
                         profesional_id: prof.id,
