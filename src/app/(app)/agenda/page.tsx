@@ -193,16 +193,35 @@ export default function AgendaPage() {
                     ? obrasSociales.find(o => o.id === newAppointment.obrasocial_id)?.nombre ?? null
                     : null;
 
-            // Check for overlap with bloqueo_horario
-            const newStart = DateTime.fromISO(`${newAppointment.date}T${newAppointment.time}`);
-            const newEnd = newStart.plus({ minutes: parseInt(newAppointment.duration) });
-            const overlap = bloqueos.some(b => {
+            // 1. Check for overlap with internal appointments (same professional)
+            const internalOverlap = appointments.some(a => {
+                // Only check for the same professional and active appointments
+                if (a.professional !== profName || a.status === 'cancelado') return false;
+
+                const aStart = DateTime.fromISO(`${a.date}T${a.time}`);
+                const aEnd = aStart.plus({ minutes: a.duration });
+
+                return newStart < aEnd && newEnd > aStart;
+            });
+
+            if (internalOverlap) {
+                toast.warning(`⚠️ El profesional ${profName} ya tiene un turno agendado en ese horario.`);
+                setIsCreating(false);
+                return;
+            }
+
+            // 2. Check for overlap with external blocks (Google Calendar)
+            const externalOverlap = bloqueos.some(b => {
+                // Blocks are professional-specific
+                if (b.profesional_id && b.profesional_id !== newAppointment.professional) return false;
+
                 const bStart = DateTime.fromISO(b.bloqueo_desde);
                 const bEnd = DateTime.fromISO(b.bloqueo_hasta);
                 return newStart < bEnd && newEnd > bStart;
             });
-            if (overlap) {
-                toast.warning("⚠️ El horario se superpone con un bloqueo externo (Google Calendar u otro)");
+
+            if (externalOverlap) {
+                toast.warning("⚠️ El horario se superpone con un bloqueo externo (Google Calendar)");
                 setIsCreating(false);
                 return;
             }
