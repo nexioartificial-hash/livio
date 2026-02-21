@@ -3,16 +3,24 @@ import { NextResponse } from 'next/server';
 import { buildOAuth2Client } from '@/lib/google';
 import { createAdminClient } from '@/lib/supabase/admin';
 
-const SITE_URL = 'https://www.liviodental.com';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const stateRaw = searchParams.get('state');
+  const origin = new URL(request.url).origin;
 
-  if (!code || !stateRaw) {
-    return NextResponse.redirect(`${SITE_URL}/config?google=error&reason=missing_params`);
-  }
+  const errorResponse = (reason: string) => {
+    return new NextResponse(
+      `<html><body><script>
+        window.opener.postMessage({ type: 'GOOGLE_AUTH_ERROR', reason: '${reason}' }, '*');
+        window.close();
+      </script></body></html>`,
+      { headers: { 'Content-Type': 'text/html' } }
+    );
+  };
+
+  if (!code || !stateRaw) return errorResponse('missing_params');
 
   // Decode state → profesionalId
   let profesionalId: string;
@@ -21,15 +29,16 @@ export async function GET(request: Request) {
     profesionalId = decoded.profesionalId;
     if (!profesionalId) throw new Error('No profesionalId in state');
   } catch {
-    return NextResponse.redirect(`${SITE_URL}/config?google=error&reason=invalid_state`);
+    return errorResponse('invalid_state');
   }
 
   if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-    return NextResponse.redirect(`${SITE_URL}/config?google=error&reason=misconfigured`);
+    return errorResponse('misconfigured');
   }
 
   try {
-    const oauth2Client = buildOAuth2Client();
+    const redirect_uri = `${origin}/api/integrations/google/callback`;
+    const oauth2Client = buildOAuth2Client(redirect_uri);
     const { tokens } = await oauth2Client.getToken(code);
     oauth2Client.setCredentials(tokens);
 
@@ -61,14 +70,23 @@ export async function GET(request: Request) {
 
     if (updateError) {
       console.error('[Google Callback] DB update error:', updateError);
-      return NextResponse.redirect(`${SITE_URL}/config?google=error&reason=db_error`);
+      return errorResponse('db_error');
     }
 
-    return NextResponse.redirect(`${SITE_URL}/config?google=success&email=${encodeURIComponent(googleUser.email || '')}`);
+    return new NextResponse(
+      `<html><body><script>
+        window.opener.postMessage({ 
+          type: 'GOOGLE_AUTH_SUCCESS', 
+          email: '${googleUser.email}' 
+        }, '*');
+        window.close();
+      </script></body></html>`,
+      { headers: { 'Content-Type': 'text/html' } }
+    );
 
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'unknown';
     console.error('[Google Callback] Error:', msg);
-    return NextResponse.redirect(`${SITE_URL}/config?google=error&reason=${encodeURIComponent(msg)}`);
+    return errorResponse(msg);
   }
 }

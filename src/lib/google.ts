@@ -11,11 +11,11 @@ export const WRITE_SCOPES = [
 ];
 
 // ─── Base OAuth client (no credentials) ──────────────────────────────────────
-export function buildOAuth2Client() {
+export function buildOAuth2Client(redirectUri?: string) {
     return new google.auth.OAuth2(
         process.env.GOOGLE_CLIENT_ID,
         process.env.GOOGLE_CLIENT_SECRET,
-        REDIRECT_URI
+        redirectUri || REDIRECT_URI
     );
 }
 

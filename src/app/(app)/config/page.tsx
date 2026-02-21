@@ -96,27 +96,34 @@ export default function ConfigPage() {
         console.log("📋 [Config] Render state:", { hasUser: !!user, loading, mountTime });
     }, [user, loading, mountTime]);
 
-    // ─── Google OAuth Redirect Handler ──────────────────────────────────────
-    // Using vanilla window.location to avoid Suspense/Router stalls during mount
+    // ─── Google OAuth Popup Handler ───────────────────────────────────────
     useEffect(() => {
-        if (typeof window === 'undefined') return;
-        const params = new URLSearchParams(window.location.search);
-        const googleParam = params.get('google');
-        const emailParam = params.get('email');
+        const handleMessage = (event: MessageEvent) => {
+            if (event.data?.type === 'GOOGLE_AUTH_SUCCESS') {
+                const email = event.data.email;
+                toast.success(`✅ Google Calendar conectado (${email})`);
+                setGoogleProfile(p => ({ ...p, email, connected: true }));
+            } else if (event.data?.type === 'GOOGLE_AUTH_ERROR') {
+                toast.error(`Error al conectar Google Calendar: ${event.data.reason}`);
+            }
+        };
 
-        if (googleParam === 'success') {
-            toast.success(`✅ Google Calendar conectado${emailParam ? ` (${decodeURIComponent(emailParam)})` : ''}`);
-            if (emailParam) setGoogleProfile(p => ({ ...p, email: decodeURIComponent(emailParam), connected: true }));
-            // Clean URL without full router navigation to avoid side effects
-            const newUrl = window.location.pathname;
-            window.history.replaceState({}, '', newUrl);
-        } else if (googleParam === 'error') {
-            const reason = params.get('reason') || 'desconocido';
-            toast.error(`Error al conectar Google Calendar: ${reason}`);
-            const newUrl = window.location.pathname;
-            window.history.replaceState({}, '', newUrl);
-        }
+        window.addEventListener('message', handleMessage);
+        return () => window.removeEventListener('message', handleMessage);
     }, []);
+
+    const handleConnectGoogle = () => {
+        const width = 600;
+        const height = 700;
+        const left = window.screenX + (window.outerWidth - width) / 2;
+        const top = window.screenY + (window.outerHeight - height) / 2;
+
+        window.open(
+            '/api/integrations/google/auth',
+            'google-auth',
+            `width=${width},height=${height},left=${left},top=${top}`
+        );
+    };
 
     // Load current Google profile from DB
     useEffect(() => {
@@ -527,12 +534,15 @@ export default function ConfigPage() {
                                         )}
                                     </div>
                                 </div>
-                                <a href="/api/integrations/google/auth">
-                                    <Button variant="outline" size="sm" className="gap-2 border-[#76D7B6] text-[#76D7B6] hover:bg-[#76D7B6]/10">
-                                        <CalendarDays className="h-4 w-4" />
-                                        {googleProfile.connected ? 'Reconectar' : 'Conectar Google Calendar'}
-                                    </Button>
-                                </a>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleConnectGoogle}
+                                    className="gap-2 border-[#76D7B6] text-[#76D7B6] hover:bg-[#76D7B6]/10"
+                                >
+                                    <CalendarDays className="h-4 w-4" />
+                                    {googleProfile.connected ? 'Reconectar' : 'Conectar Google Calendar'}
+                                </Button>
                             </div>
 
                             {/* Sync toggle */}
