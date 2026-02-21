@@ -101,8 +101,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 if (_event === "SIGNED_OUT") {
                     setUser(null);
                     setSession(null);
-                    router.push("/");
-                    router.refresh();
+                    // Hard redirect is handled by signOut() below
                 }
             }
         );
@@ -114,16 +113,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const signOut = async () => {
         try {
-            const { error } = await supabase.auth.signOut();
-            if (error) throw error;
-            router.push("/");
-            router.refresh();
+            await supabase.auth.signOut();
         } catch (error) {
             console.error("Error signing out:", error);
-            // Forced cleanup
-            setUser(null);
-            setSession(null);
-            router.push("/");
+        } finally {
+            // Hard navigation clears all state and avoids double-redirect race
+            window.location.href = '/login';
         }
     };
 
