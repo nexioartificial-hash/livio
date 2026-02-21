@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import {
     Card,
     CardContent,
@@ -62,29 +61,7 @@ import { supabase } from "@/lib/supabase/client";
  * Small component that reads OAuth redirect result from URL params.
  * Must be isolated so it can be wrapped in <Suspense> (Next.js requirement for useSearchParams).
  */
-function GoogleOAuthHandler({ onSuccess }: { onSuccess?: (email: string) => void }) {
-    const searchParams = useSearchParams();
-    const router = useRouter();
-
-    useEffect(() => {
-        const googleParam = searchParams.get('google');
-        const emailParam = searchParams.get('email');
-        if (googleParam === 'success') {
-            toast.success(`✅ Google Calendar conectado${emailParam ? ` (${decodeURIComponent(emailParam)})` : ''}`);
-            if (emailParam && onSuccess) onSuccess(decodeURIComponent(emailParam));
-            router.replace('/config');
-        } else if (googleParam === 'error') {
-            const reason = searchParams.get('reason') || 'desconocido';
-            toast.error(`Error al conectar Google Calendar: ${reason}`);
-            router.replace('/config');
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    return null;
-}
-
-function ConfigPageContent() {
+export default function ConfigPage() {
     const { user, loading } = useAuth();
     const isSuperAdmin = user?.role === 'superadmin';
 
@@ -97,6 +74,27 @@ function ConfigPageContent() {
     const [isSyncToggling, setIsSyncToggling] = useState(false);
     const [isPulling, setIsPulling] = useState(false);
 
+    // ─── Google OAuth Redirect Handler ──────────────────────────────────────
+    // Using vanilla window.location to avoid Suspense/Router stalls during mount
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const params = new URLSearchParams(window.location.search);
+        const googleParam = params.get('google');
+        const emailParam = params.get('email');
+
+        if (googleParam === 'success') {
+            toast.success(`✅ Google Calendar conectado${emailParam ? ` (${decodeURIComponent(emailParam)})` : ''}`);
+            if (emailParam) setGoogleProfile(p => ({ ...p, email: decodeURIComponent(emailParam), connected: true }));
+            // Clean URL without full router navigation to avoid side effects
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, '', newUrl);
+        } else if (googleParam === 'error') {
+            const reason = params.get('reason') || 'desconocido';
+            toast.error(`Error al conectar Google Calendar: ${reason}`);
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, '', newUrl);
+        }
+    }, []);
 
     // Load current Google profile from DB
     useEffect(() => {
@@ -163,7 +161,6 @@ function ConfigPageContent() {
         phone: "+54 11 4567-8900",
     });
 
-
     const [team, setTeam] = useState<any[]>([]);
 
     useEffect(() => {
@@ -194,7 +191,16 @@ function ConfigPageContent() {
         );
     }
 
-
+    if (!user) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
+                <ShieldCheck className="h-12 w-12 text-slate-300" />
+                <h2 className="text-xl font-semibold text-slate-900">Acceso restringido</h2>
+                <p className="text-slate-500 max-w-xs">Debes iniciar sesión para configurar tu clínica.</p>
+                <Button onClick={() => window.location.href = '/login'}>Ir al Login</Button>
+            </div>
+        );
+    }
 
     const handleDeleteMember = async (id: string) => {
         const result = await deleteMember(id);
@@ -235,7 +241,6 @@ function ConfigPageContent() {
 
     return (
         <div className="space-y-6">
-
             <div className="flex flex-col gap-2">
                 <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Configuración</h1>
                 <p className="text-slate-500 text-sm">Gestiona la información de tu clínica y equipo de trabajo.</p>
@@ -542,18 +547,5 @@ function ConfigPageContent() {
                 </TabsContent>
             </Tabs>
         </div>
-    );
-}
-
-export default function ConfigPage() {
-    return (
-        <Suspense fallback={
-            <div className="flex items-center justify-center min-h-[400px] animate-pulse bg-slate-50/50 rounded-xl">
-                <div className="h-8 w-8 rounded-full border-b-2 border-[#76D7B6] animate-spin" />
-            </div>
-        }>
-            <GoogleOAuthHandler onSuccess={() => { }} />
-            <ConfigPageContent />
-        </Suspense>
     );
 }
