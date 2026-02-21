@@ -227,8 +227,8 @@ export default function ConfigPage() {
     // Aggressive rendering strategy:
     // 1. If we have a user, show the page immediately.
     // 2. If we are still "loading" according to AuthProvider, show the spinner.
-    // 3. If loading is false but user is null, give it a 10s grace period before showing "Restricted Access".
-    const showVerifyingState = !user && (loading || mountTime < 10);
+    // 3. If loading is false but user is null, give it a 20s grace period before showing "Restricted Access".
+    const showVerifyingState = !user && (loading || mountTime < 20);
 
     if (showVerifyingState) {
         return (
@@ -241,7 +241,7 @@ export default function ConfigPage() {
         );
     }
 
-    // If we reached here and still have no user after 10s, show the Access Restricted view
+    // If we reached here and still have no user after 20s, show the Access Restricted view
     if (!user) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">

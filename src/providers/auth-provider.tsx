@@ -75,25 +75,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     useEffect(() => {
-        // More patient safety timeout (15s)
+        // Very patient safety timeout (30s)
         const globalTimeout = setTimeout(() => {
-            console.warn("🚨 [Auth] Auth initialization limit reached (15s).");
+            console.warn("🚨 [Auth] Auth initialization limit reached (30s). Forcing ready state.");
             setLoading(false);
-        }, 15000);
+        }, 30000);
 
-        // Get initial session with a racing timeout (8s)
+        // Get initial session with a racing timeout (20s)
         const getSessionWithTimeout = async () => {
             const sessionPromise = supabase.auth.getSession();
             const timeoutPromise = new Promise<any>((resolve) =>
-                setTimeout(() => resolve({ data: { session: null }, error: 'timeout' }), 8000)
+                setTimeout(() => resolve({ data: { session: null }, error: 'timeout' }), 20000)
             );
 
             try {
                 const { data, error } = await Promise.race([sessionPromise, timeoutPromise]);
-                // Handle different response shapes from race
+                // Robust extraction of session object
                 const session = (data as any)?.session !== undefined ? (data as any).session : (data as any);
 
-                if (error === 'timeout') console.warn("🕒 [Auth] getSession() timed out");
+                if (error === 'timeout') {
+                    console.warn("🕒 [Auth] getSession() timed out (20s)");
+                }
 
                 console.log("🔐 [Auth] Sesión detectada:", session?.user?.email || "Ninguna");
                 setSession(session);

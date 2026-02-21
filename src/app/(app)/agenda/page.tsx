@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Plus, Clock, Download, Calendar, FileSpreadsheet, ChevronDown, UploadCloud, Loader2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
+import { useAuth } from "@/providers/auth-provider";
 import Papa from "papaparse";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -72,8 +73,8 @@ export default function AgendaPage() {
     const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
+    const { user, loading } = useAuth();
     const { DateTime } = require("luxon");
-    const supabase = createClient();
     const [currentDate, setCurrentDate] = useState(DateTime.now());
     const [newAppointment, setNewAppointment] = useState({
         patient: "",
@@ -115,7 +116,7 @@ export default function AgendaPage() {
         const { data, error } = await query;
         if (error) {
             console.error("Error fetching turnos:", error);
-            toast.error("Error al cargar turnos");
+            toast.error(`Error al cargar turnos: ${error.message || 'Error de permisos'}`);
         } else {
             setAppointments(data.map((t: any) => ({
                 id: t.id,
@@ -143,8 +144,10 @@ export default function AgendaPage() {
     }, [currentDate, view, supabase]);
 
     useEffect(() => {
-        fetchAppointments();
-    }, [fetchAppointments]);
+        if (!loading && user) {
+            fetchAppointments();
+        }
+    }, [loading, user, fetchAppointments]);
 
     // Load obras sociales once
     useEffect(() => {
