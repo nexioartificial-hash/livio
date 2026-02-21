@@ -230,12 +230,12 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
 
             if (profError) {
                 console.error("Error fetching professional data:", profError);
-                throw new Error("No se pudo obtener la información de la clínica: " + profError.message);
+                throw new Error("No se pudo obtener la información de la clínica: " + JSON.stringify(profError));
             }
 
             const clinicId = profData?.clinic_id;
             if (!clinicId) {
-                throw new Error("No se encontró una clínica asociada a tu usuario.");
+                throw new Error("No se encontró una clínica asociada a tu usuario. Por favor contactá a soporte.");
             }
 
             // Transform data
@@ -293,7 +293,12 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
             resetModal();
         } catch (error: any) {
             console.error("Import error full object:", error);
-            const msg = error.message || error.details || "Error desconocido";
+            let msg = "Error desconocido";
+            if (typeof error === 'string') msg = error;
+            else if (error.message) msg = error.message;
+            else if (error.details) msg = error.details;
+            else msg = JSON.stringify(error);
+
             toast.error("Error durante la importación: " + msg);
         } finally {
             setIsProcessing(false);
@@ -394,21 +399,21 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                         <div className="space-y-4 flex-1 flex flex-col overflow-hidden">
                             <div className="flex items-center justify-between">
                                 <h4 className="text-sm font-bold flex items-center gap-2 text-slate-700">
-                                    <Calendar className="h-4 w-4" /> Vista previa (primeros 10)
+                                    <Calendar className="h-4 w-4" /> Vista previa (primeros 20)
                                 </h4>
                                 <Badge variant="outline" className="text-[10px] bg-white">{rawData.length} filas totales</Badge>
                             </div>
 
-                            <div className="rounded-lg border bg-white shadow-sm overflow-hidden flex flex-col h-[480px]">
+                            <div className="rounded-lg border bg-white shadow-sm overflow-hidden flex flex-col h-[420px]">
                                 <div className="flex-1 overflow-auto relative scrollbar-thin scrollbar-thumb-slate-200">
-                                    <Table className="min-w-[1500px] border-separate border-spacing-0">
-                                        <TableHeader className="sticky top-0 bg-white z-40 shadow-sm">
-                                            <TableRow className="bg-slate-50">
-                                                <TableHead className="min-w-[160px] max-w-[220px] py-3 px-3 bg-slate-100/95 sticky left-0 top-0 z-50 border-r border-b backdrop-blur-md">
+                                    <table className="min-w-[1500px] border-separate border-spacing-0 w-full text-sm">
+                                        <thead className="sticky top-0 bg-white z-40 shadow-sm">
+                                            <tr className="bg-slate-50">
+                                                <th className="min-w-[160px] max-w-[220px] py-3 px-3 bg-slate-100/95 sticky left-0 top-0 z-50 border-r border-b backdrop-blur-md text-left align-middle font-medium">
                                                     <span className="text-[11px] font-black uppercase text-slate-600">Representación Final</span>
-                                                </TableHead>
+                                                </th>
                                                 {headers.map((header) => (
-                                                    <TableHead key={header} className="min-w-[150px] max-w-[200px] py-2 px-3 border-b bg-slate-50/95 sticky top-0 z-40">
+                                                    <th key={header} className="min-w-[150px] max-w-[200px] py-2 px-3 border-b bg-slate-50/95 sticky top-0 z-40 text-left align-middle font-medium">
                                                         <div className="space-y-2">
                                                             <TooltipProvider>
                                                                 <Tooltip>
@@ -439,25 +444,25 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                                                                 </SelectContent>
                                                             </Select>
                                                         </div>
-                                                    </TableHead>
+                                                    </th>
                                                 ))}
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody className="divide-y relative">
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y relative">
                                             {rawData.slice(0, 20).map((row, i) => (
-                                                <TableRow key={i} className="hover:bg-slate-50/50 group transition-colors">
-                                                    <TableCell className="py-2.5 px-3 bg-slate-50/95 sticky left-0 z-30 border-r border-b backdrop-blur-sm shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                                                <tr key={i} className="hover:bg-slate-50/50 group transition-colors border-b">
+                                                    <td className="py-2.5 px-3 bg-slate-50/95 sticky left-0 z-30 border-r backdrop-blur-sm shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] align-middle">
                                                         <span className="text-xs font-bold text-slate-800">{getDisplayName(row)}</span>
-                                                    </TableCell>
+                                                    </td>
                                                     {headers.map((h) => (
-                                                        <TableCell key={h} className="py-2.5 px-3 border-b border-r last:border-r-0">
+                                                        <td key={h} className="py-2.5 px-3 border-r last:border-r-0 align-middle">
                                                             <TruncatedCell value={row[h]} />
-                                                        </TableCell>
+                                                        </td>
                                                     ))}
-                                                </TableRow>
+                                                </tr>
                                             ))}
-                                        </TableBody>
-                                    </Table>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
 
