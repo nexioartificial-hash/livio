@@ -14,7 +14,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Upload, FileText, Download, ChevronRight, ChevronLeft, AlertCircle, CheckCircle2, Loader2, X } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Upload, FileText, Download, ChevronRight, ChevronLeft, AlertCircle, CheckCircle2, Loader2, X, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/providers/auth-provider";
@@ -41,7 +43,32 @@ const DB_FIELDS = [
     { value: "birth_date", label: "Fecha Nacimiento" },
     { value: "tags", label: "Tags" },
     { value: "gender", label: "Género" },
-];
+].sort((a, b) => a.label.localeCompare(b.label));
+
+const normalizeHeader = (h: string) => h.trim().toLowerCase().replace(/[-_]/g, ' ');
+
+const TruncatedCell = ({ value }: { value: any }) => {
+    const strValue = String(value || "");
+    const isDate = /^\d{4}-\d{2}-\d{2}$/.test(strValue);
+    const displayValue = isDate ? strValue.split('-').reverse().join('/') : strValue;
+
+    if (strValue.length <= 20) return <span className="text-xs">{displayValue}</span>;
+
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <span className="text-xs cursor-help underline decoration-dotted decoration-slate-300">
+                        {displayValue.substring(0, 17)}...
+                    </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p className="max-w-xs break-all">{displayValue}</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    );
+};
 
 export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPatientsModalProps) {
     const { user } = useAuth();
@@ -78,13 +105,13 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
     });
 
     const parseFile = (file: File) => {
-        const reader = new FileReader();
         const extension = file.name.split(".").pop()?.toLowerCase();
 
         if (extension === "csv") {
             Papa.parse(file, {
                 header: true,
                 skipEmptyLines: true,
+                transformHeader: (header) => normalizeHeader(header),
                 complete: (results) => {
                     const data = results.data as any[];
                     if (data && data.length > 0) {
@@ -96,17 +123,34 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                 },
             });
         } else if (extension === "xlsx") {
+            const reader = new FileReader();
             reader.onload = (e) => {
                 const data = e.target?.result;
                 const workbook = XLSX.read(data, { type: "binary" });
                 const sheetName = workbook.SheetNames[0];
                 const sheet = workbook.Sheets[sheetName];
-                const json = XLSX.utils.sheet_to_json(sheet) as any[];
-                if (json.length > 0) {
-                    setRawData(json);
-                    const firstRowHeaders = Object.keys(json[0] as object);
-                    setHeaders(firstRowHeaders);
-                    autoMap(firstRowHeaders);
+
+                // Get all rows to normalize headers
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][];
+                if (rows.length > 0) {
+                    const originalHeaders = rows[0].map(h => String(h || ""));
+                    const normalizedHeaders = originalHeaders.map(h => normalizeHeader(h));
+
+                    // Re-parse with normalized headers
+                    const json = XLSX.utils.sheet_to_json(sheet) as any[];
+                    const normalizedJson = json.map(row => {
+                        const newRow: any = {};
+                        Object.entries(row).forEach(([key, val]) => {
+                            newRow[normalizeHeader(key)] = val;
+                        });
+                        return newRow;
+                    });
+
+                    if (normalizedJson.length > 0) {
+                        setRawData(normalizedJson);
+                        setHeaders(normalizedHeaders);
+                        autoMap(normalizedHeaders);
+                    }
                 }
             };
             reader.readAsBinaryString(file);
@@ -115,16 +159,15 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
 
     const autoMap = (fileHeaders: string[]) => {
         const newMapping: Record<string, string> = {};
-        const dbValues = DB_FIELDS.map(f => f.value);
 
         fileHeaders.forEach(header => {
             const h = header.toLowerCase().trim();
-            if (h === "nombre" || h === "name" || h === "nombre completo") newMapping[header] = "full_name";
-            else if (h === "dni" || h === "documento") newMapping[header] = "dni";
+            if (h === "nombre" || h === "name" || h === "full name" || h === "apellido") newMapping[header] = "full_name";
+            else if (h === "dni" || h === "documento" || h === "id") newMapping[header] = "dni";
             else if (h === "telefono" || h === "phone" || h === "celular") newMapping[header] = "phone";
             else if (h === "email" || h === "correo") newMapping[header] = "email";
             else if (h.includes("obra") || h.includes("social")) newMapping[header] = "obra_social";
-            else if (h.includes("nacimiento") || h.includes("birth")) newMapping[header] = "birth_date";
+            else if (h.includes("nacimiento") || h.includes("birth") || h === "fecha") newMapping[header] = "birth_date";
             else if (h === "tags" || h === "etiquetas") newMapping[header] = "tags";
             else if (h === "genero" || h === "sexo" || h === "gender") newMapping[header] = "gender";
         });
@@ -228,7 +271,7 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                 if (!val) resetModal();
             }
         }}>
-            <DialogContent className="sm:max-w-[800px] h-[90vh] flex flex-col p-6 overflow-hidden">
+            <DialogContent className="sm:max-w-[850px] h-[90vh] flex flex-col p-6 overflow-hidden">
                 <DialogHeader>
                     <div className="flex items-center justify-between mb-2">
                         <DialogTitle className="text-2xl font-bold flex items-center gap-2">
@@ -250,12 +293,12 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                     </div>
                     <DialogDescription>
                         {step === 1 && "Subí tu archivo CSV o Excel para cargar pacientes masivamente."}
-                        {step === 2 && "Configurá qué columna de tu archivo corresponde a cada dato en Livio."}
+                        {step === 2 && "Verificá la vista previa y mapeá las columnas de tu archivo a los campos de Livio."}
                         {step === 3 && "Revisá el resumen final antes de realizar la importación."}
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="flex-1 overflow-y-auto my-6 border rounded-xl p-4 bg-slate-50/50">
+                <div className="flex-1 overflow-hidden my-6 border rounded-xl p-4 bg-slate-50/50 flex flex-col">
                     {step === 1 && (
                         <div className="space-y-6">
                             <div
@@ -302,80 +345,114 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                     )}
 
                     {step === 2 && (
-                        <div className="space-y-6">
-                            <div className="rounded-lg border bg-white overflow-hidden">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow className="bg-slate-50">
-                                            <TableHead className="text-xs">Columna Archivo</TableHead>
-                                            <TableHead className="w-12 text-center"><ChevronRight className="h-3 w-3 mx-auto text-slate-300" /></TableHead>
-                                            <TableHead className="text-xs">Campo Livio</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {headers.map((header) => (
-                                            <TableRow key={header}>
-                                                <TableCell className="font-medium text-sm py-3 capitalize">{header}</TableCell>
-                                                <TableCell className="text-center">
-                                                    {mapping[header] ? (
-                                                        <CheckCircle2 className="h-4 w-4 mx-auto text-[#76D7B6]" />
-                                                    ) : (
-                                                        <AlertCircle className="h-4 w-4 mx-auto text-slate-200" />
-                                                    )}
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Select
-                                                        value={mapping[header] || "ignore"}
-                                                        onValueChange={(val) => setMapping({ ...mapping, [header]: val === "ignore" ? "" : val })}
-                                                    >
-                                                        <SelectTrigger className="h-9 text-xs">
-                                                            <SelectValue placeholder="Ignorar columna" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="ignore" className="text-xs italic text-slate-400">Ignorar columna</SelectItem>
-                                                            {DB_FIELDS.map(f => (
-                                                                <SelectItem key={f.value} value={f.value} className="text-xs">
-                                                                    {f.label} {f.value === 'dni' || f.value === 'full_name' ? <span className="text-red-500 font-bold">*</span> : ""}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
+                        <div className="space-y-4 flex-1 flex flex-col overflow-hidden">
+                            <div className="flex items-center justify-between">
+                                <h4 className="text-sm font-bold flex items-center gap-2 text-slate-700">
+                                    <Calendar className="h-4 w-4" /> Vista previa (primeros 10)
+                                </h4>
+                                <Badge variant="outline" className="text-[10px] bg-white">{rawData.length} filas totales</Badge>
                             </div>
 
-                            <div className="flex items-center space-x-2 bg-[#76D7B6]/5 border border-[#76D7B6]/20 p-4 rounded-lg">
-                                <Checkbox id="overwrite" checked={overwrite} onCheckedChange={(val) => setOverwrite(!!val)} />
-                                <label htmlFor="overwrite" className="text-sm font-medium text-slate-700 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                    Sobrescribir datos si el DNI ya existe en la clínica
-                                </label>
+                            <div className="rounded-lg border bg-white overflow-hidden shadow-sm flex-none">
+                                <ScrollArea className="w-full">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow className="bg-slate-50 divide-x">
+                                                {headers.map((header) => (
+                                                    <TableHead key={header} className="min-w-[140px] max-w-[180px] py-2 px-3">
+                                                        <div className="space-y-2">
+                                                            <TooltipProvider>
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <span className="text-[11px] font-bold block truncate uppercase text-slate-500">
+                                                                            {header}
+                                                                        </span>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent>
+                                                                        <p className="text-xs">{header}</p>
+                                                                    </TooltipContent>
+                                                                </Tooltip>
+                                                            </TooltipProvider>
+                                                            <Select
+                                                                value={mapping[header] || "ignore"}
+                                                                onValueChange={(val) => setMapping({ ...mapping, [header]: val === "ignore" ? "" : val })}
+                                                            >
+                                                                <SelectTrigger className="h-8 text-[11px] bg-white border-slate-200">
+                                                                    <SelectValue placeholder="Ignorar" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="ignore" className="text-[11px] italic text-slate-400">Ignorar</SelectItem>
+                                                                    {DB_FIELDS.map(f => (
+                                                                        <SelectItem key={f.value} value={f.value} className="text-[11px]">
+                                                                            {f.label} {f.value === 'dni' || f.value === 'full_name' ? <span className="text-red-500 font-bold">*</span> : ""}
+                                                                        </SelectItem>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </div>
+                                                    </TableHead>
+                                                ))}
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody className="divide-y">
+                                            {rawData.slice(0, 10).map((row, i) => (
+                                                <TableRow key={i} className="divide-x hover:bg-slate-50/50">
+                                                    {headers.map((h) => (
+                                                        <TableCell key={h} className="py-2 px-3">
+                                                            <TruncatedCell value={row[h]} />
+                                                        </TableCell>
+                                                    ))}
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                    <ScrollBar orientation="horizontal" />
+                                </ScrollArea>
+                            </div>
+
+                            <div className="flex-1 flex flex-col justify-end">
+                                <div className="flex items-center space-x-2 bg-[#76D7B6]/5 border border-[#76D7B6]/20 p-4 rounded-xl">
+                                    <Checkbox id="overwrite" checked={overwrite} onCheckedChange={(val) => setOverwrite(!!val)} />
+                                    <div>
+                                        <label htmlFor="overwrite" className="text-sm font-bold text-slate-700 block cursor-pointer">
+                                            Sobrescribir datos existentes
+                                        </label>
+                                        <p className="text-xs text-slate-500">Si el DNI ya existe, se actualizará el paciente en lugar de crear uno nuevo.</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
 
                     {step === 3 && (
-                        <div className="space-y-6 flex flex-col items-center justify-center py-8 text-center">
-                            <div className="w-24 h-24 rounded-full bg-[#76D7B6]/10 flex items-center justify-center mb-4">
+                        <div className="space-y-6 flex flex-col items-center justify-center py-8 text-center flex-1">
+                            <div className="w-24 h-24 rounded-full bg-[#76D7B6]/10 flex items-center justify-center mb-4 scale-animation">
                                 <CheckCircle2 className="h-12 w-12 text-[#76D7B6]" />
                             </div>
                             <div>
                                 <h3 className="text-xl font-bold text-slate-900">¿Todo listo para importar?</h3>
-                                <p className="text-slate-500 max-w-sm mx-auto mt-2">
-                                    Se importarán <strong>{rawData.length}</strong> pacientes.
-                                    Los campos faltantes se podrán editar manualmente en la ficha de cada paciente.
+                                <div className="mt-4 grid grid-cols-2 gap-4 max-w-sm mx-auto">
+                                    <div className="p-3 bg-white border rounded-xl shadow-sm">
+                                        <p className="text-2xl font-black text-[#76D7B6]">{rawData.length}</p>
+                                        <p className="text-[10px] uppercase font-bold text-slate-400">Pacientes</p>
+                                    </div>
+                                    <div className="p-3 bg-white border rounded-xl shadow-sm">
+                                        <p className="text-2xl font-black text-[#76D7B6]">{Object.keys(mapping).filter(k => mapping[k]).length}</p>
+                                        <p className="text-[10px] uppercase font-bold text-slate-400">Campos</p>
+                                    </div>
+                                </div>
+                                <p className="text-slate-500 max-w-sm mx-auto mt-6 text-sm">
+                                    Los campos faltantes se podrán completar manualmente desde el perfil del paciente.
                                 </p>
                             </div>
 
                             {isProcessing && (
-                                <div className="w-full max-w-sm space-y-2">
-                                    <div className="flex justify-between text-xs font-bold text-slate-600">
-                                        <span>Procesando...</span>
+                                <div className="w-full max-w-sm space-y-3 mt-8">
+                                    <div className="flex justify-between text-xs font-bold text-slate-600 uppercase tracking-tighter">
+                                        <span>Procesando lote...</span>
                                         <span>{progress}%</span>
                                     </div>
-                                    <Progress value={progress} className="h-2" />
+                                    <Progress value={progress} className="h-3 rounded-full bg-slate-100" />
                                 </div>
                             )}
                         </div>
