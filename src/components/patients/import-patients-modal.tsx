@@ -50,6 +50,34 @@ const DB_FIELDS = [
 
 const normalizeHeader = (h: string) => h.trim().toLowerCase().replace(/[-_]/g, ' ');
 
+const formatHeaderForDisplay = (h: string) => {
+    const raw = h.trim();
+    if (raw === "__parsed_extra" || raw === "__PARSED_EXTRA") return "Información Extra";
+
+    // Common concatenations in medical/import files
+    const beautify: Record<string, string> = {
+        "numeroafiliado": "Número Afiliado",
+        "fechanacimiento": "Fecha Nacimiento",
+        "obrasocial": "Obra Social",
+        "obrasocialplan": "Plan Obra Social",
+        "afiliado": "Afiliado",
+        "nacimiento": "Nacimiento",
+        "telefono": "Teléfono",
+        "planprepaga": "Plan Prepaga",
+        "codigopostal": "Código Postal",
+        "dni": "DNI"
+    };
+
+    const lower = raw.toLowerCase().replace(/[\s\-_]/g, '');
+    if (beautify[lower]) return beautify[lower];
+
+    // Default: split words and capitalize
+    return raw
+        .split(/[\s\-_]/)
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(' ');
+};
+
 const TruncatedCell = ({ value }: { value: any }) => {
     const strValue = String(value || "");
     const isDate = /^\d{4}-\d{2}-\d{2}$/.test(strValue);
@@ -139,8 +167,11 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                     const data = results.data as any[];
                     if (data && data.length > 0) {
                         setRawData(data);
-                        // Filter out technical headers like __PARSED_EXTRA
-                        const firstRowHeaders = Object.keys(data[0] as object).filter(h => h !== "__parsed_extra" && h !== "__PARSED_EXTRA");
+                        // Strictly filter out technical/empty headers
+                        const firstRowHeaders = Object.keys(data[0] as object).filter(h => {
+                            const lower = h.toLowerCase();
+                            return lower !== "__parsed_extra" && lower !== "" && !h.startsWith("column_");
+                        });
                         setHeaders(firstRowHeaders);
                         autoMap(firstRowHeaders);
                     }
@@ -172,8 +203,13 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
 
                     if (normalizedJson.length > 0) {
                         setRawData(normalizedJson);
-                        setHeaders(normalizedHeaders);
-                        autoMap(normalizedHeaders);
+                        // Filter tech headers in XLSX too
+                        const filteredHeaders = normalizedHeaders.filter(h => {
+                            const lower = h.toLowerCase();
+                            return lower !== "__parsed_extra" && lower !== "" && !h.startsWith("column_");
+                        });
+                        setHeaders(filteredHeaders);
+                        autoMap(filteredHeaders);
                     }
                 }
             };
@@ -428,7 +464,7 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                                                                 <Tooltip>
                                                                     <TooltipTrigger asChild>
                                                                         <span className="text-[11px] font-bold block truncate uppercase text-slate-500">
-                                                                            {header}
+                                                                            {formatHeaderForDisplay(header)}
                                                                         </span>
                                                                     </TooltipTrigger>
                                                                     <TooltipContent>
