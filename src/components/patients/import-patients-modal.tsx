@@ -222,13 +222,21 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
 
         try {
             // Get clinic_id for the current user
-            const { data: profData } = await supabase
+            const { data: profData, error: profError } = await supabase
                 .from('professional')
                 .select('clinic_id')
                 .eq('id', user.id)
-                .single();
+                .maybeSingle();
+
+            if (profError) {
+                console.error("Error fetching professional data:", profError);
+                throw new Error("No se pudo obtener la información de la clínica: " + profError.message);
+            }
 
             const clinicId = profData?.clinic_id;
+            if (!clinicId) {
+                throw new Error("No se encontró una clínica asociada a tu usuario.");
+            }
 
             // Transform data
             const patientsToUpsert = rawData.map(row => {
@@ -238,7 +246,7 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                     if (dbField === 'tags' && typeof value === 'string') {
                         value = value.split(',').map(t => t.trim()).filter(Boolean);
                     }
-                    if (dbField === 'dni') value = String(value).replace(/[^0-9]/g, '');
+                    if (dbField === 'dni') value = String(value || "").replace(/[^0-9]/g, '');
                     patient[dbField] = value;
                 });
 
@@ -251,6 +259,9 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                     }
                 }
 
+                // Ensure required full_name is at least a string
+                if (!patient.full_name) patient.full_name = "Sin nombre";
+
                 return patient;
             });
 
@@ -262,13 +273,15 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
             for (let i = 0; i < total; i += chunkSize) {
                 const chunk = patientsToUpsert.slice(i, i + chunkSize);
 
-                let query = supabase.from('patient').upsert(chunk, {
+                const { error: upsertError } = await supabase.from('patient').upsert(chunk, {
                     onConflict: 'dni',
                     ignoreDuplicates: !overwrite
                 });
 
-                const { error } = await query;
-                if (error) throw error;
+                if (upsertError) {
+                    console.error("Upsert error details:", upsertError);
+                    throw upsertError;
+                }
 
                 processed += chunk.length;
                 setProgress(Math.round((processed / total) * 100));
@@ -279,8 +292,9 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
             onOpenChange(false);
             resetModal();
         } catch (error: any) {
-            console.error("Import error:", error);
-            toast.error("Error durante la importación: " + (error.message || "Error desconocido"));
+            console.error("Import error full object:", error);
+            const msg = error.message || error.details || "Error desconocido";
+            toast.error("Error durante la importación: " + msg);
         } finally {
             setIsProcessing(false);
         }
@@ -385,10 +399,10 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                                 <Badge variant="outline" className="text-[10px] bg-white">{rawData.length} filas totales</Badge>
                             </div>
 
-                            <div className="rounded-lg border bg-white shadow-sm flex-1 flex flex-col min-h-[400px] overflow-hidden">
+                            <div className="rounded-lg border bg-white shadow-sm overflow-hidden flex flex-col h-[480px]">
                                 <div className="flex-1 overflow-auto relative scrollbar-thin scrollbar-thumb-slate-200">
-                                    <Table className="min-w-[1400px] border-separate border-spacing-0">
-                                        <TableHeader className="sticky top-0 bg-white z-40 shadow-sm transition-shadow">
+                                    <Table className="min-w-[1500px] border-separate border-spacing-0">
+                                        <TableHeader className="sticky top-0 bg-white z-40 shadow-sm">
                                             <TableRow className="bg-slate-50">
                                                 <TableHead className="min-w-[160px] max-w-[220px] py-3 px-3 bg-slate-100/95 sticky left-0 top-0 z-50 border-r border-b backdrop-blur-md">
                                                     <span className="text-[11px] font-black uppercase text-slate-600">Representación Final</span>
