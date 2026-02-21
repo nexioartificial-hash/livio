@@ -73,6 +73,22 @@ export default function ConfigPage() {
     }>({ email: null, syncEnabled: false, connected: false });
     const [isSyncToggling, setIsSyncToggling] = useState(false);
     const [isPulling, setIsPulling] = useState(false);
+    const [debugInfo, setDebugInfo] = useState<string>("Iniciando...");
+
+    // Safety timeout for loading state
+    useEffect(() => {
+        if (loading) {
+            const timer = setTimeout(() => {
+                console.error("🕒 [Config] El estado de carga excedió los 5s. Forzando revisión...");
+                setDebugInfo("El sistema de autenticación está tardando más de lo habitual.");
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [loading]);
+
+    useEffect(() => {
+        console.log("📋 [Config] Render state:", { hasUser: !!user, loading, userId: user?.id });
+    }, [user, loading]);
 
     // ─── Google OAuth Redirect Handler ──────────────────────────────────────
     // Using vanilla window.location to avoid Suspense/Router stalls during mount
@@ -185,8 +201,14 @@ export default function ConfigPage() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-[400px]">
+            <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#76D7B6]"></div>
+                <p className="text-sm text-slate-400 animate-pulse">{debugInfo === "Iniciando..." ? "Cargando configuración..." : debugInfo}</p>
+                {debugInfo !== "Iniciando..." && (
+                    <Button variant="ghost" size="sm" onClick={() => window.location.reload()}>
+                        Reintentar
+                    </Button>
+                )}
             </div>
         );
     }
