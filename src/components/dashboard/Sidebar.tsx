@@ -27,6 +27,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { DateTime } from "luxon";
 
 const sidebarItems = [
     {
@@ -80,8 +81,12 @@ export function Sidebar() {
         setIsMounted(true);
     }, []);
 
-    // Mock trial days remaining
-    const trialDaysLeft = 14;
+    // Calculate trial days remaining
+    const trialDaysLeft = user?.trial_ends_at
+        ? Math.max(0, Math.ceil(DateTime.fromISO(user.trial_ends_at).diffNow('days').days))
+        : 14;
+
+    const isTrialExpired = trialDaysLeft === 0 && user?.subscription_status !== 'active';
 
     const userInitial = user?.user_metadata?.full_name?.charAt(0) || user?.email?.charAt(0) || "?";
 
@@ -140,20 +145,29 @@ export function Sidebar() {
             </nav>
 
             {/* Trial / Upgrade Badge */}
-            <div className="px-4 pb-4">
-                <div className="rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 p-4 text-white shadow-lg">
-                    <div className="mb-2 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-[#76D7B6]">TRIAL ACTIVO</span>
-                        <span className="text-xs text-slate-400">{trialDaysLeft}d</span>
+            {user?.subscription_status !== 'active' && (
+                <div className="px-4 pb-4">
+                    <div className="rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 p-4 text-white shadow-lg">
+                        <div className="mb-2 flex items-center justify-between">
+                            <span className={cn(
+                                "text-xs font-semibold",
+                                isTrialExpired ? "text-red-400" : "text-[#76D7B6]"
+                            )}>
+                                {isTrialExpired ? "TRIAL EXPIRADO" : "TRIAL ACTIVO"}
+                            </span>
+                            <span className="text-xs text-slate-400">{trialDaysLeft}d</span>
+                        </div>
+                        <p className="mb-3 text-xs text-slate-300">
+                            {isTrialExpired
+                                ? "Tu periodo de prueba ha terminado. Actualiza para continuar."
+                                : "Tienes acceso total. Actualiza para mantener tus datos."}
+                        </p>
+                        <button className="w-full rounded-lg bg-[#76D7B6] py-2 text-xs font-bold text-slate-900 hover:bg-[#65cba8] transition-colors">
+                            UPGRADE PRO
+                        </button>
                     </div>
-                    <p className="mb-3 text-xs text-slate-300">
-                        Tienes acceso total. Actualiza para mantener tus datos.
-                    </p>
-                    <button className="w-full rounded-lg bg-[#76D7B6] py-2 text-xs font-bold text-slate-900 hover:bg-[#65cba8] transition-colors">
-                        UPGRADE PRO
-                    </button>
                 </div>
-            </div>
+            )}
 
             {/* Profile Footer */}
             <div className="p-4 border-t mt-auto">
