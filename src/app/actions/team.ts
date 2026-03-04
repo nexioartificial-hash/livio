@@ -69,16 +69,20 @@ export async function getClinicInvites(userId: string) {
             .eq("id", userId)
             .maybeSingle();
 
-        if (!profile?.clinic_id) {
-            return { success: true, data: [] };
-        }
+        const clinicId = profile?.clinic_id;
 
-        const { data: invites, error } = await supabaseAdmin
+        const query = supabaseAdmin
             .from("invites")
             .select("*")
-            .eq("clinic_id", profile.clinic_id)
             .order("created_at", { ascending: false });
 
+        if (clinicId) {
+            query.eq("clinic_id", clinicId);
+        } else {
+            query.eq("inviter_id", userId); // Fallback for new clinics
+        }
+
+        const { data: invites, error } = await query;
         if (error) throw error;
 
         return { success: true, data: invites || [] };
@@ -155,33 +159,73 @@ export async function cancelInvite(inviteId: string) {
     }
 }
 
-// ─── Get Team Members ────────────────────────────────────────────
-export async function getTeamMembers() {
+// ─── Get Team Members (Filtered by Clinic) ────────────────────────
+export async function getTeamMembers(clinicId?: string | null, ownerId?: string | null) {
     try {
-        const { data: { users }, error: authError } = await supabaseAdmin.auth.admin.listUsers();
-        if (authError) throw authError;
+        if (!clinicId && !ownerId) {
+            return { success: true, data: [] };
+        }
 
-        const { data: profiles, error: profileError } = await supabaseAdmin
+        // 1. Get professionals for this clinic
+        const query = supabaseAdmin
             .from("professional")
-            .select("*");
+            .select("*")
+
+        if (clinicId) {
+            query.eq("clinic_id", clinicId);
+        } else {
+            query.eq("id", ownerId); // Fallback for owner-only view if clinic_id not linked
+        }
+
+        const { data: profiles, error: profileError } = await query;
         if (profileError) throw profileError;
 
-        const mergedTeam = users.map(authUser => {
-            const profile = profiles?.find(p => p.id === authUser.id);
-            return {
-                id: authUser.id,
-                email: authUser.email,
-                full_name: profile?.full_name || authUser.user_metadata?.full_name || "Invitado",
-                role: profile?.role || authUser.user_metadata?.role || "profesional",
-                status: authUser.last_sign_in_at ? "activo" : "pendiente",
-                created_at: authUser.created_at
-            };
-        });
+        // 2. Get pending invites for this clinic
+        const inviteQuery = supabaseAdmin
+            .from("invites")
+            .select("*")
+            .eq("status", "pending")
+
+        if (clinicId) {
+            inviteQuery.eq("clinic_id", clinicId);
+        } else if (ownerId) {
+            inviteQuery.eq("inviter_id", ownerId);
+        }
+
+        const { data: invites, error: inviteError } = await inviteQuery;
+        if (inviteError) throw inviteError;
+
+        // 3. Map profiles to team members
+        const teamProfiles = (profiles || []).map(p => ({
+            id: p.id,
+            email: p.google_user_email || "Usuario Livio", // Try to find email
+            full_name: p.full_name || "Profesional",
+            role: p.role,
+            status: "activo",
+            created_at: p.created_at
+        }));
+
+        // 4. Map invites to team members
+        const teamInvites = (invites || []).map(i => ({
+            id: i.id,
+            email: i.email,
+            full_name: i.email.split('@')[0], // Fallback name for invites
+            role: i.role,
+            status: "pendiente",
+            created_at: i.created_at
+        }));
+
+        // Combined and sorted
+        const mergedTeam = [...teamProfiles, ...teamInvites];
+
+        // Final cleanup for auth data (optional but safer: only use database as source of truth for team list)
+        // We can't easily list emails from Auth for non-active users without admin privileges,
+        // but we can try to fetch the current user's email if they are in the list.
 
         const sortedTeam = mergedTeam.sort((a, b) => {
             if (a.role === 'superadmin' && b.role !== 'superadmin') return -1;
             if (a.role !== 'superadmin' && b.role === 'superadmin') return 1;
-            return a.full_name.localeCompare(b.full_name);
+            return (a.full_name || "").localeCompare(b.full_name || "");
         });
 
         return { success: true, data: sortedTeam };

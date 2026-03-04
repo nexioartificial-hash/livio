@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import React, { useState, useEffect } from "react";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { motion } from "framer-motion";
@@ -11,15 +11,22 @@ import { Label } from "@/components/ui/label";
 import { Building2, MapPin, Plus, Trash2, ChevronRight, ChevronLeft, Globe } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { titleCase, formatCUIT } from "@/utils/masks";
 
 const clinicSchema = z.object({
-    name: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
-    email: z.string().email("Email inválido"),
-    phone: z.string().min(8, "Teléfono inválido"),
-    cuit: z.string().optional(),
+    name: z.string().min(1, "El nombre comercial es requerido").transform(titleCase),
+    email: z.string().email("Email profesional inválido"),
+    phone: z.string().min(1, "El teléfono es requerido"),
+    cuit: z
+        .string()
+        .optional()
+        .refine(
+            (val) => !val || /^\d{2}-\d{8}-\d{1}$/.test(val),
+            "Formato CUIT inválido (XX-XXXXXXXX-X)"
+        ),
     branches: z.array(z.object({
-        name: z.string().min(2, "Nombre de sucursal requerido"),
-        address: z.string().min(5, "Dirección requerida"),
+        name: z.string().min(1, "Nombre de sucursal requerido").transform(titleCase),
+        address: z.string().min(1, "Dirección requerida"),
         google_maps_url: z.string().url("URL inválida").optional().or(z.literal("")),
     })).min(1, "Debe agregar al menos una sucursal"),
 });
@@ -35,12 +42,28 @@ export default function ClinicStep({ onNext, onBack }: ClinicStepProps) {
     const [loading, setLoading] = useState(false);
     const supabase = createClient();
 
-    const { register, control, handleSubmit, formState: { errors }, watch } = useForm<ClinicFormValues>({
+    const { register, control, handleSubmit, formState: { errors }, watch, setValue } = useForm<ClinicFormValues>({
         resolver: zodResolver(clinicSchema),
         defaultValues: {
+            name: "",
+            email: "",
+            phone: "",
+            cuit: "",
             branches: [{ name: "Sede Central", address: "", google_maps_url: "" }],
         },
     });
+
+    // Prefill user email
+    useEffect(() => {
+        const prefillEmail = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user?.email) {
+                setValue("email", user.email);
+                console.log("📧 [ClinicStep] Email pre-llenado:", user.email);
+            }
+        };
+        prefillEmail();
+    }, [supabase, setValue]);
 
     const { fields, append, remove } = useFieldArray({
         control,
@@ -145,7 +168,18 @@ export default function ClinicStep({ onNext, onBack }: ClinicStepProps) {
                         <Label className="text-slate-600 font-bold ml-1">Nombre Comercial</Label>
                         <div className="relative">
                             <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-                            <Input {...register("name")} className="h-12 pl-12 rounded-xl bg-white border-white/50 shadow-sm focus:ring-[#76D7B6]" placeholder="Ej: Clínica Dental Livio" />
+                            <Controller
+                                name="name"
+                                control={control}
+                                render={({ field }) => (
+                                    <Input
+                                        {...field}
+                                        className="h-12 pl-12 rounded-xl bg-white border-white/50 shadow-sm focus:ring-[#76D7B6]"
+                                        placeholder="Ej: Clínica Dental Livio"
+                                        onChange={(e) => field.onChange(titleCase(e.target.value))}
+                                    />
+                                )}
+                            />
                         </div>
                         {errors.name && <p className="text-red-500 text-xs font-bold ml-1">{errors.name.message}</p>}
                     </div>
@@ -164,18 +198,17 @@ export default function ClinicStep({ onNext, onBack }: ClinicStepProps) {
 
                     <div className="space-y-2">
                         <Label className="text-slate-600 font-bold ml-1">CUIT (Opcional)</Label>
-                        <Input
-                            {...register("cuit")}
-                            className="h-12 rounded-xl bg-white border-white/50 shadow-sm"
-                            placeholder="XX-XXXXXXXX-X"
-                            onChange={(e) => {
-                                const val = e.target.value.replace(/\D/g, "");
-                                let formatted = val;
-                                if (val.length > 2) formatted = `${val.slice(0, 2)}-${val.slice(2)}`;
-                                if (val.length > 10) formatted = `${val.slice(0, 2)}-${val.slice(2, 10)}-${val.slice(10, 11)}`;
-                                e.target.value = formatted;
-                                register("cuit").onChange(e);
-                            }}
+                        <Controller
+                            name="cuit"
+                            control={control}
+                            render={({ field }) => (
+                                <Input
+                                    {...field}
+                                    className="h-12 rounded-xl bg-white border-white/50 shadow-sm"
+                                    placeholder="XX-XXXXXXXX-X"
+                                    onChange={(e) => field.onChange(formatCUIT(e.target.value))}
+                                />
+                            )}
                         />
                     </div>
                 </div>
@@ -218,7 +251,17 @@ export default function ClinicStep({ onNext, onBack }: ClinicStepProps) {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label className="text-xs font-black uppercase tracking-tighter text-slate-400">Nombre de la Sede</Label>
-                                        <Input {...register(`branches.${index}.name`)} className="h-11 rounded-xl bg-white shadow-sm border-transparent" />
+                                        <Controller
+                                            name={`branches.${index}.name`}
+                                            control={control}
+                                            render={({ field }) => (
+                                                <Input
+                                                    {...field}
+                                                    className="h-11 rounded-xl bg-white shadow-sm border-transparent"
+                                                    onChange={(e) => field.onChange(titleCase(e.target.value))}
+                                                />
+                                            )}
+                                        />
                                     </div>
                                     <div className="space-y-2">
                                         <Label className="text-xs font-black uppercase tracking-tighter text-slate-400">Dirección</Label>

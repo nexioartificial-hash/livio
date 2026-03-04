@@ -27,8 +27,8 @@ import Link from "next/link";
 export function Header() {
     const { user, signOut } = useAuth();
 
-    // Mock initial for avatar if no photo
-    const userInitial = user?.email?.[0].toUpperCase() ?? "U";
+    // Initial for avatar if no photo
+    const userInitial = user?.full_name?.charAt(0) || user?.user_metadata?.full_name?.charAt(0) || user?.email?.charAt(0) || "?";
 
     return (
         <header className="sticky top-0 z-40 bg-white border-b h-16 flex items-center justify-between px-6 shadow-sm">
@@ -71,7 +71,7 @@ export function Header() {
                             <Avatar className="h-9 w-9">
                                 <AvatarImage src={user?.user_metadata?.avatar_url} />
                                 <AvatarFallback className="bg-[#76D7B6]/10 text-[#76D7B6] font-bold">
-                                    {userInitial}
+                                    {user?.full_name?.charAt(0) || user?.email?.charAt(0) || "?"}
                                 </AvatarFallback>
                             </Avatar>
                         </Button>
@@ -79,8 +79,10 @@ export function Header() {
                     <DropdownMenuContent className="w-56" align="end" forceMount>
                         <DropdownMenuLabel className="font-normal">
                             <div className="flex flex-col space-y-1">
-                                <p className="text-sm font-medium leading-none">{user?.user_metadata?.full_name || "Dr. Usuario"}</p>
-                                <p className="text-xs leading-none text-slate-500">{user?.email}</p>
+                                <p className="text-sm font-medium leading-none">{user?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name || "Usuario"}</p>
+                                <p className="text-sm font-bold text-slate-900 truncate">
+                                    {user?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name || "Usuario"}
+                                </p>
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />

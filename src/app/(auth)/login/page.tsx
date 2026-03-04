@@ -144,7 +144,7 @@ export default function LoginPage() {
             </div>
 
             <p className="mt-8 text-xs text-center text-slate-400">
-                14 días gratis • Sin tarjeta de crédito • Cancelación en cualquier momento
+                30 días gratis • Sin tarjeta de crédito • Cancelación en cualquier momento
             </p>
         </div>
     );

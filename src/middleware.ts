@@ -2,6 +2,8 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+    const pathname = request.nextUrl.pathname;
+
     let response = NextResponse.next({
         request: {
             headers: request.headers,
@@ -63,10 +65,15 @@ export async function middleware(request: NextRequest) {
     )
 
     // Refresh session if expired - required for Server Components
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (user) {
+        // console.log("Middleware: User identified", user.id);
+    } else if (authError && !pathname.startsWith('/api')) {
+        // console.log("Middleware: Auth error", authError.message);
+    }
 
     // Protected Routes Logic
-    const pathname = request.nextUrl.pathname;
     const isDashboardRoute = pathname.startsWith('/dashboard') ||
         pathname.startsWith('/historia-clinica') ||
         pathname.startsWith('/agenda') ||

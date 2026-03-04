@@ -52,7 +52,6 @@ export default function RegisterPage() {
 
         setLoading(true);
 
-        // 1. Sign Up User
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email: formData.email,
             password: formData.password,
@@ -60,9 +59,8 @@ export default function RegisterPage() {
                 data: {
                     full_name: formData.fullName,
                     license: formData.license,
-                    clinic_name: formData.clinicName, // Trigger will use this
+                    clinic_name: formData.clinicName,
                     cuit: formData.cuit
-                    // Trigger is expected to handle: Clinic Creation, Trial Activation (14 days), Role Assignment
                 }
             }
         });
@@ -73,7 +71,6 @@ export default function RegisterPage() {
             return;
         }
 
-        // 2. Create professional profile with superadmin role
         if (authData.user) {
             await supabase.from('professional').upsert({
                 id: authData.user.id,
@@ -84,9 +81,8 @@ export default function RegisterPage() {
             }, { onConflict: 'id' });
         }
 
-        // Success
         toast.success("¡Cuenta creada! Revisa tu email para confirmar.");
-        router.push("/dashboard?trial=started"); // Redirect to dashboard (middleware will bounce if email confirmation required, ideally we show a "Check Email" screen)
+        router.push("/dashboard?trial=started");
     };
 
     return (
@@ -104,10 +100,9 @@ export default function RegisterPage() {
                         {step === 1 ? "Datos de la Clínica" : "Tu Perfil Profesional"}
                     </h2>
                     <p className="mt-2 text-sm text-slate-500">
-                        Comienza tu prueba gratuita de 14 días
+                        Comienza tu prueba gratuita de 30 días
                     </p>
 
-                    {/* Steps Indicator */}
                     <div className="flex items-center gap-2 mt-4">
                         <div className={`h-2 w-8 rounded-full ${step >= 1 ? "bg-[#76D7B6]" : "bg-slate-200"}`}></div>
                         <div className={`h-2 w-8 rounded-full ${step >= 2 ? "bg-[#76D7B6]" : "bg-slate-200"}`}></div>
@@ -166,7 +161,7 @@ export default function RegisterPage() {
 
                             <div className="p-4 bg-[#76D7B6]/10 rounded-lg text-sm text-slate-600 mt-4">
                                 <p className="font-semibold text-[#76D7B6] mb-1">✨ Plan Trial</p>
-                                <p>Tendrás acceso total a todas las funciones premium por 14 días. Sin cargos automáticos.</p>
+                                <p>Tendrás acceso total a todas las funciones premium por 30 días. Sin cargos automáticos.</p>
                             </div>
                         </>
                     )}

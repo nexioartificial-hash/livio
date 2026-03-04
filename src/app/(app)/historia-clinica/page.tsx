@@ -1,25 +1,49 @@
 "use client";
 
-import { useState } from "react";
-import { Search, UserPlus, ArrowRight, History } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, UserPlus, ArrowRight, History, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Link from "next/link";
-
-const mockPatients = [
-    { id: 1, name: "Juan Diaz", dni: "35.789.012", email: "juan.diaz@email.com", lastVisit: "10 Feb 2026" },
-    { id: 2, name: "Sofia Martinez", dni: "38.456.789", email: "sofia@email.com", lastVisit: "15 Jan 2026" },
-    { id: 3, name: "Ricardo Gomez", dni: "32.123.456", email: "ricardo@email.com", lastVisit: "05 Dec 2025" },
-];
+import { useAuth } from "@/providers/auth-provider";
+import { createClient } from "@/lib/supabase/client";
 
 export default function HistoriaClinicaIndex() {
+    const { user } = useAuth();
+    const supabase = createClient();
     const [search, setSearch] = useState("");
+    const [patients, setPatients] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const filteredPatients = mockPatients.filter(p =>
-        p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.dni.includes(search)
+    useEffect(() => {
+        if (!user?.clinic_id) return;
+
+        const fetchPatients = async () => {
+            setLoading(true);
+            try {
+                const { data, error } = await supabase
+                    .from('patient')
+                    .select('id, full_name, dni, email, created_at')
+                    .eq('clinic_id', user.clinic_id)
+                    .order('full_name');
+
+                if (error) throw error;
+                setPatients(data || []);
+            } catch (error) {
+                console.error("Error fetching patients:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPatients();
+    }, [user?.clinic_id, supabase]);
+
+    const filteredPatients = patients.filter(p =>
+        (p.full_name || "").toLowerCase().includes(search.toLowerCase()) ||
+        (p.dni || "").includes(search)
     );
 
     return (
@@ -44,7 +68,9 @@ export default function HistoriaClinicaIndex() {
             </Card>
 
             <div className="grid gap-4">
-                {filteredPatients.length > 0 ? (
+                {loading ? (
+                    <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-[#76D7B6]" /></div>
+                ) : filteredPatients.length > 0 ? (
                     filteredPatients.map(patient => (
                         <Link key={patient.id} href={`/historia-clinica/${patient.id}`}>
                             <Card className="hover:border-[#76D7B6] hover:shadow-md transition-all cursor-pointer group">
@@ -52,18 +78,20 @@ export default function HistoriaClinicaIndex() {
                                     <div className="flex items-center gap-4">
                                         <Avatar className="h-12 w-12 border border-slate-100">
                                             <AvatarFallback className="bg-slate-100 text-slate-600 font-bold">
-                                                {patient.name.split(" ").map(n => n[0]).join("")}
+                                                {(patient.full_name || "?").split(" ").map((n: string) => n[0]).join("")}
                                             </AvatarFallback>
                                         </Avatar>
                                         <div>
-                                            <h3 className="font-bold text-slate-900 group-hover:text-[#76D7B6] transition-colors">{patient.name}</h3>
-                                            <p className="text-xs text-slate-500">DNI: {patient.dni} · {patient.email}</p>
+                                            <h3 className="font-bold text-slate-900 group-hover:text-[#76D7B6] transition-colors">{patient.full_name}</h3>
+                                            <p className="text-xs text-slate-500">DNI: {patient.dni || "S/D"} · {patient.email || "Sin email"}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-6">
                                         <div className="text-right hidden sm:block">
-                                            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Última Visita</p>
-                                            <p className="text-xs font-medium text-slate-700">{patient.lastVisit}</p>
+                                            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Registrado el</p>
+                                            <p className="text-xs font-medium text-slate-700">
+                                                {patient.created_at ? new Date(patient.created_at).toLocaleDateString('es-AR') : "-"}
+                                            </p>
                                         </div>
                                         <div className="h-8 w-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-[#76D7B6] group-hover:text-white transition-all">
                                             <ArrowRight className="h-4 w-4" />
@@ -95,7 +123,7 @@ export default function HistoriaClinicaIndex() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="text-xs text-slate-400">Verás las últimas fichas que abriste aquí.</div>
+                        <div className="text-xs text-slate-400">Verás las fichas de los pacientes registrados para tu clínica.</div>
                     </CardContent>
                 </Card>
 

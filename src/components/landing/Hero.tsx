@@ -1,21 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Check, PlayCircle } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 
 export default function Hero() {
     return (
         <section className="relative overflow-hidden pt-16 pb-20 lg:pt-24 lg:pb-32">
-
-
-            {/* Background blobs - REMOVING old manual blobs to avoid conflict */}
-
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                 <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16 items-center">
-
                     <div className="flex flex-col gap-8 text-left pl-4 lg:pl-0">
-
-
                         <h1 className="text-4xl font-extrabold tracking-tight text-[#111827] sm:text-5xl lg:text-5xl xl:text-[3.4rem] leading-[1.15]">
                             Software con <span className="relative inline-block">
                                 IA
@@ -49,11 +41,11 @@ export default function Hero() {
                         <div className="flex flex-col sm:flex-row gap-4 pt-6 justify-start">
                             <Button size="xl" className="bg-accent text-primary hover:bg-accent/90 font-bold text-base shadow-[0_4px_14px_0_rgba(130,217,188,0.39)] rounded-lg h-auto py-4 px-8" asChild>
                                 <Link href="/register">
-                                    Comenzar prueba gratis 14 días
+                                    Comenzar prueba gratuita de 30 días
                                 </Link>
                             </Button>
                             <Button size="xl" variant="outline" className="border-2 border-secondary hover:bg-secondary/20 hover:text-primary font-semibold text-base rounded-lg h-auto py-4 px-8 group" asChild>
-                                <Link href="#how-it-works" className="flex items-center">
+                                <Link href="/#how-it-works" className="flex items-center">
                                     <PlayCircle className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" /> Ver cómo funciona
                                 </Link>
                             </Button>

@@ -22,7 +22,7 @@ export default function Footer() {
                     <Link href="#" className="hover:underline hover:text-foreground">
                         Términos y Condiciones
                     </Link>
-                    <Link href="#" className="hover:underline hover:text-foreground">
+                    <Link href="/privacy" className="hover:underline hover:text-foreground">
                         Política de Privacidad
                     </Link>
                     <Link href="#" className="hover:underline hover:text-foreground">

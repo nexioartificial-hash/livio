@@ -19,13 +19,13 @@ export default function Header() {
                 </Link>
 
                 <nav className="hidden md:flex items-center gap-8">
-                    <Link href="#features" className="text-sm font-medium text-foreground/80 hover:text-accent transition-colors">
+                    <Link href="/#features" className="text-sm font-medium text-foreground/80 hover:text-accent transition-colors">
                         Funcionalidades
                     </Link>
-                    <Link href="#pricing" className="text-sm font-medium text-foreground/80 hover:text-accent transition-colors">
+                    <Link href="/#pricing" className="text-sm font-medium text-foreground/80 hover:text-accent transition-colors">
                         Precios
                     </Link>
-                    <Link href="#testimonials" className="text-sm font-medium text-foreground/80 hover:text-accent transition-colors">
+                    <Link href="/#testimonials" className="text-sm font-medium text-foreground/80 hover:text-accent transition-colors">
                         Testimonios
                     </Link>
                 </nav>
