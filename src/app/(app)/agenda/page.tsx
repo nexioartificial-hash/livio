@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Plus, Clock, Download, Calendar, FileSpreadsheet, ChevronDown, UploadCloud, Loader2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
+import { useAuth } from "@/providers/auth-provider";
 import Papa from "papaparse";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -72,8 +73,11 @@ export default function AgendaPage() {
     const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
+    const [selectedBloqueo, setSelectedBloqueo] = useState<any>(null);
+    const [isBloqueoModalOpen, setIsBloqueoModalOpen] = useState(false);
+
+    const { user, loading } = useAuth();
     const { DateTime } = require("luxon");
-    const supabase = createClient();
     const [currentDate, setCurrentDate] = useState(DateTime.now());
     const [newAppointment, setNewAppointment] = useState({
         patient: "",
@@ -88,6 +92,7 @@ export default function AgendaPage() {
     });
     const [isCreating, setIsCreating] = useState(false);
     const [appointments, setAppointments] = useState<Appointment[]>([]);
+    const [bloqueos, setBloqueos] = useState<{ id: string; profesional_id: string; bloqueo_desde: string; bloqueo_hasta: string; descripcion: string; tipo: string }[]>([]);
     const [obrasSociales, setObrasSociales] = useState<ObraSocial[]>([]);
     const [obraSearch, setObraSearch] = useState("");
     const [obraOpen, setObraOpen] = useState(false);
@@ -114,7 +119,7 @@ export default function AgendaPage() {
         const { data, error } = await query;
         if (error) {
             console.error("Error fetching turnos:", error);
-            toast.error("Error al cargar turnos");
+            toast.error(`Error al cargar turnos: ${error.message || 'Error de permisos'}`);
         } else {
             setAppointments(data.map((t: any) => ({
                 id: t.id,
@@ -129,11 +134,33 @@ export default function AgendaPage() {
                 obra_social: t.obra_social || null,
             })));
         }
+
+        // Also fetch bloqueos for the same date range
+        const startISO = (
+            view === 'dia' ? currentDate.startOf('day') :
+                view === 'semana' ? currentDate.startOf('week') :
+                    currentDate.startOf('month')
+        ).toISO();
+
+        const endISO = (
+            view === 'dia' ? currentDate.endOf('day') :
+                view === 'semana' ? currentDate.endOf('week') :
+                    currentDate.endOf('month')
+        ).toISO();
+
+        const { data: bloqueosData } = await supabase
+            .from('bloqueo_horario')
+            .select('*')
+            .gte('bloqueo_hasta', startISO)
+            .lte('bloqueo_desde', endISO);
+        if (bloqueosData) setBloqueos(bloqueosData);
     }, [currentDate, view, supabase]);
 
     useEffect(() => {
-        fetchAppointments();
-    }, [fetchAppointments]);
+        if (!loading && user) {
+            fetchAppointments();
+        }
+    }, [loading, user, fetchAppointments]);
 
     // Load obras sociales once
     useEffect(() => {
@@ -166,7 +193,44 @@ export default function AgendaPage() {
                     ? obrasSociales.find(o => o.id === newAppointment.obrasocial_id)?.nombre ?? null
                     : null;
 
-            const { error } = await supabase.from('turno').insert({
+            // 0. Calculate new appointment timeframe
+            const newStart = DateTime.fromISO(`${newAppointment.date}T${newAppointment.time}`);
+            const newEnd = newStart.plus({ minutes: parseInt(newAppointment.duration) });
+
+            // 1. Check for overlap with internal appointments (same professional)
+            const internalOverlap = appointments.some(a => {
+                // Only check for the same professional and active appointments
+                if (a.professional !== profName || a.status === 'cancelado') return false;
+
+                const aStart = DateTime.fromISO(`${a.date}T${a.time}`);
+                const aEnd = aStart.plus({ minutes: a.duration });
+
+                return newStart < aEnd && newEnd > aStart;
+            });
+
+            if (internalOverlap) {
+                toast.warning(`⚠️ El profesional ${profName} ya tiene un turno agendado en ese horario.`);
+                setIsCreating(false);
+                return;
+            }
+
+            // 2. Check for overlap with external blocks (Google Calendar)
+            const externalOverlap = bloqueos.some(b => {
+                // Blocks are professional-specific
+                if (b.profesional_id && b.profesional_id !== newAppointment.professional) return false;
+
+                const bStart = DateTime.fromISO(b.bloqueo_desde);
+                const bEnd = DateTime.fromISO(b.bloqueo_hasta);
+                return newStart < bEnd && newEnd > bStart;
+            });
+
+            if (externalOverlap) {
+                toast.warning("⚠️ El horario se superpone con un bloqueo externo (Google Calendar)");
+                setIsCreating(false);
+                return;
+            }
+
+            const { data: inserted, error } = await supabase.from('turno').insert({
                 patient_name: newAppointment.patient,
                 professional_name: profName,
                 date: newAppointment.date,
@@ -177,9 +241,18 @@ export default function AgendaPage() {
                 sucursal: newAppointment.sucursal,
                 source: 'manual',
                 obra_social: obraNombre,
-            });
+            }).select('id').single();
 
             if (error) throw error;
+
+            // Push to Google Calendar asynchronously (fire and forget)
+            if (inserted?.id) {
+                fetch('/api/integrations/google/push', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ turnoId: inserted.id, action: 'create' }),
+                }).catch(() => { }); // silent — don't block UX
+            }
 
             toast.success("Turno agendado correctamente");
             setIsModalOpen(false);
@@ -197,8 +270,9 @@ export default function AgendaPage() {
             setObraSearch("");
             fetchAppointments(); // Refresh grid
         } catch (error: any) {
-            console.error("Error creating appointment:", JSON.stringify(error));
-            toast.error("Error al agendar turno: " + (error.message || JSON.stringify(error)));
+            console.error("Error creating appointment:", error);
+            const errorMsg = error.message || (typeof error === 'string' ? error : JSON.stringify(error));
+            toast.error("Error al agendar turno: " + (errorMsg === '{}' ? "Error interno de validación" : errorMsg));
         } finally {
             setIsCreating(false);
         }
@@ -274,10 +348,15 @@ export default function AgendaPage() {
         return true;
     });
 
+    const filteredBloqueos = bloqueos.filter(b => {
+        if (selectedProfessional !== "all" && b.profesional_id !== selectedProfessional) return false;
+        return true;
+    });
+
     // --- GOOGLE INTEGRATION ---
     const handleGoogleConnect = () => {
-        const width = 500;
-        const height = 600;
+        const width = 600;
+        const height = 700;
         const left = window.screen.width / 2 - width / 2;
         const top = window.screen.height / 2 - height / 2;
 
@@ -288,37 +367,32 @@ export default function AgendaPage() {
         );
 
         const handleMessage = async (event: MessageEvent) => {
-            if (event.data.type === 'GOOGLE_CALENDAR_SUCCESS' && event.data.events) {
+            if (event.data.type === 'GOOGLE_AUTH_SUCCESS') {
                 window.removeEventListener('message', handleMessage);
                 setIsImporting(true);
 
                 try {
-                    const events = event.data.events;
-                    const turnosToInsert = events.map((evt: any) => ({
-                        patient_name: evt.summary || "Evento Google",
-                        professional_name: "Google Calendar",
-                        date: evt.start.dateTime ? evt.start.dateTime.split('T')[0] : evt.start.date,
-                        time: evt.start.dateTime ? evt.start.dateTime.split('T')[1].substring(0, 5) : "09:00",
-                        reason: evt.description || "Importado de Google",
-                        source: 'google',
-                        status: 'pendiente',
-                        sucursal: 'Sede Central'
-                    }));
+                    // Trigger server-side pull
+                    const res = await fetch('/api/integrations/google/pull', {
+                        method: 'POST',
+                        body: JSON.stringify({ profesionalId: user?.id })
+                    });
 
-                    if (turnosToInsert.length > 0) {
-                        const { error } = await supabase.from('turno').insert(turnosToInsert);
-                        if (error) throw error;
-                        toast.success(`¡${turnosToInsert.length} turnos importados de Google!`);
-                        setIsImportModalOpen(false);
-                    } else {
-                        toast.info("No se encontraron eventos cercanos para importar.");
-                    }
+                    if (!res.ok) throw new Error('Error al sincronizar con Google');
 
+                    const syncData = await res.json();
+                    const syncedCount = syncData.results?.[0]?.found || 0;
+
+                    toast.success(`✅ Google Calendar conectado! Se encontraron ${syncedCount} eventos.`);
+                    setIsImportModalOpen(false);
+                    fetchAppointments(); // Refresh grid
                 } catch (error: any) {
-                    toast.error("Error al guardar eventos: " + error.message);
+                    toast.error("Error al sincronizar eventos: " + error.message);
                 } finally {
                     setIsImporting(false);
                 }
+            } else if (event.data.type === 'GOOGLE_AUTH_ERROR') {
+                toast.error(`Error de Google: ${event.data.reason}`);
             }
         };
 
@@ -591,13 +665,52 @@ export default function AgendaPage() {
                                     <div key={hour} className="grid grid-cols-[80px_repeat(7,1fr)] border-b last:border-b-0 min-h-[60px]">
                                         <div className="p-2 text-xs text-slate-400 border-r flex items-start justify-end pr-3 pt-1">{hour}</div>
                                         {weekDays.map((dayObj, dayIdx) => {
-                                            // Filter by exact date
                                             const dayDate = dayObj.date.toISODate();
-                                            const dayAppts = filteredAppointments.filter(a => a.date === dayDate && a.time === hour);
                                             const isToday = dayObj.date.hasSame(DateTime.now(), 'day');
+
+                                            // Slots boundaries
+                                            const slotStart = dayObj.date.set({
+                                                hour: parseInt(hour.split(':')[0]),
+                                                minute: 0
+                                            });
+                                            const slotEnd = slotStart.plus({ hours: 1 });
+
+                                            // Filter appointments that intersect with this hour slot
+                                            const dayAppts = filteredAppointments.filter(a => {
+                                                if (a.date !== dayDate) return false;
+                                                const aStart = DateTime.fromISO(`${a.date}T${a.time}`);
+                                                const aEnd = aStart.plus({ minutes: a.duration });
+                                                return aStart < slotEnd && aEnd > slotStart;
+                                            });
+
+                                            // Filter bloqueos that intersect with this hour slot
+                                            const dayBloqueos = filteredBloqueos.filter(b => {
+                                                const bStart = DateTime.fromISO(b.bloqueo_desde);
+                                                const bEnd = DateTime.fromISO(b.bloqueo_hasta);
+                                                return bStart < slotEnd && bEnd > slotStart;
+                                            });
 
                                             return (
                                                 <div key={dayIdx} className={`border-r last:border-r-0 p-1 ${isToday ? "bg-[#76D7B6]/[0.02]" : ""}`}>
+                                                    {/* Bloqueos externos */}
+                                                    {dayBloqueos.map(b => (
+                                                        <div
+                                                            key={b.id}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setSelectedBloqueo(b);
+                                                                setIsBloqueoModalOpen(true);
+                                                            }}
+                                                            title={b.descripcion}
+                                                            className="rounded-md border-l-[3px] border-slate-300 bg-slate-50 p-2 text-xs text-slate-500 mb-1 cursor-pointer hover:bg-slate-100 transition-colors"
+                                                        >
+                                                            <p className="font-semibold truncate flex items-center gap-1.5">
+                                                                <span className="w-2 h-2 rounded-full bg-slate-300" />
+                                                                {b.descripcion || 'Bloqueado'}
+                                                            </p>
+                                                            <p className="text-[10px] opacity-60">Sincronizado</p>
+                                                        </div>
+                                                    ))}
                                                     {dayAppts.map(appt => (
                                                         <div
                                                             key={appt.id}
@@ -633,11 +746,48 @@ export default function AgendaPage() {
                         </div>
                         {hours.map(hour => {
                             const dateStr = currentDate.toISODate();
-                            const appts = filteredAppointments.filter(a => a.date === dateStr && a.time === hour);
+
+                            const slotStart = currentDate.set({
+                                hour: parseInt(hour.split(':')[0]),
+                                minute: 0
+                            });
+                            const slotEnd = slotStart.plus({ hours: 1 });
+
+                            const appts = filteredAppointments.filter(a => {
+                                if (a.date !== dateStr) return false;
+                                const aStart = DateTime.fromISO(`${a.date}T${a.time}`);
+                                const aEnd = aStart.plus({ minutes: a.duration });
+                                return aStart < slotEnd && aEnd > slotStart;
+                            });
+
+                            const dayBloqueos = filteredBloqueos.filter(b => {
+                                const bStart = DateTime.fromISO(b.bloqueo_desde);
+                                const bEnd = DateTime.fromISO(b.bloqueo_hasta);
+                                return bStart < slotEnd && bEnd > slotStart;
+                            });
                             return (
                                 <div key={hour} className="flex border-b last:border-b-0 min-h-[56px]">
                                     <div className="w-20 p-2 text-xs text-slate-400 border-r flex items-start justify-end pr-3 pt-2 flex-shrink-0">{hour}</div>
                                     <div className="flex-1 p-1.5">
+                                        {/* Bloqueos externos */}
+                                        {dayBloqueos.map(b => (
+                                            <div
+                                                key={b.id}
+                                                onClick={() => {
+                                                    setSelectedBloqueo(b);
+                                                    setIsBloqueoModalOpen(true);
+                                                }}
+                                                className="rounded-lg border-l-[3px] border-slate-300 bg-slate-50 p-3 text-slate-500 mb-1 cursor-pointer hover:bg-slate-100 transition-colors"
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <span className="font-semibold text-sm flex items-center gap-2">
+                                                        <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
+                                                        {b.descripcion || 'Bloqueado'}
+                                                    </span>
+                                                    <span className="text-[10px] opacity-60">Google Calendar</span>
+                                                </div>
+                                            </div>
+                                        ))}
                                         {appts.map(appt => (
                                             <div
                                                 key={appt.id}
@@ -686,6 +836,27 @@ export default function AgendaPage() {
                                     <div key={i} className={`rounded-lg p-2 min-h-[80px] text-xs border ${isToday ? "bg-[#76D7B6]/5 border-[#76D7B6]" : "border-transparent hover:bg-slate-50"}`}>
                                         <span className={`font-medium ${isToday ? "text-[#76D7B6] font-bold" : "text-slate-600"}`}>{dayNum}</span>
                                         <div className="mt-1 space-y-0.5">
+                                            {/* Bloqueos */}
+                                            {filteredBloqueos.filter(b => {
+                                                const bStart = DateTime.fromISO(b.bloqueo_desde);
+                                                const bEnd = DateTime.fromISO(b.bloqueo_hasta);
+                                                const dStart = date.startOf('day');
+                                                const dEnd = date.endOf('day');
+                                                return bStart < dEnd && bEnd > dStart;
+                                            }).map(b => (
+                                                <div
+                                                    key={b.id}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSelectedBloqueo(b);
+                                                        setIsBloqueoModalOpen(true);
+                                                    }}
+                                                    className="rounded px-1.5 py-0.5 text-[10px] truncate bg-slate-100 text-slate-500 border-l-2 border-slate-300 cursor-pointer hover:bg-slate-200 transition-colors"
+                                                >
+                                                    {b.descripcion || 'Bloqueado'}
+                                                </div>
+                                            ))}
+
                                             {dayAppts.slice(0, 2).map(a => (
                                                 <div
                                                     key={a.id}
@@ -695,7 +866,7 @@ export default function AgendaPage() {
                                                     {a.time} {a.patient.split(" ")[0]}
                                                 </div>
                                             ))}
-                                            {dayAppts.length > 2 && <span className="text-[10px] text-slate-400">+{dayAppts.length - 2} más</span>}
+                                            {(dayAppts.length > 2) && <span className="text-[10px] text-slate-400">+{dayAppts.length - 2} más</span>}
                                         </div>
                                     </div>
                                 );
@@ -962,6 +1133,49 @@ export default function AgendaPage() {
                                 Restaurar Turno
                             </Button>
                         )}
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Bloqueo Detail Modal */}
+            <Dialog open={isBloqueoModalOpen} onOpenChange={setIsBloqueoModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <span className="w-3 h-3 rounded-full bg-slate-400" />
+                            Evento Externo
+                        </DialogTitle>
+                        <DialogDescription>
+                            Este es un evento sincronizado desde Google Calendar.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {selectedBloqueo && (
+                        <div className="space-y-4 py-4">
+                            <div className="grid grid-cols-3 items-start gap-2 text-sm">
+                                <span className="font-semibold text-slate-500">Título:</span>
+                                <span className="col-span-2 font-bold">{selectedBloqueo.descripcion}</span>
+                            </div>
+                            <div className="grid grid-cols-3 items-start gap-2 text-sm">
+                                <span className="font-semibold text-slate-500">Inicio:</span>
+                                <span className="col-span-2">
+                                    {DateTime.fromISO(selectedBloqueo.bloqueo_desde).toFormat("dd/MM/yyyy HH:mm")}hs
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-3 items-start gap-2 text-sm">
+                                <span className="font-semibold text-slate-500">Fin:</span>
+                                <span className="col-span-2">
+                                    {DateTime.fromISO(selectedBloqueo.bloqueo_hasta).toFormat("dd/MM/yyyy HH:mm")}hs
+                                </span>
+                            </div>
+                            <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 text-xs text-slate-500 italic">
+                                Sincronizado para proteger tu disponibilidad. Para editar este evento, hazlo directamente en tu Google Calendar.
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button className="w-full" onClick={() => setIsBloqueoModalOpen(false)}>
+                            Entendido
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
