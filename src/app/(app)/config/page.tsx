@@ -62,7 +62,6 @@ import { supabase } from "@/lib/supabase/client";
  * Small component that reads OAuth redirect result from URL params.
  * Must be isolated so it can be wrapped in <Suspense> (Next.js requirement for useSearchParams).
  */
-import { supabase } from "@/lib/supabase/client";
 
 export default function ConfigPage() {
     const { user, loading } = useAuth();
