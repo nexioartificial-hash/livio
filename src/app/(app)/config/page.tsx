@@ -56,6 +56,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { updateMemberRole, deleteMember, getTeamMembers } from "@/app/actions/team";
 import InviteModal from "@/components/team/InviteModal";
+import SedeModal from "@/components/sucursales/SedeModal";
 import { supabase } from "@/lib/supabase/client";
 
 /**
@@ -592,14 +593,21 @@ export default function ConfigPage() {
                                     ) : (
                                         <div className="grid gap-4 sm:grid-cols-2">
                                             {sucursales.map((suc) => (
-                                                <div key={suc.id} className="p-4 rounded-xl border border-slate-100 bg-white shadow-sm hover:border-[#76D7B6]/30 transition-all">
+                                                <div
+                                                    key={suc.id}
+                                                    className="p-4 rounded-xl border border-slate-100 bg-white shadow-sm hover:border-[#76D7B6]/30 transition-all cursor-pointer group/sede"
+                                                    onClick={() => {
+                                                        setEditingSedeId(suc.id);
+                                                        setNewSede({ name: suc.name, address: suc.address || "", phone: suc.phone || "" });
+                                                        setShowNewSedeDialog(true);
+                                                    }}
+                                                >
                                                     <div className="flex items-center justify-between mb-2">
-                                                        <p className="font-bold text-slate-900">{suc.name}</p>
+                                                        <p className="font-bold text-slate-900 group-hover/sede:text-[#76D7B6] transition-colors">{suc.name}</p>
                                                         <Badge className="bg-green-100 text-green-700 text-[10px] px-1.5 py-0 border-none">Activa</Badge>
                                                     </div>
-                                                    <p className="text-xs text-slate-500 mb-3 flex items-center gap-1">
-                                                        <MapPin className="h-3 w-3" />
-                                                        {suc.address || <span className="italic text-slate-300">Sin dirección</span>}
+                                                    <p className="text-xs text-slate-500 mb-3 flex items-center gap-1 text-wrap line-clamp-1">
+                                                        <MapPin className="h-3 w-3 flex-shrink-0" /> {suc.address || <span className="italic text-slate-300">Sin dirección</span>}
                                                     </p>
                                                     <div className="flex items-center gap-3 border-t pt-3 mt-1">
                                                         {suc.phone && (
@@ -611,6 +619,7 @@ export default function ConfigPage() {
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
                                                                 className="text-[11px] text-[#76D7B6] hover:underline transition-colors"
+                                                                onClick={(e) => e.stopPropagation()}
                                                             >
                                                                 Ver en Maps
                                                             </a>
@@ -623,15 +632,6 @@ export default function ConfigPage() {
                                                             <Button
                                                                 variant="link"
                                                                 className="h-auto p-0 text-[11px] text-[#76D7B6] hover:text-[#65cba8] font-bold"
-                                                                onClick={() => {
-                                                                    setEditingSedeId(suc.id);
-                                                                    setNewSede({
-                                                                        name: suc.name,
-                                                                        address: suc.address || "",
-                                                                        phone: suc.phone || ""
-                                                                    });
-                                                                    setShowNewSedeDialog(true);
-                                                                }}
                                                             >
                                                                 Editar
                                                             </Button>
@@ -643,77 +643,6 @@ export default function ConfigPage() {
                                     )}
                                 </CardContent>
                             </Card>
-
-                            {/* Nueva Sede Dialog */}
-                            {showNewSedeDialog && (
-                                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
-                                        <h3 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
-                                            <MapPin className="h-5 w-5 text-[#76D7B6]" /> {editingSedeId ? "Editar Sede" : "Nueva Sede"}
-                                        </h3>
-                                        <div className="space-y-3">
-                                            <div>
-                                                <label className="text-xs font-medium text-slate-600 mb-1 block">Nombre *</label>
-                                                <input
-                                                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#76D7B6]/40"
-                                                    placeholder="Ej: Sede Central"
-                                                    value={newSede.name}
-                                                    onChange={e => setNewSede(p => ({ ...p, name: e.target.value }))}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-xs font-medium text-slate-600 mb-1 block">Dirección</label>
-                                                <input
-                                                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#76D7B6]/40"
-                                                    placeholder="Ej: Av. Corrientes 1234, CABA"
-                                                    value={newSede.address}
-                                                    onChange={e => setNewSede(p => ({ ...p, address: e.target.value }))}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-xs font-medium text-slate-600 mb-1 block">Teléfono</label>
-                                                <input
-                                                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#76D7B6]/40"
-                                                    placeholder="Ej: +54 11 4567-8900"
-                                                    value={newSede.phone}
-                                                    onChange={e => setNewSede(p => ({ ...p, phone: e.target.value }))}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-2 mt-5 items-center justify-between">
-                                            {editingSedeId ? (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="text-red-500 hover:text-red-700 hover:bg-red-50 gap-1 px-2"
-                                                    onClick={handleDeleteSede}
-                                                    disabled={savingSede}
-                                                >
-                                                    <Trash2 className="h-4 w-4" /> Eliminar
-                                                </Button>
-                                            ) : <div />}
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => { setShowNewSedeDialog(false); setEditingSedeId(null); setNewSede({ name: "", address: "", phone: "" }); }}
-                                                    disabled={savingSede}
-                                                >
-                                                    Cancelar
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    className="bg-[#76D7B6] text-slate-900 hover:bg-[#65cba8]"
-                                                    onClick={handleSaveSede}
-                                                    disabled={savingSede || !newSede.name.trim()}
-                                                >
-                                                    {savingSede ? "Guardando..." : (editingSedeId ? "Actualizar" : "Guardar Sede")}
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
                         </div>
 
                         <div className="space-y-6">
@@ -782,8 +711,8 @@ export default function ConfigPage() {
                                 </Card>
                             )}
                         </div>
-                    </div>
-                </TabsContent>
+                    </div >
+                </TabsContent >
 
                 <TabsContent value="equipo" className="mt-6">
                     <Card>
@@ -966,7 +895,34 @@ export default function ConfigPage() {
                         </CardContent>
                     </Card>
                 </TabsContent>
-            </Tabs>
-        </div>
+            </Tabs >
+
+            <SedeModal
+                isOpen={showNewSedeDialog}
+                onClose={() => {
+                    setShowNewSedeDialog(false);
+                    setEditingSedeId(null);
+                    setNewSede({ name: "", address: "", phone: "" });
+                }}
+                editingSede={editingSedeId ? { id: editingSedeId, ...newSede } : null}
+                clinicId={user?.clinic_id || ""}
+                onSuccess={(data, isEdit) => {
+                    if (!isEdit && typeof data === 'string') {
+                        // Deletion case handled by onSuccess passing ID (simple restoration logic)
+                        setSucursales(prev => prev.filter(s => s.id !== data));
+                    } else {
+                        // Success handled by local fetch in useEffect [loading] or manual refresh
+                        // For responsiveness, we can manually trigger refreshSucursales if we possessed it
+                        // but the existing useEffect [user?.clinic_id, loading] will trigger on data changes if handled correctly.
+                        // However, to be safe and immediate:
+                        if (isEdit) {
+                            setSucursales(prev => prev.map(s => s.id === data.id ? { ...s, ...data } : s));
+                        } else {
+                            setSucursales(prev => [...prev, data]);
+                        }
+                    }
+                }}
+            />
+        </div >
     );
 }

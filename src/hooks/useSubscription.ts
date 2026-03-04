@@ -13,12 +13,15 @@ export interface Subscription {
 }
 
 export function useSubscription() {
-    const { user } = useAuth();
+    const { user } = useAuth() as { user: (any & { clinic_id?: string; trial_ends_at?: string }) | null };
     const [subscription, setSubscription] = useState<Subscription | null>(null);
     const [loading, setLoading] = useState(true);
 
     const fetchSubscription = async () => {
-        if (!user?.clinic_id) return;
+        if (!user?.clinic_id) {
+            setLoading(false);
+            return;
+        }
 
         try {
             const { data, error } = await supabase

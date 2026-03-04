@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             try {
                 const { data: profile, error } = await supabase
                     .from("professional")
-                    .select("role")
+                    .select("role, clinic_id, full_name")
                     .eq("id", userId)
                     .maybeSingle();
 
