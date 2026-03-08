@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { titleCase } from "@/utils/masks";
+import { titleCase, sentenceCase } from "@/utils/masks";
 import { sedeSchema, type SedeValues } from "@/lib/validators/config";
 
 interface SedeModalProps {
@@ -200,7 +200,12 @@ export default function SedeModal({ isOpen, onClose, editingSede, clinicId, onSu
                                 name="address"
                                 control={control}
                                 render={({ field }) => (
-                                    <Input {...field} placeholder="Ej: Av. Corrientes 1234" className={cn(errors.address && "border-red-500")} />
+                                    <Input 
+                                        {...field} 
+                                        placeholder="Ej: Av. Corrientes 1234" 
+                                        className={cn(errors.address && "border-red-500")}
+                                        onChange={(e) => field.onChange(titleCase(e.target.value))}
+                                    />
                                 )}
                             />
                             {errors.address && <p className="text-[10px] text-red-500 mt-1">{errors.address.message}</p>}
@@ -211,7 +216,12 @@ export default function SedeModal({ isOpen, onClose, editingSede, clinicId, onSu
                                 name="location"
                                 control={control}
                                 render={({ field }) => (
-                                    <Input {...field} placeholder="Ej: Palermo, CABA" className={cn(errors.location && "border-red-500")} />
+                                    <Input 
+                                        {...field} 
+                                        placeholder="Ej: Palermo, CABA" 
+                                        className={cn(errors.location && "border-red-500")}
+                                        onChange={(e) => field.onChange(titleCase(e.target.value))}
+                                    />
                                 )}
                             />
                             {errors.location && <p className="text-[10px] text-red-500 mt-1">{errors.location.message}</p>}
@@ -229,7 +239,7 @@ export default function SedeModal({ isOpen, onClose, editingSede, clinicId, onSu
                                     placeholder="Depto/Piso, timbre, referencias para pacientes..."
                                     rows={2}
                                     className={cn("min-h-[60px]", errors.aclaraciones && "border-red-500")}
-                                    onChange={(e) => field.onChange(e.target.value.slice(0, 200))}
+                                    onChange={(e) => field.onChange(sentenceCase(e.target.value.slice(0, 200)))}
                                 />
                             )}
                         />

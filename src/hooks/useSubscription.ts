@@ -16,6 +16,7 @@ export function useSubscription() {
     const { user } = useAuth() as { user: (any & { clinic_id?: string; trial_ends_at?: string }) | null };
     const [subscription, setSubscription] = useState<Subscription | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
     const fetchSubscription = async () => {
         if (!user?.clinic_id) {
@@ -39,6 +40,28 @@ export function useSubscription() {
         }
     };
 
+    const startCheckout = async () => {
+        setIsCheckoutLoading(true);
+        try {
+            const res = await fetch('/api/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const data = await res.json();
+            if (data.init_point) {
+                window.location.href = data.init_point;
+            } else {
+                throw new Error(data.error || 'Error al iniciar checkout');
+            }
+        } catch (error) {
+            console.error('Checkout error:', error);
+            alert('No se pudo iniciar el proceso de pago. Por favor intenta de nuevo.');
+        } finally {
+            setIsCheckoutLoading(false);
+        }
+    };
+
     useEffect(() => {
         fetchSubscription();
     }, [user?.clinic_id]);
@@ -47,6 +70,8 @@ export function useSubscription() {
         ? Math.ceil(DateTime.fromISO(subscription.trial_ends_at).diffNow('days').days)
         : 0;
 
+    const trialProgress = Math.max(0, Math.min(100, (daysLeft / 30) * 100));
+
     const isTrialExpired = daysLeft <= 0 && subscription?.status === 'trialing';
     const isPro = subscription?.status === 'active' && subscription?.plan === 'pro';
 
@@ -54,8 +79,11 @@ export function useSubscription() {
         subscription,
         loading,
         daysLeft,
+        trialProgress,
         isTrialExpired,
         isPro,
+        startCheckout,
+        isCheckoutLoading,
         refresh: fetchSubscription,
     };
 }

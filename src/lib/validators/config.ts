@@ -29,3 +29,36 @@ export const sedeSchema = z.object({
 });
 
 export type SedeValues = z.infer<typeof sedeSchema>;
+
+export const obraSocialSchema = z.object({
+    nombre: z.string().min(1, "El nombre es requerido"),
+    codigo: z.string().optional().or(z.literal("")),
+    activo: z.boolean().default(true),
+});
+
+export type ObraSocialValues = z.infer<typeof obraSocialSchema>;
+
+export const treatmentSchema = z.object({
+    nombre: z.string().min(1, "El nombre es requerido"),
+    categoria: z.string().min(1, "La categoría es requerida"),
+    precio: z.string().min(1, "El precio es requerido"),
+    duracion: z.string().min(1, "La duración es requerida"),
+    color: z.string().optional(),
+    noms: z.string().optional().or(z.literal("")),
+    activo: z.boolean().default(true),
+    descripcion: z.string().optional().or(z.literal("")),
+});
+
+export type TreatmentValues = z.infer<typeof treatmentSchema>;
+
+export const stockSchema = z.object({
+    nombre: z.string().min(1, "El nombre del producto es requerido"),
+    categoria: z.string().min(1, "La categoría es requerida"),
+    stock_actual: z.number().min(0, "Mínimo 0"),
+    stock_minimo: z.number().min(0, "Mínimo 0"),
+    sucursal_id: z.string().uuid("Seleccione una sede válida"),
+    proveedor: z.string().optional().or(z.literal("")),
+    precio_costo: z.number().optional().or(z.literal(0)),
+});
+
+export type StockValues = z.infer<typeof stockSchema>;

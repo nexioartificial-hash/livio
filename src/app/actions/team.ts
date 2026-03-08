@@ -2,6 +2,7 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
 // Admin client (server-side only)
 const supabaseAdmin = createClient(
@@ -19,6 +20,7 @@ export async function inviteTeamMember(
     try {
         // Get inviter's clinic_id & name
         let clinicId: string | null = null;
+        let clinicName = "Tu Clínica";
         let inviterName = "Livio";
 
         if (inviterId) {
@@ -30,10 +32,26 @@ export async function inviteTeamMember(
 
             clinicId = inviterProfile?.clinic_id || null;
             inviterName = inviterProfile?.full_name || "Livio";
+
+            if (clinicId) {
+                const { data: clinicData } = await supabaseAdmin
+                    .from("clinic")
+                    .select("name")
+                    .eq("id", clinicId)
+                    .maybeSingle();
+                
+                if (clinicData?.name) clinicName = clinicData.name;
+            }
         }
 
         // Call the Resend API route
-        const origin = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+        const headersList = await headers();
+        const host = headersList.get("host");
+        const protocol = host?.includes("localhost") ? "http" : "https";
+        const origin = process.env.NEXT_PUBLIC_SITE_URL || `${protocol}://${host}`;
+        
+        console.log(`📡 [Team] Enviando invitación via: ${origin}/api/send-invite`);
+        
         const res = await fetch(`${origin}/api/send-invite`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -41,12 +59,15 @@ export async function inviteTeamMember(
                 email,
                 role,
                 clinicId,
+                clinicName,
                 inviterName,
                 inviterId,
+                invitedName: fullName
             }),
         });
 
         const result = await res.json();
+        console.log(`📩 [Team] Respuesta de API de invitación:`, result);
 
         if (!res.ok) {
             return { error: result.error || "Error al enviar invitación" };
@@ -253,14 +274,66 @@ export async function updateMemberRole(userId: string, newRole: string) {
 }
 
 // ─── Delete Member ───────────────────────────────────────────────
-export async function deleteMember(userId: string) {
+export async function deleteMember(id: string) {
     try {
-        const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
-        if (error) throw error;
+        // 1. Try to see if it's a pending invite first
+        const { data: invite } = await supabaseAdmin
+            .from("invites")
+            .select("id, email")
+            .eq("id", id)
+            .maybeSingle();
 
-        revalidatePath("/config");
-        return { success: true };
+        if (invite) {
+            // It's a pending invite, just delete it
+            const { error: deleteInviteError } = await supabaseAdmin
+                .from("invites")
+                .delete()
+                .eq("id", id);
+            
+            if (deleteInviteError) throw deleteInviteError;
+            
+            revalidatePath("/config");
+            return { success: true };
+        }
+
+        // 2. If not an invite, it must be a professional profile
+        const { data: profile } = await supabaseAdmin
+            .from("professional")
+            .select("id, clinic_id, google_user_email")
+            .eq("id", id)
+            .maybeSingle();
+
+        if (profile) {
+            // Delete associated invites first to avoid re-invite issues later
+            if (profile.google_user_email) {
+                await supabaseAdmin
+                    .from("invites")
+                    .delete()
+                    .eq("email", profile.google_user_email);
+            }
+
+            // Delete professional profile
+            const { error: deleteProfileError } = await supabaseAdmin
+                .from("professional")
+                .delete()
+                .eq("id", id);
+            
+            if (deleteProfileError) throw deleteProfileError;
+
+            // Delete from Auth if possible (this might fail if the user doesn't exist anymore or other issues)
+            try {
+                await supabaseAdmin.auth.admin.deleteUser(id);
+            } catch (authError) {
+                console.warn("Auth deletion failed, maybe user was already gone:", authError);
+            }
+
+            revalidatePath("/config");
+            return { success: true };
+        }
+
+        return { error: "No se encontró el miembro a eliminar." };
     } catch (error: any) {
+        console.error("Delete member error:", error);
         return { error: error.message };
     }
 }

@@ -28,3 +28,12 @@ export function titleCase(str: string): string {
         })
         .join(" ");
 }
+
+/**
+ * Converts a string to Sentence Case: "hello world" -> "Hello world"
+ */
+export function sentenceCase(str: string): string {
+    if (!str) return "";
+    const lower = str.toLowerCase();
+    return lower.charAt(0).toUpperCase() + lower.slice(1);
+}

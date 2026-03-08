@@ -10,7 +10,9 @@ export async function POST(request: Request) {
   );
 
   try {
-    const { email, role, clinicId, inviterName, inviterId } = await request.json();
+    const body = await request.json();
+    console.log('📬 [API] Payload recibido:', body);
+    const { email, role, clinicId, clinicName, inviterName, inviterId, invitedName } = body;
 
     if (!email || !role) {
       return NextResponse.json(
@@ -88,7 +90,9 @@ export async function POST(request: Request) {
       to: email,
       subject: `¡${inviterName || 'Tu clínica'} te invitó a Livio!`,
       html: buildInviteEmailHtml({
-        inviterName: inviterName || 'Tu clínica',
+        inviterName: inviterName || 'Livio',
+        invitedName: invitedName || 'Colega',
+        clinicName: clinicName || 'Tu Clínica',
         roleName,
         inviteLink,
       }),
@@ -117,13 +121,23 @@ export async function POST(request: Request) {
 // ─── HTML Email Template ─────────────────────────────────────────
 function buildInviteEmailHtml({
   inviterName,
+  invitedName,
+  clinicName,
   roleName,
   inviteLink,
 }: {
   inviterName: string;
+  invitedName: string;
+  clinicName: string;
   roleName: string;
   inviteLink: string;
 }) {
+  const origin = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  // Fallback to a publicly hosted logo if on localhost, otherwise the local one
+  const logoUrl = origin.includes('localhost')
+    ? 'https://raw.githubusercontent.com/nexioartificial/livio/main/public/logo.png'
+    : `${origin}/logo.png`;
+
   return `
 <!DOCTYPE html>
 <html lang="es">
@@ -136,33 +150,32 @@ function buildInviteEmailHtml({
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9;padding:40px 20px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.08);">
+        <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:24px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.08);border:1px solid #e2e8f0;">
           
-          <!-- Header -->
+          <!-- Header with Logo -->
           <tr>
-            <td style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:32px 40px;text-align:center;">
-              <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:800;letter-spacing:-0.5px;">LIVIO</h1>
-              <p style="margin:4px 0 0;color:#94a3b8;font-size:12px;letter-spacing:1px;">SOFTWARE ODONTOLÓGICO CON IA</p>
+            <td style="background-color:#ffffff;padding:48px 40px 12px;text-align:center;">
+              <img src="${logoUrl}" alt="Livio Logo" style="height:70px;width:auto;display:inline-block;margin:0 auto;" />
+              <p style="margin:16px 0 0;color:#94a3b8;font-size:12px;letter-spacing:1px;font-weight:700;text-transform:uppercase;">Software Dental Inteligente</p>
             </td>
           </tr>
 
           <!-- Body -->
           <tr>
             <td style="padding:40px;">
-              <h2 style="margin:0 0 8px;color:#0f172a;font-size:22px;font-weight:700;">¡Te invitaron al equipo!</h2>
-              <p style="margin:0 0 24px;color:#64748b;font-size:15px;line-height:1.6;">
-                <strong style="color:#0f172a;">${inviterName}</strong> te invitó a unirte como
-                <strong style="color:#10B981;">${roleName}</strong> en Livio.
+              <h2 style="margin:0 0 12px;color:#0f172a;font-size:24px;font-weight:800;letter-spacing:-0.5px;text-align:center;">¡Hola, ${invitedName}! 👋</h2>
+              <p style="margin:0 0 24px;color:#64748b;font-size:16px;line-height:1.6;text-align:center;">
+                <strong style="color:#0f172a;">${inviterName}</strong> de <strong style="color:#0f172a;">${clinicName}</strong> te ha invitado a unirte a su equipo en la plataforma Livio.
               </p>
 
-              <!-- Role Badge -->
-              <div style="background-color:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px 20px;margin-bottom:28px;">
-                <p style="margin:0;color:#166534;font-size:13px;font-weight:600;">
-                  🦷 Tu rol: ${roleName}
+              <!-- Role Info Card -->
+              <div style="background-color:#f0fdf4;border:1px solid #bbf7d0;border-radius:16px;padding:24px;margin-bottom:32px;text-align:center;">
+                <p style="margin:0;color:#166534;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">
+                  Tu posición asignada:
                 </p>
-                <p style="margin:4px 0 0;color:#15803d;font-size:12px;">
-                  Tendrás acceso completo a las funciones de tu rol
-                </p>
+                <h3 style="margin:10px 0 0;color:#10B981;font-size:22px;font-weight:800;">
+                  ✨ ${roleName}
+                </h3>
               </div>
 
               <!-- CTA Button -->
@@ -170,17 +183,19 @@ function buildInviteEmailHtml({
                 <tr>
                   <td align="center">
                     <a href="${inviteLink}" target="_blank"
-                       style="display:inline-block;background-color:#10B981;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:14px 40px;border-radius:12px;box-shadow:0 4px 14px rgba(16,185,129,0.3);">
+                       style="display:inline-block;background-color:#10B981;color:#ffffff;text-decoration:none;font-weight:700;font-size:16px;padding:18px 48px;border-radius:14px;box-shadow:0 8px 20px rgba(16,185,129,0.25);">
                       Aceptar invitación →
                     </a>
                   </td>
                 </tr>
               </table>
 
-              <p style="margin:24px 0 0;color:#94a3b8;font-size:12px;text-align:center;line-height:1.5;">
-                Este enlace es válido por 24 horas.<br/>
-                Si no esperabas esta invitación, podés ignorar este email.
-              </p>
+              <div style="margin-top:40px;padding-top:24px;border-top:1px solid #f1f5f9;">
+                <p style="margin:0;color:#94a3b8;font-size:12px;text-align:center;line-height:1.6;">
+                  Este enlace es exclusivo y personal.<br/>
+                  Si no esperabas este correo, podés ignorarlo.
+                </p>
+              </div>
             </td>
           </tr>
 
@@ -188,7 +203,7 @@ function buildInviteEmailHtml({
           <tr>
             <td style="background-color:#f8fafc;padding:20px 40px;border-top:1px solid #e2e8f0;">
               <p style="margin:0;color:#94a3b8;font-size:11px;text-align:center;">
-                Livio — Software con IA para clínicas odontológicas 🇦🇷<br/>
+                Livio 🇦🇷 — Software con IA para clínicas odontológicas<br/>
                 Cumplimiento Ley 27.706 · Datos protegidos
               </p>
             </td>

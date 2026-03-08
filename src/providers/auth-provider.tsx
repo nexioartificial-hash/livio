@@ -7,7 +7,8 @@ import { useRouter } from "next/navigation";
 
 interface AuthContextType {
     session: Session | null;
-    user: (User & { role?: string }) | null;
+    user: (User & { role?: string; clinic_id?: string; full_name?: string }) | null;
+    clinic: any | null;
     loading: boolean;
     signOut: () => Promise<void>;
 }
@@ -15,63 +16,66 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
     session: null,
     user: null,
+    clinic: null,
     loading: true,
     signOut: async () => { },
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [session, setSession] = useState<Session | null>(null);
-    const [user, setUser] = useState<(User & { role?: string }) | null>(null);
+    const [user, setUser] = useState<any | null>(null);
+    const [clinic, setClinic] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
+
+    // Initial load from cache to be "instantaneous"
+    useEffect(() => {
+        const cachedUser = localStorage.getItem('livio_user_cache');
+        const cachedClinic = localStorage.getItem('livio_clinic_cache');
+        if (cachedUser) setUser(JSON.parse(cachedUser));
+        if (cachedClinic) setClinic(JSON.parse(cachedClinic));
+    }, []);
     const router = useRouter();
 
-    const fetchProfile = async (userId: string) => {
-        console.log("🔍 [Auth] Intentando obtener perfil para ID:", userId);
+    const fetchProfileAndClinic = async (userId: string) => {
+        console.log("🔍 [Auth] Obteniendo perfil y clínica para:", userId);
+        try {
+            // 1. Get Professional Profile
+            const { data: profile, error: pError } = await supabase
+                .from("professional")
+                .select("*")
+                .eq("id", userId)
+                .maybeSingle();
 
-        // Timeout protection for the profile fetch
-        const profilePromise = (async () => {
-            try {
-                const { data: profile, error } = await supabase
+            if (pError) throw pError;
+
+            let finalProfile = profile;
+            if (!profile) {
+                console.warn("⚠️ [Auth] Perfil no encontrado. Creando superadmin...");
+                const { data: newProfile, error: iError } = await supabase
                     .from("professional")
-                    .select("role, clinic_id, full_name")
-                    .eq("id", userId)
-                    .maybeSingle();
-
-                if (error) {
-                    console.error("❌ [Auth] Error en Supabase Query:", error);
-                    return null;
-                }
-
-                if (!profile) {
-                    console.warn("⚠️ [Auth] Registro no encontrado. Creando perfil superadmin...");
-                    const { data: newProfile, error: insertError } = await supabase
-                        .from("professional")
-                        .insert({ id: userId, role: 'superadmin', is_onboarded: false })
-                        .select("role")
-                        .single();
-
-                    if (insertError) {
-                        console.error("❌ [Auth] Error al crear perfil:", insertError.message);
-                        return null;
-                    }
-                    return newProfile;
-                }
-
-                return profile;
-            } catch (err) {
-                console.error("🔥 [Auth] Error inesperado en fetchProfile:", err);
-                return null;
+                    .insert({ id: userId, role: 'superadmin', is_onboarded: false })
+                    .select("*")
+                    .single();
+                if (iError) throw iError;
+                finalProfile = newProfile;
             }
-        })();
 
-        const timeoutPromise = new Promise<null>((resolve) =>
-            setTimeout(() => {
-                console.warn("🕒 [Auth] Profile fetch timed out (4s)");
-                resolve(null);
-            }, 4000)
-        );
+            // 2. Get Clinic Data if clinic_id exists
+            let clinicData = null;
+            if (finalProfile?.clinic_id) {
+                const { data: clinic, error: cError } = await supabase
+                    .from("clinic")
+                    .select("*")
+                    .eq("id", finalProfile.clinic_id)
+                    .maybeSingle();
+                if (!cError) clinicData = clinic;
+            }
 
-        return Promise.race([profilePromise, timeoutPromise]);
+            return { profile: finalProfile, clinic: clinicData };
+        } catch (err) {
+            console.error("🔥 [Auth] Error en fetchProfileAndClinic:", err);
+            return { profile: null, clinic: null };
+        }
     };
 
     useEffect(() => {
@@ -101,10 +105,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 setSession(session);
 
                 if (session?.user) {
-                    const profile = await fetchProfile(session.user.id);
-                    setUser({ ...session.user, role: profile?.role });
+                    const { profile, clinic: cData } = await fetchProfileAndClinic(session.user.id);
+                    const enrichedUser = { ...session.user, ...profile };
+                    setUser(enrichedUser);
+                    setClinic(cData);
+                    // Update cache
+                    localStorage.setItem('livio_user_cache', JSON.stringify(enrichedUser));
+                    if (cData) localStorage.setItem('livio_clinic_cache', JSON.stringify(cData));
                 } else {
                     setUser(null);
+                    setClinic(null);
+                    localStorage.removeItem('livio_user_cache');
+                    localStorage.removeItem('livio_clinic_cache');
                 }
             } catch (err) {
                 console.error("❌ [Auth] Error en getSession:", err);
@@ -124,10 +136,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 try {
                     setSession(session);
                     if (session?.user) {
-                        const profile = await fetchProfile(session.user.id);
-                        setUser({ ...session.user, role: profile?.role });
+                        const { profile, clinic: cData } = await fetchProfileAndClinic(session.user.id);
+                        const enrichedUser = { ...session.user, ...profile };
+                        setUser(enrichedUser);
+                        setClinic(cData);
+                        localStorage.setItem('livio_user_cache', JSON.stringify(enrichedUser));
+                        if (cData) localStorage.setItem('livio_clinic_cache', JSON.stringify(cData));
                     } else {
                         setUser(null);
+                        setClinic(null);
+                        localStorage.removeItem('livio_user_cache');
+                        localStorage.removeItem('livio_clinic_cache');
                     }
                 } catch (err) {
                     console.error("❌ [Auth] Error en onAuthStateChange:", err);
@@ -155,7 +174,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ session, user, loading, signOut }}>
+        <AuthContext.Provider value={{ session, user, clinic, loading, signOut }}>
             {children}
         </AuthContext.Provider>
     );

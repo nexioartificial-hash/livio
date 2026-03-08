@@ -81,7 +81,7 @@ export function Sidebar() {
         setIsMounted(true);
     }, []);
 
-    const userInitial = user?.full_name?.charAt(0) || user?.email?.charAt(0) || "?";
+    const userInitial = (user as any)?.full_name?.charAt(0) || user?.email?.charAt(0) || "?";
 
     if (!isMounted) return null; // Avoid hydration mismatch on IDs
 
@@ -91,9 +91,9 @@ export function Sidebar() {
                 <Image
                     src="/logo-transparent.png"
                     alt="Livio"
-                    width={100}
-                    height={40}
-                    className="h-8 w-auto object-contain"
+                    width={180}
+                    height={72}
+                    className="h-12 w-auto object-contain"
                     priority
                 />
             </div>
@@ -155,7 +155,7 @@ export function Sidebar() {
                             </Avatar>
                             <div className="flex-1 overflow-hidden">
                                 <p className="text-sm font-bold text-slate-900 truncate">
-                                    {user?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name || "Usuario"}
+                                    {(user as any)?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name || "Usuario"}
                                 </p>
                                 <p className="text-[11px] text-slate-500 truncate">
                                     {user?.email}

@@ -52,12 +52,21 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/providers/auth-provider";
+import { useSubscription } from "@/hooks/useSubscription";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { updateMemberRole, deleteMember, getTeamMembers } from "@/app/actions/team";
-import InviteModal from "@/components/team/InviteModal";
 import SedeModal from "@/components/sucursales/SedeModal";
 import { supabase } from "@/lib/supabase/client";
+import ClinicConfigForm from "@/components/clinica/ClinicConfigForm";
+import { SimpleTeamTable } from "@/components/team/SimpleTeamTable";
+import { AddMemberFAB } from "@/components/team/AddMemberFAB";
+import StockModal from "@/components/stock/StockModal";
+import ImportStockModal from "@/components/stock/ImportStockModal";
+import TreatmentModal from "@/components/config/TreatmentModal";
+import ObrasSocialesModal from "@/components/obras-sociales/ObrasSocialesModal";
+import ImportObrasSocialesModal from "@/components/obras-sociales/ImportObrasSocialesModal";
+import { Package, Utensils, HeartPulse, FileSpreadsheet, Download } from "lucide-react";
 
 /**
  * Small component that reads OAuth redirect result from URL params.
@@ -65,8 +74,9 @@ import { supabase } from "@/lib/supabase/client";
  */
 
 export default function ConfigPage() {
-    const { user, loading } = useAuth();
-    const isSuperAdmin = user?.role === 'superadmin';
+    const { user, clinic, loading } = useAuth();
+    const { daysLeft, trialProgress, isPro, loading: subLoading } = useSubscription();
+    const isSuperAdmin = user?.role === 'superadmin' || user?.role === 'admin';
 
     // Google Calendar integration state
     const [googleProfile, setGoogleProfile] = useState<{
@@ -96,8 +106,10 @@ export default function ConfigPage() {
     }, [loading]);
 
     useEffect(() => {
-        console.log("📋 [Config] Render state:", { hasUser: !!user, loading, mountTime });
-    }, [user, loading, mountTime]);
+        if (!loading) {
+            console.log("📋 [Config] Auth check:", { hasUser: !!user, role: user?.role, clinic_id: (user as any)?.clinic_id });
+        }
+    }, [user, loading]);
 
     // ─── Google OAuth Popup Handler ───────────────────────────────────────
     useEffect(() => {
@@ -204,71 +216,11 @@ export default function ConfigPage() {
         }
     };
 
-    const [clinicData, setClinicData] = useState({
-        name: "",
-        cuit: "",
-        email: "",
-        phone: "",
-    });
-    const [loadingClinic, setLoadingClinic] = useState(true);
-
-    useEffect(() => {
-        const fetchClinicData = async () => {
-            if (!user?.clinic_id) {
-                setLoadingClinic(false);
-                return;
-            }
-            setLoadingClinic(true);
-            const { data, error } = await supabase
-                .from("clinic")
-                .select("name, cuit, email, phone")
-                .eq("id", user.clinic_id)
-                .maybeSingle();
-
-            if (!error && data) {
-                setClinicData({
-                    name: data.name || "",
-                    cuit: data.cuit || "",
-                    email: data.email || "",
-                    phone: data.phone || "",
-                });
-            }
-            setLoadingClinic(false);
-        };
-
-        if (!loading) fetchClinicData();
-    }, [user?.clinic_id, loading]);
-
-    const handleSaveClinic = async () => {
-        if (!user?.clinic_id) return;
-        const { error } = await supabase
-            .from("clinic")
-            .update({
-                name: clinicData.name,
-                cuit: clinicData.cuit,
-                email: clinicData.email,
-                phone: clinicData.phone,
-            })
-            .eq("id", user.clinic_id);
-
-        if (error) {
-            toast.error("Error al guardar los cambios: " + error.message);
-        } else {
-            toast.success("¡Cambios guardados correctamente!");
-        }
-    };
-
     const [team, setTeam] = useState<any[]>([]);
 
     useEffect(() => {
-        const fetchTeam = async () => {
-            const result = await getTeamMembers();
-            if (result.success) {
-                setTeam(result.data || []);
-            }
-        };
-        if (isSuperAdmin) fetchTeam();
-    }, [isSuperAdmin]);
+        if (isSuperAdmin) refreshTeam();
+    }, [isSuperAdmin, user?.email]);
 
     type Sucursal = {
         id: string;
@@ -283,17 +235,63 @@ export default function ConfigPage() {
     const [loadingSucursales, setLoadingSucursales] = useState(true);
     const [showNewSedeDialog, setShowNewSedeDialog] = useState(false);
     const [editingSedeId, setEditingSedeId] = useState<string | null>(null);
+
+    // Advanced Data State
+    const [tratamientos, setTratamientos] = useState<any[]>([]);
+    const [obrasSociales, setObrasSociales] = useState<any[]>([]);
+    const [stockItems, setStockItems] = useState<any[]>([]);
+    const [loadingAdvanced, setLoadingAdvanced] = useState(false);
+
+    // Editing State for Advanced Modals
+    const [editingTreatment, setEditingTreatment] = useState<any | null>(null);
+    const [editingStock, setEditingStock] = useState<any | null>(null);
+    const [editingOS, setEditingOS] = useState<any | null>(null);
+
+    // Advanced Tabs Modal States
+    const [showStockModal, setShowStockModal] = useState(false);
+    const [showImportStockModal, setShowImportStockModal] = useState(false);
+    const [showTreatmentModal, setShowTreatmentModal] = useState(false);
+    const [showOSModal, setShowOSModal] = useState(false);
+    const [showImportOSModal, setShowImportOSModal] = useState(false);
+
+    // Fetch Advanced Data
+    useEffect(() => {
+        if ((user as any)?.clinic_id) {
+            fetchAdvancedData();
+        }
+    }, [(user as any)?.clinic_id]);
+
+    const fetchAdvancedData = async () => {
+        setLoadingAdvanced(true);
+        const clinicId = (user as any)?.clinic_id;
+        try {
+            const [tRes, osRes, sRes] = await Promise.all([
+                supabase.from("tratamiento").select("*").eq("clinic_id", clinicId).order("nombre"),
+                supabase.from("obras_sociales").select("*").eq("clinic_id", clinicId).order("nombre"),
+                supabase.from("stock").select("*").eq("clinic_id", clinicId).order("nombre")
+            ]);
+
+            if (tRes.data) setTratamientos(tRes.data);
+            if (osRes.data) setObrasSociales(osRes.data);
+            if (sRes.data) setStockItems(sRes.data);
+        } catch (err) {
+            console.error("Error fetching advanced data:", err);
+        } finally {
+            setLoadingAdvanced(false);
+        }
+    };
     const [newSede, setNewSede] = useState({ name: "", address: "", phone: "" });
     const [savingSede, setSavingSede] = useState(false);
 
     useEffect(() => {
         const fetchSucursales = async () => {
-            if (!user?.clinic_id) { setLoadingSucursales(false); return; }
+            const clinicId = (user as any)?.clinic_id;
+            if (!clinicId) { setLoadingSucursales(false); return; }
             setLoadingSucursales(true);
             const { data, error } = await supabase
                 .from("sucursal")
                 .select("id, name, address, phone, google_maps_url")
-                .eq("clinic_id", user.clinic_id)
+                .eq("clinic_id", clinicId)
                 .order("created_at", { ascending: true });
 
             if (!error && data) {
@@ -302,10 +300,10 @@ export default function ConfigPage() {
             setLoadingSucursales(false);
         };
         if (!loading) fetchSucursales();
-    }, [user?.clinic_id, loading]);
+    }, [(user as any)?.clinic_id, loading]);
 
     const handleSaveSede = async () => {
-        if (!user?.clinic_id || !newSede.name.trim()) return;
+        if (!(user as any)?.clinic_id || !newSede.name.trim()) return;
         setSavingSede(true);
         try {
             if (editingSedeId) {
@@ -334,7 +332,7 @@ export default function ConfigPage() {
                 // CREATE
                 const { data, error } = await supabase
                     .from("sucursal")
-                    .insert({ clinic_id: user.clinic_id, name: newSede.name, address: newSede.address || null, phone: newSede.phone || null })
+                    .insert({ clinic_id: (user as any).clinic_id, name: newSede.name, address: newSede.address || null, phone: newSede.phone || null })
                     .select("id, name, address, phone, google_maps_url")
                     .single();
 
@@ -384,38 +382,39 @@ export default function ConfigPage() {
     };
 
     const refreshTeam = async () => {
-        const result = await getTeamMembers();
-        if (result.success) setTeam(result.data || []);
+        const clinicId = (user as any)?.clinic_id;
+        const result = await getTeamMembers(clinicId, user?.id);
+        if (result.success) {
+            const currentEmail = user?.email;
+            const members = (result.data || []).map((m: any) => ({
+                ...m,
+                isCurrentUser: m.email === currentEmail
+            }));
+            setTeam(members);
+        }
     };
 
-    // Aggressive rendering strategy:
-    // 1. If we have a user, show the page immediately.
-    // 2. If we are still "loading" according to AuthProvider, show the spinner.
-    // 3. If loading is false but user is null, give it a 20s grace period before showing "Restricted Access".
-    const showVerifyingState = !user && (loading || mountTime < 20);
+    // Ultra-Fast Rendering Strategy:
+    // 1. If we have a user (even without profile yet), show the page structure immediately.
+    // 2. Only show a full page loader if we are truly "loading" the initial session (first few ms).
+    const isInitialSessionLoading = loading && mountTime < 1;
 
-    if (showVerifyingState) {
+    if (isInitialSessionLoading) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#76D7B6]"></div>
-                <p className="text-sm text-slate-400 animate-pulse">
-                    {mountTime > 5 ? "Verificando acceso..." : "Cargando configuración..."}
-                </p>
+            <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 p-8">
+                <Loader2 className="h-8 w-8 animate-spin text-[#76D7B6]" />
             </div>
         );
     }
 
-    // If we reached here and still have no user after 20s, show the Access Restricted view
-    if (!user) {
+    // If we reached here and still have no user after a grace period, show Access Restricted
+    if (!user && !loading && mountTime > 3) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
                 <ShieldCheck className="h-12 w-12 text-slate-300" />
-                <h2 className="text-xl font-semibold text-slate-900">Sesión no encontrada</h2>
-                <p className="text-slate-500 max-w-xs">No pudimos verificar tu acceso. Si acabas de iniciar sesión, por favor refresca la página.</p>
-                <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => window.location.reload()}>Refrescar Página</Button>
-                    <Button onClick={() => window.location.href = '/login'}>Ir al Login</Button>
-                </div>
+                <h2 className="text-xl font-semibold text-slate-900">Sincronizando sesión...</h2>
+                <p className="text-slate-500 max-w-xs">Si el problema persiste, por favor intenta refrescar la página manualmente.</p>
+                <Button onClick={() => window.location.reload()}>Refrescar Página</Button>
             </div>
         );
     }
@@ -457,14 +456,7 @@ export default function ConfigPage() {
         }
     }
 
-    const trialDaysLeft = user?.trial_ends_at
-        ? Math.max(0, Math.ceil(DateTime.fromISO(user.trial_ends_at).diffNow('days').days))
-        : 30;
-
-    const trialProgress = Math.min(100, Math.max(0, (trialDaysLeft / 30) * 100));
-
-
-    const showTrialBadge = user?.subscription_status === 'trialing' || (user?.role === 'superadmin' && !user?.subscription_status);
+    const showTrialBadge = (user as any)?.subscription_status === 'trialing' || (user?.role === 'superadmin' && !(user as any)?.subscription_status);
 
     return (
         <div className="space-y-6">
@@ -474,80 +466,24 @@ export default function ConfigPage() {
             </div>
 
             <Tabs defaultValue="clinica" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 max-w-lg bg-slate-100 p-1">
+                <TabsList className={cn(
+                    "grid w-full bg-slate-100 p-1",
+                    isSuperAdmin ? "grid-cols-6" : "grid-cols-5"
+                )}>
                     <TabsTrigger value="clinica" className="data-[state=active]:bg-white data-[state=active]:text-[#76D7B6] data-[state=active]:shadow-sm">Mi Clínica</TabsTrigger>
                     {isSuperAdmin && (
                         <TabsTrigger value="equipo" className="data-[state=active]:bg-white data-[state=active]:text-[#76D7B6] data-[state=active]:shadow-sm">Equipo</TabsTrigger>
                     )}
+                    <TabsTrigger value="tratamientos" className="data-[state=active]:bg-white data-[state=active]:text-[#76D7B6] data-[state=active]:shadow-sm">Tratamientos</TabsTrigger>
+                    <TabsTrigger value="obras-sociales" className="data-[state=active]:bg-white data-[state=active]:text-[#76D7B6] data-[state=active]:shadow-sm">Obras Sociales</TabsTrigger>
+                    <TabsTrigger value="inventario" className="data-[state=active]:bg-white data-[state=active]:text-[#76D7B6] data-[state=active]:shadow-sm">Inventario</TabsTrigger>
                     <TabsTrigger value="integraciones" className="data-[state=active]:bg-white data-[state=active]:text-[#76D7B6] data-[state=active]:shadow-sm">Integraciones</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="clinica" className="mt-6 space-y-6">
                     <div className="grid gap-6 lg:grid-cols-3">
                         <div className="lg:col-span-2 space-y-6">
-                            <Card className={cn(!isSuperAdmin && "opacity-80")}>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2 text-base">
-                                        <Building2 className="h-5 w-5 text-[#76D7B6]" />
-                                        Información General
-                                    </CardTitle>
-                                    <CardDescription>Datos básicos de facturación y contacto.</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="grid gap-4 md:grid-cols-2">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="clinic-name">Nombre Comercial</Label>
-                                            <Input
-                                                id="clinic-name"
-                                                value={clinicData.name}
-                                                onChange={(e) => setClinicData({ ...clinicData, name: e.target.value })}
-                                                disabled={!isSuperAdmin || loadingClinic}
-                                                placeholder={loadingClinic ? "Cargando..." : "Ej: Clinica Dental San Martín"}
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="clinic-cuit">CUIT</Label>
-                                            <Input
-                                                id="clinic-cuit"
-                                                value={clinicData.cuit}
-                                                onChange={(e) => setClinicData({ ...clinicData, cuit: e.target.value })}
-                                                disabled={!isSuperAdmin || loadingClinic}
-                                                placeholder={loadingClinic ? "Cargando..." : "Ej: 20-12345678-9"}
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="clinic-email">Email Admin</Label>
-                                            <Input
-                                                id="clinic-email"
-                                                type="email"
-                                                value={clinicData.email}
-                                                onChange={(e) => setClinicData({ ...clinicData, email: e.target.value })}
-                                                disabled={!isSuperAdmin || loadingClinic}
-                                                placeholder={loadingClinic ? "Cargando..." : "Ej: admin@miclinica.com"}
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="clinic-phone">Teléfono Consultas</Label>
-                                            <Input
-                                                id="clinic-phone"
-                                                value={clinicData.phone}
-                                                onChange={(e) => setClinicData({ ...clinicData, phone: e.target.value })}
-                                                disabled={!isSuperAdmin || loadingClinic}
-                                                placeholder={loadingClinic ? "Cargando..." : "Ej: +54 11 4567-8900"}
-                                            />
-                                        </div>
-                                    </div>
-                                    {isSuperAdmin && (
-                                        <Button
-                                            onClick={handleSaveClinic}
-                                            className="bg-[#76D7B6] hover:bg-[#65cba8] text-white"
-                                            disabled={loadingClinic}
-                                        >
-                                            {loadingClinic ? "Cargando..." : "Guardar Cambios"}
-                                        </Button>
-                                    )}
-                                </CardContent>
-                            </Card>
+                            <ClinicConfigForm />
 
                             <Card>
                                 <CardHeader>
@@ -576,14 +512,18 @@ export default function ConfigPage() {
                                             ))}
                                         </div>
                                     ) : sucursales.length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center py-10 text-center gap-3">
-                                            <MapPin className="h-10 w-10 text-slate-200" />
-                                            <p className="text-sm text-slate-500 font-medium">No hay sedes cargadas todavía</p>
-                                            <p className="text-xs text-slate-400">Crea tu primera sede para organizarte mejor</p>
+                                        <div className="flex flex-col items-center justify-center py-12 text-center gap-4">
+                                            <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center">
+                                                <MapPin className="h-8 w-8 text-slate-300" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-sm font-bold text-slate-900">No hay sedes registradas todavía</p>
+                                                <p className="text-xs text-slate-500 max-w-[200px]">Agrega tu primera sucursal para comenzar a gestionar los horarios y turnos.</p>
+                                            </div>
                                             {isSuperAdmin && (
                                                 <Button
                                                     size="sm"
-                                                    className="mt-1 bg-[#76D7B6] text-slate-900 hover:bg-[#65cba8]"
+                                                    className="mt-2 bg-[#76D7B6] text-slate-900 hover:bg-[#65cba8] font-bold"
                                                     onClick={() => setShowNewSedeDialog(true)}
                                                 >
                                                     <Plus className="h-4 w-4 mr-1" /> Agregar primera sede
@@ -649,9 +589,9 @@ export default function ConfigPage() {
                             {isSuperAdmin && showTrialBadge && (
                                 <Card className={cn(
                                     "text-white border-none shadow-xl overflow-hidden relative transition-colors duration-500",
-                                    trialDaysLeft > 0 && trialDaysLeft <= 3
+                                    daysLeft > 0 && daysLeft <= 3
                                         ? "bg-gradient-to-br from-red-950 to-red-900 ring-1 ring-red-500/30"
-                                        : trialDaysLeft <= 0
+                                        : daysLeft <= 0
                                             ? "bg-slate-950 opacity-80"
                                             : "bg-slate-900"
                                 )}>
@@ -662,17 +602,17 @@ export default function ConfigPage() {
                                         <CardTitle className="text-sm font-bold flex items-center gap-2">
                                             <Crown className={cn(
                                                 "h-4 w-4",
-                                                trialDaysLeft <= 3 ? "text-red-400" : "text-[#76D7B6]"
+                                                daysLeft <= 3 ? "text-red-400" : "text-[#76D7B6]"
                                             )} />
                                             Suscripción Premium
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-6 relative z-10">
                                         <div className="space-y-4">
-                                            {user?.clinic_created_at && (
+                                            {(user as any)?.clinic_created_at && (
                                                 <div className="flex justify-between text-[11px] font-medium text-slate-400">
                                                     <span>Fecha de registro</span>
-                                                    <span>{DateTime.fromISO(user.clinic_created_at).setLocale('es').toFormat('dd/MM/yyyy')}</span>
+                                                    <span>{DateTime.fromISO((user as any).clinic_created_at).setLocale('es').toFormat('dd/MM/yyyy')}</span>
                                                 </div>
                                             )}
                                             <div className="space-y-2">
@@ -680,14 +620,14 @@ export default function ConfigPage() {
                                                     <span className="text-slate-400">Días de prueba</span>
                                                     <span className={cn(
                                                         "font-bold",
-                                                        trialDaysLeft <= 3 ? "text-red-400 animate-pulse" : "text-[#76D7B6]"
-                                                    )}>{trialDaysLeft} restantes</span>
+                                                        daysLeft <= 3 ? "text-red-400 animate-pulse" : "text-[#76D7B6]"
+                                                    )}>{daysLeft} restantes</span>
                                                 </div>
                                                 <div className="h-2 w-full bg-slate-800/50 rounded-full overflow-hidden">
                                                     <div
                                                         className={cn(
                                                             "h-full transition-all duration-1000",
-                                                            trialDaysLeft <= 3 ? "bg-red-500 animate-pulse-slow" : "bg-[#76D7B6] animate-pulse-slow"
+                                                            daysLeft <= 3 ? "bg-red-500 animate-pulse-slow" : "bg-[#76D7B6] animate-pulse-slow"
                                                         )}
                                                         style={{ width: `${trialProgress}%` }}
                                                     ></div>
@@ -714,97 +654,21 @@ export default function ConfigPage() {
                     </div >
                 </TabsContent >
 
-                <TabsContent value="equipo" className="mt-6">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-6">
-                            <div className="space-y-1">
-                                <CardTitle className="text-xl">
-                                    {team.length} {team.length === 1 ? 'miembro' : 'miembros'} equipo (incluye Dueño 👑)
-                                </CardTitle>
-                                <CardDescription>Gestiona el acceso de tus profesionales y recepcionistas.</CardDescription>
-                            </div>
-                            <InviteModal onInviteSent={refreshTeam} />
-                        </CardHeader>
-                        <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow className="bg-slate-50 border-none hover:bg-slate-50">
-                                        <TableHead className="font-bold text-slate-900 rounded-l-lg">Miembro</TableHead>
-                                        <TableHead className="font-bold text-slate-900">Rol</TableHead>
-                                        <TableHead className="font-bold text-slate-900">Estado</TableHead>
-                                        <TableHead className="text-right font-bold text-slate-900 rounded-r-lg">Acciones</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {team.map((member) => (
-                                        <TableRow key={member.id} className="border-b border-slate-50 hover:bg-slate-50/50">
-                                            <TableCell>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="h-9 w-9 rounded-full bg-[#76D7B6]/10 flex items-center justify-center font-bold text-[#76D7B6] text-xs">
-                                                        {(member.full_name || "M").split(" ").map((n: string) => n[0]).join("")}
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-bold text-sm text-slate-900">{member.full_name}</p>
-                                                        <p className="text-[11px] text-slate-400">{member.email}</p>
-                                                    </div>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center gap-2">
-                                                    {getRoleBadge(member.role)}
-                                                    {member.role === 'superadmin' && <span className="text-[10px] text-slate-400 font-medium">Admin Total</span>}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant="outline" className={cn(
-                                                    "text-[10px] font-medium border-none px-2",
-                                                    member.status === 'activo' ? "text-green-600 bg-green-50" : "text-amber-600 bg-amber-50"
-                                                )}>
-                                                    {member.status === 'activo' ? 'Activo' : 'Invitación pendiente'}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                {member.role !== 'superadmin' ? (
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
-                                                                <MoreVertical className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => handleUpdateRole(member.id, 'superadmin')}>
-                                                                <Crown className="h-4 w-4" /> Cambiar a Dueño
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => handleUpdateRole(member.id, 'recepcionista')}>
-                                                                <MessageSquare className="h-4 w-4" /> Cambiar a Recepción
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => handleUpdateRole(member.id, 'profesional')}>
-                                                                <Stethoscope className="h-4 w-4" /> Cambiar a Dentista
-                                                            </DropdownMenuItem>
-                                                            <div className="h-px bg-slate-100 my-1" />
-                                                            {member.status === 'pendiente' && (
-                                                                <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => toast.success("Invitación reenviada")}>
-                                                                    <Send className="h-4 w-4" /> Reenviar Invite
-                                                                </DropdownMenuItem>
-                                                            )}
-                                                            <DropdownMenuItem
-                                                                className="cursor-pointer gap-2 text-red-600 focus:text-red-700 focus:bg-red-50"
-                                                                onClick={() => handleDeleteMember(member.id)}
-                                                            >
-                                                                <Trash2 className="h-4 w-4" /> Eliminar Miembro
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                ) : (
-                                                    <Badge variant="ghost" className="text-[10px] text-slate-300">Protegido</Badge>
-                                                )}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
+                <TabsContent value="equipo" className="mt-6 space-y-6">
+                    <div className="flex items-center justify-between mb-2">
+                        <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+                            Equipo ({team.length} {team.length === 1 ? 'miembro' : 'miembros'})
+                        </h2>
+                    </div>
+
+                    <SimpleTeamTable 
+                        members={team}
+                        onDelete={handleDeleteMember}
+                        onUpdateRole={handleUpdateRole}
+                        onInviteSent={refreshTeam}
+                    />
+
+                    <AddMemberFAB onInviteSent={refreshTeam} />
                 </TabsContent>
 
                 {/* ─── Integraciones Tab ─────────────────────────────────────── */}
@@ -905,7 +769,7 @@ export default function ConfigPage() {
                     setNewSede({ name: "", address: "", phone: "" });
                 }}
                 editingSede={editingSedeId ? { id: editingSedeId, ...newSede } : null}
-                clinicId={user?.clinic_id || ""}
+                clinicId={(user as any)?.clinic_id || ""}
                 onSuccess={(data, isEdit) => {
                     if (!isEdit && typeof data === 'string') {
                         // Deletion case handled by onSuccess passing ID (simple restoration logic)
@@ -922,6 +786,45 @@ export default function ConfigPage() {
                         }
                     }
                 }}
+            />
+
+            {/* Advanced Feature Modals */}
+            <TreatmentModal 
+                isOpen={showTreatmentModal}
+                onClose={() => setShowTreatmentModal(false)}
+                editingItem={editingTreatment}
+                clinicId={(user as any)?.clinic_id || ""}
+                onSuccess={fetchAdvancedData}
+            />
+
+            <StockModal
+                isOpen={showStockModal}
+                onClose={() => setShowStockModal(false)}
+                editingItem={editingStock}
+                clinicId={(user as any)?.clinic_id || ""}
+                onSuccess={fetchAdvancedData}
+            />
+
+            <ImportStockModal
+                isOpen={showImportStockModal}
+                onClose={() => setShowImportStockModal(false)}
+                clinicId={(user as any)?.clinic_id || ""}
+                onSuccess={fetchAdvancedData}
+            />
+
+            <ObrasSocialesModal 
+                isOpen={showOSModal}
+                onClose={() => setShowOSModal(false)}
+                editingItem={editingOS}
+                clinicId={(user as any)?.clinic_id || ""}
+                onSuccess={fetchAdvancedData}
+            />
+
+            <ImportObrasSocialesModal
+                isOpen={showImportOSModal}
+                onClose={() => setShowImportOSModal(false)}
+                clinicId={(user as any)?.clinic_id || ""}
+                onSuccess={fetchAdvancedData}
             />
         </div >
     );
