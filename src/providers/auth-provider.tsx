@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import { logoutAction } from "@/app/actions/logout";
 
 interface AuthContextType {
     session: Session | null;
@@ -163,13 +164,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }, []);
 
     const signOut = async () => {
+        console.log("🚪 [Auth] Cerrando sesión...");
         try {
+            // 1. Sign out from Supabase (Client)
             await supabase.auth.signOut();
+            
+            // 2. Clear localStorage Cache
+            localStorage.removeItem('livio_user_cache');
+            localStorage.removeItem('livio_clinic_cache');
+            
+            // 3. Call Server Action to clear cookies thoroughly
+            await logoutAction();
+            
+            console.log("✅ [Auth] Sesión cerrada exitosamente.");
         } catch (error) {
-            console.error("Error signing out:", error);
+            console.error("❌ [Auth] Error al cerrar sesión:", error);
         } finally {
-            // Hard navigation clears all state and avoids double-redirect race
-            window.location.href = '/login';
+            // 4. Force hard redirect to login and clear all memory state
+            window.location.replace('/login');
         }
     };
 
