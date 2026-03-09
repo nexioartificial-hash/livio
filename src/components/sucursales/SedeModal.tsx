@@ -13,6 +13,27 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { titleCase, sentenceCase } from "@/utils/masks";
 import { sedeSchema, type SedeValues } from "@/lib/validators/config";
+import { Switch } from "@/components/ui/switch";
+
+const DAYS_ES = {
+    monday: "Lunes",
+    tuesday: "Martes",
+    wednesday: "Miércoles",
+    thursday: "Jueves",
+    friday: "Viernes",
+    saturday: "Sábado",
+    sunday: "Domingo"
+} as const;
+
+const DEFAULT_HORARIOS = {
+    monday: { enabled: true, slots: [{ start: "09:00", end: "18:00" }] },
+    tuesday: { enabled: true, slots: [{ start: "09:00", end: "18:00" }] },
+    wednesday: { enabled: true, slots: [{ start: "09:00", end: "18:00" }] },
+    thursday: { enabled: true, slots: [{ start: "09:00", end: "18:00" }] },
+    friday: { enabled: true, slots: [{ start: "09:00", end: "18:00" }] },
+    saturday: { enabled: false, slots: [{ start: "09:00", end: "13:00" }] },
+    sunday: { enabled: false, slots: [{ start: "09:00", end: "13:00" }] },
+};
 
 interface SedeModalProps {
     isOpen: boolean;
@@ -44,7 +65,8 @@ export default function SedeModal({ isOpen, onClose, editingSede, clinicId, onSu
             phone: "",
             email: "",
             google_maps_url: "",
-            confirmAddress: false
+            confirmAddress: false,
+            horarios: DEFAULT_HORARIOS
         }
     });
 
@@ -70,7 +92,8 @@ export default function SedeModal({ isOpen, onClose, editingSede, clinicId, onSu
                     phone: editingSede.phone?.replace("+54 ", "") || "",
                     email: editingSede.email || "",
                     google_maps_url: editingSede.google_maps_url || "",
-                    confirmAddress: !!editingSede.google_maps_url
+                    confirmAddress: !!editingSede.google_maps_url,
+                    horarios: editingSede.horarios || DEFAULT_HORARIOS
                 });
                 setIsManualUrl(!!editingSede.google_maps_url);
             } else {
@@ -82,7 +105,8 @@ export default function SedeModal({ isOpen, onClose, editingSede, clinicId, onSu
                     phone: "",
                     email: "",
                     google_maps_url: "",
-                    confirmAddress: false
+                    confirmAddress: false,
+                    horarios: DEFAULT_HORARIOS
                 });
                 setIsManualUrl(false);
             }
@@ -159,222 +183,209 @@ export default function SedeModal({ isOpen, onClose, editingSede, clinicId, onSu
         }
     };
 
-    if (!isOpen) return null;
-
-    return (
+    if (!isOpen) return null;    return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 relative">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 relative overflow-hidden">
                 <button
                     onClick={onClose}
-                    className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 transition-colors"
+                    className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 transition-colors z-20"
                 >
                     <X className="h-5 w-5" />
                 </button>
 
-                <h3 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <MapPin className="h-5 w-5 text-[#76D7B6]" /> {editingSede ? "Editar Sede" : "Nueva Sede"}
-                </h3>
-
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-                    <div>
-                        <Label className="text-xs font-medium text-slate-600 mb-1 block">Nombre</Label>
-                        <Controller
-                            name="name"
-                            control={control}
-                            render={({ field }) => (
-                                <Input
-                                    {...field}
-                                    placeholder="Ej: Sede Central"
-                                    className={cn(errors.name && "border-red-500")}
-                                    onChange={(e) => field.onChange(titleCase(e.target.value))}
-                                />
-                            )}
-                        />
-                        {errors.name && <p className="text-[10px] text-red-500 mt-1">{errors.name.message}</p>}
+                <div className="flex items-center gap-3 mb-6 relative z-10">
+                    <div className="h-10 w-10 bg-[#76D7B6]/10 rounded-xl flex items-center justify-center">
+                        <MapPin className="h-5 w-5 text-[#76D7B6]" />
                     </div>
+                    <div>
+                        <h3 className="text-lg font-bold text-slate-900 leading-none">
+                            {editingSede ? "Editar Sede" : "Nueva Sede"}
+                        </h3>
+                        <p className="text-sm text-slate-500 mt-1">Completa los datos de tu sucursal</p>
+                    </div>
+                </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 relative z-10">
+                    <div className="space-y-3">
                         <div>
-                            <Label className="text-xs font-medium text-slate-600 mb-1 block">Dirección</Label>
+                            <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Nombre de la Sede</Label>
                             <Controller
-                                name="address"
-                                control={control}
-                                render={({ field }) => (
-                                    <Input 
-                                        {...field} 
-                                        placeholder="Ej: Av. Corrientes 1234" 
-                                        className={cn(errors.address && "border-red-500")}
-                                        onChange={(e) => field.onChange(titleCase(e.target.value))}
-                                    />
-                                )}
-                            />
-                            {errors.address && <p className="text-[10px] text-red-500 mt-1">{errors.address.message}</p>}
-                        </div>
-                        <div>
-                            <Label className="text-xs font-medium text-slate-600 mb-1 block">Localidad</Label>
-                            <Controller
-                                name="location"
-                                control={control}
-                                render={({ field }) => (
-                                    <Input 
-                                        {...field} 
-                                        placeholder="Ej: Palermo, CABA" 
-                                        className={cn(errors.location && "border-red-500")}
-                                        onChange={(e) => field.onChange(titleCase(e.target.value))}
-                                    />
-                                )}
-                            />
-                            {errors.location && <p className="text-[10px] text-red-500 mt-1">{errors.location.message}</p>}
-                        </div>
-                    </div>
-
-                    <div>
-                        <Label className="text-xs font-medium text-slate-600 mb-1 block">Aclaraciones</Label>
-                        <Controller
-                            name="aclaraciones"
-                            control={control}
-                            render={({ field }) => (
-                                <Textarea
-                                    {...field}
-                                    placeholder="Depto/Piso, timbre, referencias para pacientes..."
-                                    rows={2}
-                                    className={cn("min-h-[60px]", errors.aclaraciones && "border-red-500")}
-                                    onChange={(e) => field.onChange(sentenceCase(e.target.value.slice(0, 200)))}
-                                />
-                            )}
-                        />
-                        <div className="flex justify-between mt-1">
-                            {errors.aclaraciones && <p className="text-[10px] text-red-500">{errors.aclaraciones.message}</p>}
-                            <p className="text-[10px] text-slate-400 ml-auto">{(watch("aclaraciones") || "").length}/200</p>
-                        </div>
-                    </div>
-
-                    <div>
-                        <Label className="text-xs font-medium text-slate-600 mb-1 block">Teléfono (celular)</Label>
-                        <div className="relative flex items-center">
-                            <span className="absolute left-3 text-sm font-medium text-slate-400">+54</span>
-                            <Controller
-                                name="phone"
+                                name="name"
                                 control={control}
                                 render={({ field }) => (
                                     <Input
                                         {...field}
-                                        className="pl-12"
-                                        placeholder="Ej: 11 4567-8900"
-                                        onChange={(e) => field.onChange(e.target.value.replace(/[^0-9]/g, ""))}
+                                        placeholder="Ej: Sede Central"
+                                        className={cn("h-10", errors.name && "border-red-500")}
+                                        onChange={(e) => field.onChange(titleCase(e.target.value))}
                                     />
                                 )}
                             />
+                            {errors.name && <p className="text-xs text-red-500 mt-1.5">{errors.name.message}</p>}
                         </div>
-                        {errors.phone && <p className="text-[10px] text-red-500 mt-1">{errors.phone.message}</p>}
-                    </div>
 
-                    <div>
-                        <Label className="text-xs font-medium text-slate-600 mb-1 block">Email de contacto</Label>
-                        <div className="relative flex items-center">
-                            <Mail className="absolute left-3 h-4 w-4 text-slate-400" />
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Dirección</Label>
+                                <Controller
+                                    name="address"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Input 
+                                            {...field} 
+                                            placeholder="Calle y N°" 
+                                            className={cn("h-10", errors.address && "border-red-500")}
+                                            onChange={(e) => field.onChange(titleCase(e.target.value))}
+                                        />
+                                    )}
+                                />
+                            </div>
+                            <div>
+                                <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Localidad</Label>
+                                <Controller
+                                    name="location"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Input 
+                                            {...field} 
+                                            placeholder="Ciudad/Barrio" 
+                                            className={cn("h-10", errors.location && "border-red-500")}
+                                            onChange={(e) => field.onChange(titleCase(e.target.value))}
+                                        />
+                                    )}
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Aclaraciones</Label>
                             <Controller
-                                name="email"
+                                name="aclaraciones"
                                 control={control}
                                 render={({ field }) => (
-                                    <Input
+                                    <Textarea
                                         {...field}
-                                        type="email"
-                                        className={cn("pl-10", errors.email && "border-red-500")}
-                                        placeholder="Ej: contacto@sede.com"
+                                        placeholder="Depto, piso, referencias..."
+                                        rows={2}
+                                        className={cn("min-h-[60px] resize-none", errors.aclaraciones && "border-red-500")}
+                                        onChange={(e) => field.onChange(sentenceCase(e.target.value.slice(0, 200)))}
                                     />
                                 )}
                             />
+                            <p className="text-[10px] text-slate-400 text-right mt-1">{(watch("aclaraciones") || "").length}/200</p>
                         </div>
-                        {errors.email && <p className="text-[10px] text-red-500 mt-1">{errors.email.message}</p>}
-                    </div>
 
-                    <div>
-                        <div className="flex items-center justify-between mb-1">
-                            <Label className="text-xs font-medium text-slate-600">Enlace de Google Maps</Label>
-                            {watch("google_maps_url") && (
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Teléfono (+54)</Label>
+                                <Controller
+                                    name="phone"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Input
+                                            {...field}
+                                            placeholder="11 4567-8900"
+                                            className="h-10"
+                                            onChange={(e) => field.onChange(e.target.value.replace(/[^0-9]/g, ""))}
+                                        />
+                                    )}
+                                />
+                            </div>
+                            <div>
+                                <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Email</Label>
+                                <Controller
+                                    name="email"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Input
+                                            {...field}
+                                            type="email"
+                                            placeholder="sede@email.com"
+                                            className="h-10"
+                                        />
+                                    )}
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                                <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Enlace de Google Maps</Label>
                                 <a
                                     href={watch("google_maps_url")}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-[10px] text-[#76D7B6] font-bold hover:underline flex items-center gap-1"
                                 >
-                                    Abrir Mapa <ExternalLink className="h-2.5 w-2.5" />
+                                    Abrir Mapa <ExternalLink className="h-3 w-3" />
                                 </a>
-                            )}
-                        </div>
-                        <Controller
-                            name="google_maps_url"
-                            control={control}
-                            render={({ field }) => (
-                                <Input
-                                    {...field}
-                                    className="text-xs italic mb-2"
-                                    placeholder="Se genera automáticamente o pega uno manual"
-                                    onChange={(e) => {
-                                        setIsManualUrl(true);
-                                        field.onChange(e.target.value);
-                                    }}
+                            </div>
+                            <div className="space-y-3">
+                                <Controller
+                                    name="google_maps_url"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Input
+                                            {...field}
+                                            className="text-xs h-9 bg-slate-50 italic truncate"
+                                            placeholder="Enlace automático"
+                                            onChange={(e) => {
+                                                setIsManualUrl(true);
+                                                field.onChange(e.target.value);
+                                            }}
+                                        />
+                                    )}
                                 />
-                            )}
-                        />
-                        {errors.google_maps_url && <p className="text-[10px] text-red-500 mb-1">{errors.google_maps_url.message}</p>}
-
-                        <Controller
-                            name="confirmAddress"
-                            control={control}
-                            render={({ field }) => (
-                                <label className="flex items-center gap-2 cursor-pointer group px-1">
-                                    <input
-                                        type="checkbox"
-                                        checked={field.value}
-                                        onChange={field.onChange}
-                                        className={cn(
-                                            "rounded border-slate-300 text-[#76D7B6] focus:ring-[#76D7B6] h-3.5 w-3.5",
-                                            errors.confirmAddress && "border-red-500"
-                                        )}
-                                    />
-                                    <span className="text-[11px] text-slate-500 group-hover:text-slate-900 transition-colors">
-                                        Confirmo que la ubicación coincide con el link de Google Maps
-                                    </span>
-                                </label>
-                            )}
-                        />
-                        {errors.confirmAddress && <p className="text-[10px] text-red-500 mt-1">{errors.confirmAddress.message}</p>}
+                                <Controller
+                                    name="confirmAddress"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <label className="flex items-center gap-2 cursor-pointer group">
+                                            <input
+                                                type="checkbox"
+                                                checked={field.value}
+                                                onChange={field.onChange}
+                                                className="rounded border-slate-300 text-[#76D7B6] focus:ring-[#76D7B6] h-4 w-4"
+                                            />
+                                            <span className="text-xs text-slate-500 font-medium group-hover:text-slate-700 transition-colors">
+                                                Confirmo que la ubicación coincide con el link de Google Maps
+                                            </span>
+                                        </label>
+                                    )}
+                                />
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="flex gap-2 mt-5 items-center justify-between">
-                        {editingSede ? (
+                    <div className="flex gap-3 pt-4 border-t mt-4">
+                        {editingSede && (
                             <Button
                                 type="button"
                                 variant="ghost"
-                                size="sm"
-                                className="text-red-500 hover:text-red-700 hover:bg-red-50 gap-1 px-2"
+                                size="icon"
+                                className="h-10 w-10 text-red-500 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
                                 onClick={handleDelete}
                                 disabled={saving}
                             >
-                                <Trash2 className="h-4 w-4" /> Eliminar
+                                <Trash2 className="h-5 w-5" />
                             </Button>
-                        ) : <div />}
-                        <div className="flex gap-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={onClose}
-                                disabled={saving}
-                            >
-                                Cancelar
-                            </Button>
-                            <Button
-                                type="submit"
-                                size="sm"
-                                className="bg-[#76D7B6] text-slate-900 hover:bg-[#65cba8]"
-                                disabled={saving || !isValid}
-                            >
-                                {saving ? "Guardando..." : (editingSede ? "Actualizar" : "Guardar Sede")}
-                            </Button>
-                        </div>
+                        )}
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="flex-1 h-10"
+                            onClick={onClose}
+                            disabled={saving}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="submit"
+                            className="flex-1 bg-[#76D7B6] text-slate-900 hover:bg-[#65cba8] h-10 font-medium"
+                            disabled={saving || !isValid}
+                        >
+                            {saving ? "Guardando..." : (editingSede ? "Actualizar" : "Guardar Sede")}
+                        </Button>
                     </div>
                 </form>
             </div>

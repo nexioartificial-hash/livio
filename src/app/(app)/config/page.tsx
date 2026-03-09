@@ -29,6 +29,12 @@ import {
     XCircle,
     Loader2,
     Link as LinkIcon,
+    ExternalLink,
+    Package,
+    Utensils,
+    HeartPulse,
+    FileSpreadsheet,
+    Download
 } from "lucide-react";
 import {
     Tabs,
@@ -65,7 +71,6 @@ import StockModal from "@/components/stock/StockModal";
 import ImportStockModal from "@/components/stock/ImportStockModal";
 import ObrasSocialesModal from "@/components/obras-sociales/ObrasSocialesModal";
 import ImportObrasSocialesModal from "@/components/obras-sociales/ImportObrasSocialesModal";
-import { Package, Utensils, HeartPulse, FileSpreadsheet, Download } from "lucide-react";
 import { TratamientosTab } from "@/components/config/TratamientosTab";
 import { ObrasSocialesTab } from "@/components/config/ObrasSocialesTab";
 import { InventarioTab } from "@/components/config/InventarioTab";
@@ -77,7 +82,7 @@ import { InventarioTab } from "@/components/config/InventarioTab";
 
 export default function ConfigPage() {
     const { user, clinic, loading } = useAuth();
-    const { daysLeft, trialProgress, isPro, loading: subLoading } = useSubscription();
+    const { subscription, daysLeft, trialProgress, isPro, loading: subLoading, refresh: refreshSub } = useSubscription();
     const isSuperAdmin = user?.role === 'superadmin' || user?.role === 'admin';
 
     // Google Calendar integration state
@@ -289,23 +294,40 @@ export default function ConfigPage() {
     const [newSede, setNewSede] = useState({ name: "", address: "", phone: "" });
     const [savingSede, setSavingSede] = useState(false);
 
-    useEffect(() => {
-        const fetchSucursales = async () => {
-            const clinicId = (user as any)?.clinic_id;
-            if (!clinicId) { setLoadingSucursales(false); return; }
+    const fetchSucursales = async () => {
+        const clinicId = (user as any)?.clinic_id;
+        if (!clinicId) {
+            setLoadingSucursales(false);
+            return;
+        }
+
+        try {
             setLoadingSucursales(true);
             const { data, error } = await supabase
                 .from("sucursal")
-                .select("id, name, address, phone, google_maps_url")
+                .select("id, name, address, phone, google_maps_url, location, email, aclaraciones, horarios")
                 .eq("clinic_id", clinicId)
                 .order("created_at", { ascending: true });
 
             if (!error && data) {
                 setSucursales(data.map((s) => ({ ...s, professionals: undefined })));
             }
+        } catch (err) {
+            console.error("Error fetching sucursales:", err);
+        } finally {
             setLoadingSucursales(false);
-        };
-        if (!loading) fetchSucursales();
+        }
+    };
+
+    useEffect(() => {
+        // Fetch as soon as clinic_id is present, don't wait for auth-provider's global 'loading'
+        // which might be true during minor re-validations.
+        if ((user as any)?.clinic_id) {
+            fetchSucursales();
+        } else if (!loading) {
+            // If auth finished and still no clinic_id, stop loading
+            setLoadingSucursales(false);
+        }
     }, [(user as any)?.clinic_id, loading]);
 
     const handleSaveSede = async () => {
@@ -537,47 +559,56 @@ export default function ConfigPage() {
                                             )}
                                         </div>
                                     ) : (
-                                        <div className="grid gap-4 sm:grid-cols-2">
+                                        <div className="space-y-2">
                                             {sucursales.map((suc) => (
                                                 <div
                                                     key={suc.id}
-                                                    className="p-4 rounded-xl border border-slate-100 bg-white shadow-sm hover:border-[#76D7B6]/30 transition-all cursor-pointer group/sede"
+                                                    className="p-3 rounded-xl border border-slate-100 bg-white shadow-sm hover:border-[#76D7B6]/30 transition-all cursor-pointer group/sede flex items-center gap-4"
                                                     onClick={() => {
                                                         setEditingSedeId(suc.id);
-                                                        setNewSede({ name: suc.name, address: suc.address || "", phone: suc.phone || "" });
+                                                        setNewSede({ ...suc as any });
                                                         setShowNewSedeDialog(true);
                                                     }}
                                                 >
-                                                    <div className="flex items-center justify-between mb-2">
-                                                        <p className="font-bold text-slate-900 group-hover/sede:text-[#76D7B6] transition-colors">{suc.name}</p>
-                                                        <Badge className="bg-green-100 text-green-700 text-[10px] px-1.5 py-0 border-none">Activa</Badge>
+                                                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center group-hover/sede:bg-[#76D7B6]/10 transition-colors">
+                                                        <MapPin className="h-5 w-5 text-slate-400 group-hover/sede:text-[#76D7B6]" />
                                                     </div>
-                                                    <p className="text-xs text-slate-500 mb-3 flex items-center gap-1 text-wrap line-clamp-1">
-                                                        <MapPin className="h-3 w-3 flex-shrink-0" /> {suc.address || <span className="italic text-slate-300">Sin dirección</span>}
-                                                    </p>
-                                                    <div className="flex items-center gap-3 border-t pt-3 mt-1">
-                                                        {suc.phone && (
-                                                            <span className="text-[11px] text-slate-500 font-medium">{suc.phone}</span>
-                                                        )}
+                                                    
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 mb-0.5">
+                                                            <p className="font-bold text-sm text-slate-900 truncate">{suc.name}</p>
+                                                            <div className="w-1 h-1 rounded-full bg-green-500" />
+                                                            <span className="text-[10px] text-green-600 font-bold uppercase tracking-tight">Activa</span>
+                                                        </div>
+                                                        <p className="text-[11px] text-slate-500 truncate flex items-center gap-1">
+                                                            {suc.address || <span className="italic text-slate-300">Sin dirección</span>}
+                                                            {suc.phone && (
+                                                                <>
+                                                                    <span className="text-slate-300 mx-1">•</span>
+                                                                    <span>{suc.phone}</span>
+                                                                </>
+                                                            )}
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2">
                                                         {suc.google_maps_url && (
                                                             <a
                                                                 href={suc.google_maps_url}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
-                                                                className="text-[11px] text-[#76D7B6] hover:underline transition-colors"
+                                                                className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-[#76D7B6] hover:bg-[#76D7B6]/10 transition-all"
                                                                 onClick={(e) => e.stopPropagation()}
+                                                                title="Ver en Google Maps"
                                                             >
-                                                                Ver en Maps
+                                                                <ExternalLink className="h-4 w-4" />
                                                             </a>
                                                         )}
-                                                        {!suc.phone && !suc.google_maps_url && (
-                                                            <span className="text-[11px] text-slate-300 italic">Sin datos de contacto</span>
-                                                        )}
-                                                        <div className="flex-1" />
                                                         {isSuperAdmin && (
                                                             <Button
-                                                                variant="link"
-                                                                className="h-auto p-0 text-[11px] text-[#76D7B6] hover:text-[#65cba8] font-bold"
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-8 text-[11px] text-[#76D7B6] hover:text-[#65cba8] hover:bg-[#76D7B6]/5 font-bold"
                                                             >
                                                                 Editar
                                                             </Button>
@@ -613,7 +644,7 @@ export default function ConfigPage() {
                                             Suscripción Premium
                                         </CardTitle>
                                     </CardHeader>
-                                    <CardContent className="space-y-6 relative z-10">
+                                    <CardContent className="space-y-4 relative z-10">
                                         <div className="space-y-4">
                                             {(user as any)?.clinic_created_at && (
                                                 <div className="flex justify-between text-[11px] font-medium text-slate-400">
@@ -650,15 +681,21 @@ export default function ConfigPage() {
                                                 Soporte prioritario
                                             </div>
                                         </div>
-                                        <Button className="w-full bg-white text-slate-900 hover:bg-[#76D7B6] hover:text-white transition-all font-bold">
-                                            PASAR A PRO
-                                        </Button>
-                                    </CardContent>
-                                </Card>
+                                         <Button 
+                                              size="sm"
+                                              className="w-full bg-white text-slate-900 hover:bg-[#76D7B6] hover:text-white transition-all font-bold group/btn h-9"
+                                              onClick={() => {
+                                                  window.location.href = '/#pricing';
+                                              }}
+                                          >
+                                              <span className="group-hover/btn:scale-105 transition-transform text-xs">PASAR A PRO</span>
+                                          </Button>
+                                     </CardContent>
+                                 </Card>
                             )}
                         </div>
-                    </div >
-                </TabsContent >
+                    </div>
+                </TabsContent>
 
                 <TabsContent value="equipo" className="mt-6 space-y-6 data-[state=inactive]:hidden" forceMount>
                     <div className="flex items-center justify-between mb-2">

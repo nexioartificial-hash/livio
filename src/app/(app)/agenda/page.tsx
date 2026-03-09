@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -57,8 +58,17 @@ type ViewMode = "dia" | "semana" | "mes";
 const toTitleCase = (str: string) =>
     str.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 
-export default function AgendaPage() {
+function AgendaContent() {
+    const searchParams = useSearchParams();
     const [view, setView] = useState<ViewMode>("semana");
+
+    useEffect(() => {
+        const v = searchParams.get('view');
+        if (v === 'dia' || v === 'semana' || v === 'mes') {
+            setView(v as ViewMode);
+        }
+    }, [searchParams]);
+
     const [selectedProfessional, setSelectedProfessional] = useState("all");
     const [selectedBranch, setSelectedBranch] = useState("all");
     const [selectedStatus, setSelectedStatus] = useState("all");
@@ -1287,5 +1297,17 @@ export default function AgendaPage() {
                 </DialogContent>
             </Dialog>
         </div>
+    );
+}
+
+export default function AgendaPage() {
+    return (
+        <Suspense fallback={
+            <div className="h-[80vh] flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-[#76D7B6]" />
+            </div>
+        }>
+            <AgendaContent />
+        </Suspense>
     );
 }

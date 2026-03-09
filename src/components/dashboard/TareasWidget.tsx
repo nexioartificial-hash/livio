@@ -40,9 +40,11 @@ export function TareasWidget({ tareas, onToggle, onAdd }: TareasWidgetProps) {
         e.preventDefault();
         if (!newTitulo.trim()) return;
         
+        const formattedTitulo = newTitulo.trim().charAt(0).toUpperCase() + newTitulo.trim().slice(1).toLowerCase();
+        
         setIsAdding(true);
         try {
-            await onAdd(newTitulo);
+            await onAdd(formattedTitulo);
             setNewTitulo("");
             setOpen(false);
         } catch (error) {
@@ -57,7 +59,7 @@ export function TareasWidget({ tareas, onToggle, onAdd }: TareasWidgetProps) {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.55 }}
-            className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5"
+            className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col h-full"
         >
             <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
@@ -85,7 +87,14 @@ export function TareasWidget({ tareas, onToggle, onAdd }: TareasWidgetProps) {
                                     <Input 
                                         id="titulo" 
                                         value={newTitulo} 
-                                        onChange={(e) => setNewTitulo(e.target.value)} 
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (val.length > 0) {
+                                                setNewTitulo(val.charAt(0).toUpperCase() + val.slice(1).toLowerCase());
+                                            } else {
+                                                setNewTitulo(val);
+                                            }
+                                        }} 
                                         placeholder="Ej: Llamar a proveedor, revisar stock..."
                                         required
                                     />
@@ -116,6 +125,7 @@ export function TareasWidget({ tareas, onToggle, onAdd }: TareasWidgetProps) {
                                 id={`tarea-${tarea.id}`}
                                 checked={tarea.completada}
                                 onCheckedChange={(checked) => onToggle(tarea.id, checked as boolean)}
+                                className="h-5 w-5 border-slate-300"
                             />
                             <div className="flex-1 min-w-0">
                                 <label 
@@ -131,7 +141,13 @@ export function TareasWidget({ tareas, onToggle, onAdd }: TareasWidgetProps) {
                         </motion.div>
                     ))
                 ) : (
-                    <p className="text-xs text-slate-400 text-center py-4 italic">No hay tareas pendientes</p>
+                    <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+                        <div className="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center mb-3">
+                            <CheckSquare className="h-6 w-6 text-slate-300" />
+                        </div>
+                        <p className="text-sm font-medium text-slate-500">Carga tus tareas de hoy</p>
+                        <p className="text-[10px] text-slate-400 mt-1 max-w-[140px]">Organiza tu jornada para un mejor seguimiento</p>
+                    </div>
                 )}
             </div>
         </motion.div>

@@ -26,6 +26,13 @@ export const sedeSchema = z.object({
     email: z.string().email("Email válido").min(1),
     google_maps_url: z.string().url("Link Maps válido").min(1),
     confirmAddress: z.boolean().refine(v => v, "Debe confirmar ubicación"),
+    horarios: z.record(z.string(), z.object({
+        enabled: z.boolean(),
+        slots: z.array(z.object({
+            start: z.string(),
+            end: z.string()
+        }))
+    })).optional(),
 });
 
 export type SedeValues = z.infer<typeof sedeSchema>;

@@ -14,6 +14,7 @@ export interface Subscription {
 
 export function useSubscription() {
     const { user } = useAuth() as { user: (any & { clinic_id?: string; trial_ends_at?: string }) | null };
+    // Simplified global state for subscription to sync between components
     const [subscription, setSubscription] = useState<Subscription | null>(null);
     const [loading, setLoading] = useState(true);
     const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
@@ -32,7 +33,14 @@ export function useSubscription() {
                 .single();
 
             if (error && error.code !== 'PGRST116') throw error;
+            
+            // Update state
             setSubscription(data);
+            
+            // Dispatch a custom event to notify other hook instances
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('subscription-updated', { detail: data }));
+            }
         } catch (error) {
             console.error('Error fetching subscription:', error);
         } finally {
@@ -64,6 +72,15 @@ export function useSubscription() {
 
     useEffect(() => {
         fetchSubscription();
+
+        // Listen for updates from other components
+        const handleGlobalUpdate = (event: any) => {
+            setSubscription(event.detail);
+            setLoading(false);
+        };
+
+        window.addEventListener('subscription-updated', handleGlobalUpdate);
+        return () => window.removeEventListener('subscription-updated', handleGlobalUpdate);
     }, [user?.clinic_id]);
 
     const daysLeft = subscription?.trial_ends_at

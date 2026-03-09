@@ -78,7 +78,7 @@ export function AlertasWidget({ alertas, onDismiss, onAdd }: AlertasWidgetProps)
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.45 }}
-            className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5"
+            className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col h-full"
         >
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
@@ -134,7 +134,7 @@ export function AlertasWidget({ alertas, onDismiss, onAdd }: AlertasWidgetProps)
                     </DialogContent>
                 </Dialog>
             </div>
-            <div className="space-y-2.5 max-h-[280px] overflow-y-auto pr-1 custom-scrollbar">
+            <div className="space-y-2.5 max-h-[280px] overflow-y-auto pr-1 custom-scrollbar flex-1">
                 {alertas.length > 0 ? (
                     alertas.map((alert, i) => {
                         const s = styles[alert.tipo] || styles.default;
@@ -165,7 +165,13 @@ export function AlertasWidget({ alertas, onDismiss, onAdd }: AlertasWidgetProps)
                         );
                     })
                 ) : (
-                    <p className="text-xs text-slate-400 text-center py-4 italic">No hay alertas activas</p>
+                    <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+                        <div className="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center mb-3">
+                            <AlertCircle className="h-6 w-6 text-slate-300" />
+                        </div>
+                        <p className="text-sm font-medium text-slate-500">No hay alertas activas</p>
+                        <p className="text-[10px] text-slate-400 mt-1 max-w-[140px]">El sistema te notificará cuando haya novedades</p>
+                    </div>
                 )}
             </div>
         </motion.div>

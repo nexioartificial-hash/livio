@@ -4,10 +4,11 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Building2, Mail, Phone, Hash, Loader2 } from "lucide-react";
+import { Building2, Mail, Phone, Hash, Loader2, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/providers/auth-provider";
+import HorariosModal from "@/components/config/HorariosModal";
 
 import {
     Form,
@@ -42,6 +43,7 @@ type ClinicConfigValues = z.infer<typeof clinicConfigSchema>;
 export default function ClinicConfigForm() {
     const { user, clinic, loading: authLoading } = useAuth();
     const [isSaving, setIsSaving] = useState(false);
+    const [isHorariosModalOpen, setIsHorariosModalOpen] = useState(false);
     const supabase = createClient();
 
     const form = useForm<ClinicConfigValues>({
@@ -239,12 +241,12 @@ export default function ClinicConfigForm() {
                                 )}
                             />
 
-                            {/* Email General */}
+                            {/* Email General + Horarios button side by side */}
                             <FormField
                                 control={form.control}
                                 name="emailGeneral"
                                 render={({ field }) => (
-                                    <FormItem className="md:col-span-2">
+                                    <FormItem>
                                         <FormLabel>Email General</FormLabel>
                                         <FormControl>
                                             <div className="relative">
@@ -256,18 +258,41 @@ export default function ClinicConfigForm() {
                                                 />
                                             </div>
                                         </FormControl>
-                                        <FormDescription>Este será el email visible por tus pacientes</FormDescription>
+                                        <FormDescription>Email visible por tus pacientes</FormDescription>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
+
+                            {/* Horarios button - prominent action card */}
+                            <div className="flex flex-col justify-end">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        console.log("ClinicConfigForm: Opening HorariosModal", {
+                                            clinicId: clinic?.id,
+                                            userClinicId: (user as any)?.clinic_id
+                                        });
+                                        setIsHorariosModalOpen(true);
+                                    }}
+                                    className="group w-full h-[68px] flex items-center gap-3 px-4 bg-gradient-to-r from-[#76D7B6]/10 to-[#76D7B6]/5 hover:from-[#76D7B6]/20 hover:to-[#76D7B6]/10 border border-[#76D7B6]/30 hover:border-[#76D7B6]/60 rounded-xl transition-all duration-200 cursor-pointer"
+                                >
+                                    <div className="h-8 w-8 bg-[#76D7B6]/20 group-hover:bg-[#76D7B6]/30 rounded-lg flex items-center justify-center shrink-0 transition-colors">
+                                        <CalendarDays className="h-4 w-4 text-[#76D7B6]" />
+                                    </div>
+                                    <div className="text-left">
+                                        <p className="text-sm font-semibold text-slate-800 leading-tight">Días y Horarios</p>
+                                        <p className="text-[11px] text-slate-500 font-medium leading-tight">Configurar disponibilidad</p>
+                                    </div>
+                                </button>
+                            </div>
                         </div>
 
                         <div className="flex justify-start">
                             <Button
                                 type="submit"
                                 disabled={isSaving}
-                                className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 font-bold px-8 h-11"
+                                className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 font-medium px-8 h-11"
                             >
                                 {isSaving ? (
                                     <>
@@ -282,6 +307,12 @@ export default function ClinicConfigForm() {
                     </form>
                 </Form>
             </CardContent>
+
+            <HorariosModal
+                isOpen={isHorariosModalOpen}
+                onClose={() => setIsHorariosModalOpen(false)}
+                clinicId={clinic?.id || (user as any)?.clinic_id || ""}
+            />
         </Card>
     );
 }
