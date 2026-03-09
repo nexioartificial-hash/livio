@@ -68,6 +68,7 @@ import ImportObrasSocialesModal from "@/components/obras-sociales/ImportObrasSoc
 import { Package, Utensils, HeartPulse, FileSpreadsheet, Download } from "lucide-react";
 import { TratamientosTab } from "@/components/config/TratamientosTab";
 import { ObrasSocialesTab } from "@/components/config/ObrasSocialesTab";
+import { InventarioTab } from "@/components/config/InventarioTab";
 
 /**
  * Small component that reads OAuth redirect result from URL params.
@@ -682,6 +683,10 @@ export default function ConfigPage() {
 
                 <TabsContent value="obras-sociales" className="mt-6 data-[state=inactive]:hidden" forceMount>
                     <ObrasSocialesTab clinicId={(user as any)?.clinic_id || ""} />
+                </TabsContent>
+
+                <TabsContent value="inventario" className="mt-6 data-[state=inactive]:hidden" forceMount>
+                    <InventarioTab clinicId={(user as any)?.clinic_id || ""} />
                 </TabsContent>
 
                 {/* ─── Integraciones Tab ─────────────────────────────────────── */}
