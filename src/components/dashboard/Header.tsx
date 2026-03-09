@@ -7,7 +7,10 @@ import {
     User,
     Settings,
     LogOut,
-    Menu
+    Menu,
+    Package,
+    AlertTriangle,
+    CalendarX
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -23,12 +26,66 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { useState, useEffect } from "react";
+import { getInventario } from "@/app/actions/inventario";
+import { differenceInDays } from "date-fns";
+
+interface AlertaNotif {
+    id: string;
+    tipo: "vencimiento" | "stock";
+    mensaje: string;
+    producto: string;
+    dias?: number;
+}
 
 export function Header() {
     const { user, signOut } = useAuth();
+    const [alertas, setAlertas] = useState<AlertaNotif[]>([]);
 
     // Initial for avatar if no photo
     const userInitial = user?.full_name?.charAt(0) || user?.user_metadata?.full_name?.charAt(0) || user?.email?.charAt(0) || "?";
+
+    useEffect(() => {
+        const clinicId = (user as any)?.clinic_id;
+        if (!clinicId) return;
+
+        getInventario(clinicId).then((res) => {
+            if (!res.success || !res.data) return;
+
+            const hoy = new Date();
+            const nuevasAlertas: AlertaNotif[] = [];
+
+            res.data.forEach((item: any) => {
+                // Alerta de vencimiento próximo (≤ 10 días)
+                if (item.vencimiento) {
+                    const dias = differenceInDays(new Date(item.vencimiento), hoy);
+                    if (dias >= 0 && dias <= 10) {
+                        nuevasAlertas.push({
+                            id: `venc-${item.id}`,
+                            tipo: "vencimiento",
+                            producto: item.producto,
+                            mensaje: dias === 0 ? "Vence hoy" : `Vence en ${dias} día${dias === 1 ? "" : "s"}`,
+                            dias,
+                        });
+                    }
+                }
+
+                // Alerta de stock bajo
+                if (item.stock_actual <= item.stock_min) {
+                    nuevasAlertas.push({
+                        id: `stock-${item.id}`,
+                        tipo: "stock",
+                        producto: item.producto,
+                        mensaje: `Stock bajo: ${item.stock_actual} unidades (mín. ${item.stock_min})`,
+                    });
+                }
+            });
+
+            // Ordenar: vencimientos primero, luego stock bajo
+            nuevasAlertas.sort((a, b) => (a.dias ?? 999) - (b.dias ?? 999));
+            setAlertas(nuevasAlertas);
+        });
+    }, [user]);
 
     return (
         <header className="sticky top-0 z-40 bg-white border-b h-16 flex items-center justify-between px-6 shadow-sm">
@@ -58,10 +115,74 @@ export function Header() {
                     </Badge>
                 )}
 
-                <Button variant="ghost" size="icon" className="relative text-slate-500 hover:text-[#76D7B6]">
-                    <Bell className="h-5 w-5" />
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-                </Button>
+                {/* Notification Bell */}
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="relative text-slate-500 hover:text-[#76D7B6]">
+                            <Bell className="h-5 w-5" />
+                            {alertas.length > 0 && (
+                                <span className="absolute top-1.5 right-1.5 flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-red-500 text-white rounded-full border-2 border-white leading-none">
+                                    {alertas.length > 9 ? "9+" : alertas.length}
+                                </span>
+                            )}
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-80 p-0 overflow-hidden rounded-xl shadow-xl border border-slate-100">
+                        <div className="bg-gradient-to-r from-indigo-950 to-indigo-800 p-4">
+                            <p className="text-white font-bold text-sm">Notificaciones</p>
+                            <p className="text-indigo-300 text-xs mt-0.5">
+                                {alertas.length === 0 ? "Todo en orden" : `${alertas.length} alerta${alertas.length === 1 ? "" : "s"} activa${alertas.length === 1 ? "" : "s"}`}
+                            </p>
+                        </div>
+
+                        <div className="max-h-80 overflow-y-auto divide-y divide-slate-50">
+                            {alertas.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-8 text-slate-400 gap-2">
+                                    <Bell className="h-6 w-6 text-slate-200" />
+                                    <p className="text-sm">Sin alertas activas</p>
+                                </div>
+                            ) : (
+                                alertas.map((alerta) => (
+                                    <div key={alerta.id} className="flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors">
+                                        <div className={cn(
+                                            "mt-0.5 shrink-0 rounded-full p-1.5",
+                                            alerta.tipo === "vencimiento"
+                                                ? "bg-orange-100 text-orange-600"
+                                                : "bg-red-100 text-red-600"
+                                        )}>
+                                            {alerta.tipo === "vencimiento"
+                                                ? <CalendarX className="h-3.5 w-3.5" />
+                                                : <Package className="h-3.5 w-3.5" />
+                                            }
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-semibold text-slate-800 truncate">{alerta.producto}</p>
+                                            <p className="text-xs text-slate-500 mt-0.5">{alerta.mensaje}</p>
+                                        </div>
+                                        <span className={cn(
+                                            "text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 mt-1",
+                                            alerta.tipo === "vencimiento"
+                                                ? "bg-orange-100 text-orange-700"
+                                                : "bg-red-100 text-red-700"
+                                        )}>
+                                            {alerta.tipo === "vencimiento" ? "Vto." : "Stock"}
+                                        </span>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        {alertas.length > 0 && (
+                            <div className="p-3 border-t border-slate-100 bg-slate-50">
+                                <Link href="/config?tab=inventario">
+                                    <button className="w-full text-xs font-semibold text-[#76D7B6] hover:text-[#5fc0a0] text-center transition-colors">
+                                        Ver todo el Inventario →
+                                    </button>
+                                </Link>
+                            </div>
+                        )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
 
                 <div className="h-6 w-px bg-slate-200 mx-1 hidden md:block"></div>
 
