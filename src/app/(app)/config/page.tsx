@@ -63,7 +63,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { updateMemberRole, deleteMember, getTeamMembers } from "@/app/actions/team";
 import SedeModal from "@/components/sucursales/SedeModal";
-import { supabase } from "@/lib/supabase/client";
+import { supabase, createClient } from "@/lib/supabase/client";
 import ClinicConfigForm from "@/components/clinica/ClinicConfigForm";
 import { SimpleTeamTable } from "@/components/team/SimpleTeamTable";
 import { AddMemberFAB } from "@/components/team/AddMemberFAB";
@@ -301,19 +301,34 @@ export default function ConfigPage() {
             return;
         }
 
+        const localSupabase = createClient();
+        
         try {
             setLoadingSucursales(true);
-            const { data, error } = await supabase
+            
+            // Add a safety timeout of 10 seconds
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('TIMEOUT')), 10000)
+            );
+            
+            const fetchPromise = localSupabase
                 .from("sucursal")
                 .select("id, name, address, phone, google_maps_url, location, email, aclaraciones, horarios")
                 .eq("clinic_id", clinicId)
                 .order("created_at", { ascending: true });
+                
+            const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
 
-            if (!error && data) {
-                setSucursales(data.map((s) => ({ ...s, professionals: undefined })));
+            if (error) throw error;
+            
+            if (data) {
+                setSucursales(data.map((s: any) => ({ ...s, professionals: undefined })));
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error("Error fetching sucursales:", err);
+            if (err.message === 'TIMEOUT') {
+                toast.error("La carga de sedes tardó demasiado. Por favor, intente de nuevo.");
+            }
         } finally {
             setLoadingSucursales(false);
         }
@@ -321,6 +336,7 @@ export default function ConfigPage() {
 
     useEffect(() => {
         // Fetch as soon as clinic_id is present, don't wait for auth-provider's global 'loading'
+
         // which might be true during minor re-validations.
         if ((user as any)?.clinic_id) {
             fetchSucursales();

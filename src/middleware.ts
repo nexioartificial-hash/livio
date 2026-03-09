@@ -27,6 +27,12 @@ export async function middleware(request: NextRequest) {
                     return request.cookies.get(name)?.value
                 },
                 set(name: string, value: string, options: CookieOptions) {
+                    const isRememberMe = request.cookies.get('livio_remember_me')?.value === 'true';
+                    if (!isRememberMe) {
+                        delete options.maxAge;
+                        delete options.expires;
+                    }
+
                     request.cookies.set({
                         name,
                         value,
@@ -48,6 +54,7 @@ export async function middleware(request: NextRequest) {
                         name,
                         value: '',
                         ...options,
+                        maxAge: 0
                     })
                     response = NextResponse.next({
                         request: {
@@ -58,6 +65,7 @@ export async function middleware(request: NextRequest) {
                         name,
                         value: '',
                         ...options,
+                        maxAge: 0
                     })
                 },
             },

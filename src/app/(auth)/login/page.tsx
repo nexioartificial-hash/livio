@@ -15,12 +15,17 @@ export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+    const [rememberMe, setRememberMe] = useState(false);
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+
+        // Define la duración de la sesión.
+        // max-age en la cookie es para que el servidor y cliente sepan si deben hacer la sesión persistente.
+        document.cookie = `livio_remember_me=${rememberMe ? 'true' : 'false'}; path=/; max-age=315360000; SameSite=Lax`;
 
         const { error } = await supabase.auth.signInWithPassword({
             email,
@@ -111,6 +116,19 @@ export default function LoginPage() {
                                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                             </button>
                         </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2 pt-1 pb-2">
+                        <input
+                            type="checkbox"
+                            id="remember"
+                            className="h-4 w-4 rounded border-slate-300 text-[#76D7B6] focus:ring-[#76D7B6]"
+                            checked={rememberMe}
+                            onChange={(e) => setRememberMe(e.target.checked)}
+                        />
+                        <Label htmlFor="remember" className="text-sm font-normal text-slate-600 cursor-pointer">
+                            Mantener sesión iniciada
+                        </Label>
                     </div>
 
                     <Button type="submit" className="w-full bg-slate-900 hover:bg-slate-800" disabled={loading}>

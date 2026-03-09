@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 
 export async function createClient() {
     const cookieStore = await cookies()
+    const isRememberMe = cookieStore.get('livio_remember_me')?.value === 'true'
 
     return createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,6 +15,10 @@ export async function createClient() {
                 },
                 set(name: string, value: string, options: CookieOptions) {
                     try {
+                        if (!isRememberMe) {
+                            delete options.maxAge;
+                            delete options.expires;
+                        }
                         cookieStore.set({ name, value, ...options })
                     } catch (error) {
                         // The `set` method was called from a Server Component.
@@ -21,7 +26,7 @@ export async function createClient() {
                 },
                 remove(name: string, options: CookieOptions) {
                     try {
-                        cookieStore.set({ name, value: '', ...options })
+                        cookieStore.set({ name, value: '', ...options, maxAge: 0 })
                     } catch (error) {
                         // The `delete` method was called from a Server Component.
                     }

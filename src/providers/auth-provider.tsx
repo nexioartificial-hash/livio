@@ -165,22 +165,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const signOut = async () => {
         console.log("🚪 [Auth] Cerrando sesión...");
+        
+        // 1. Clear localStorage Cache immediately
+        localStorage.removeItem('livio_user_cache');
+        localStorage.removeItem('livio_clinic_cache');
+        
         try {
-            // 1. Sign out from Supabase (Client)
-            await supabase.auth.signOut();
+            // 2. Sign out from Supabase (Client)
+            // Catch error locally so we still proceed to clear cookies
+            await supabase.auth.signOut().catch(err => {
+                console.warn("⚠️ [Auth] Warning during Supabase signOut:", err);
+            });
             
-            // 2. Clear localStorage Cache
-            localStorage.removeItem('livio_user_cache');
-            localStorage.removeItem('livio_clinic_cache');
-            
-            // 3. Call Server Action to clear cookies thoroughly
+            // 3. Delete the remember me cookie from client side just in case
+            document.cookie = 'livio_remember_me=; path=/; max-age=0; SameSite=Lax';
+
+            // 4. Call Server Action to clear HTTP-only cookies thoroughly
             await logoutAction();
             
             console.log("✅ [Auth] Sesión cerrada exitosamente.");
         } catch (error) {
             console.error("❌ [Auth] Error al cerrar sesión:", error);
         } finally {
-            // 4. Force hard redirect to login and clear all memory state
+            // 5. Force hard redirect to login and clear all memory state
             window.location.replace('/login');
         }
     };
