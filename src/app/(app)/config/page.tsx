@@ -63,10 +63,11 @@ import { SimpleTeamTable } from "@/components/team/SimpleTeamTable";
 import { AddMemberFAB } from "@/components/team/AddMemberFAB";
 import StockModal from "@/components/stock/StockModal";
 import ImportStockModal from "@/components/stock/ImportStockModal";
-import TreatmentModal from "@/components/config/TreatmentModal";
 import ObrasSocialesModal from "@/components/obras-sociales/ObrasSocialesModal";
 import ImportObrasSocialesModal from "@/components/obras-sociales/ImportObrasSocialesModal";
 import { Package, Utensils, HeartPulse, FileSpreadsheet, Download } from "lucide-react";
+import { TratamientosTab } from "@/components/config/TratamientosTab";
+import { ObrasSocialesTab } from "@/components/config/ObrasSocialesTab";
 
 /**
  * Small component that reads OAuth redirect result from URL params.
@@ -254,9 +255,9 @@ export default function ConfigPage() {
     const [showOSModal, setShowOSModal] = useState(false);
     const [showImportOSModal, setShowImportOSModal] = useState(false);
 
-    // Fetch Advanced Data
+    // Fetch Advanced Data (Only for metrics on initial load, rest handles natively per Tab)
     useEffect(() => {
-        if ((user as any)?.clinic_id) {
+        if ((user as any)?.clinic_id && !loadingAdvanced) {
             fetchAdvancedData();
         }
     }, [(user as any)?.clinic_id]);
@@ -264,18 +265,22 @@ export default function ConfigPage() {
     const fetchAdvancedData = async () => {
         setLoadingAdvanced(true);
         const clinicId = (user as any)?.clinic_id;
+        if (!clinicId) { setLoadingAdvanced(false); return; }
+        
         try {
+            // Solo necesitamos counts ligeros para los Badges del header, el contenido profundo se carga al cambiar de Tab
             const [tRes, osRes, sRes] = await Promise.all([
-                supabase.from("tratamiento").select("*").eq("clinic_id", clinicId).order("nombre"),
-                supabase.from("obras_sociales").select("*").eq("clinic_id", clinicId).order("nombre"),
-                supabase.from("stock").select("*").eq("clinic_id", clinicId).order("nombre")
+                supabase.from("tratamientos").select("id", { count: "exact" }).eq("clinic_id", clinicId),
+                supabase.from("clinica_obras_sociales").select("id", { count: "exact" }).eq("clinic_id", clinicId),
+                supabase.from("stock").select("id", { count: "exact" }).eq("clinic_id", clinicId)
             ]);
 
-            if (tRes.data) setTratamientos(tRes.data);
-            if (osRes.data) setObrasSociales(osRes.data);
-            if (sRes.data) setStockItems(sRes.data);
+            // Fake states just for total count since we use real Tabs for deep render
+            if (tRes.count) setTratamientos(Array(tRes.count).fill(null));
+            if (osRes.count) setObrasSociales(Array(osRes.count).fill(null));
+            if (sRes.count) setStockItems(Array(sRes.count).fill(null));
         } catch (err) {
-            console.error("Error fetching advanced data:", err);
+            console.error("Error fetching advanced data metric counts:", err);
         } finally {
             setLoadingAdvanced(false);
         }
@@ -396,8 +401,8 @@ export default function ConfigPage() {
 
     // Ultra-Fast Rendering Strategy:
     // 1. If we have a user (even without profile yet), show the page structure immediately.
-    // 2. Only show a full page loader if we are truly "loading" the initial session (first few ms).
-    const isInitialSessionLoading = loading && mountTime < 1;
+    // 2. Only show a full page loader if we are truly "loading" the initial session.
+    const isInitialSessionLoading = loading;
 
     if (isInitialSessionLoading) {
         return (
@@ -407,14 +412,14 @@ export default function ConfigPage() {
         );
     }
 
-    // If we reached here and still have no user after a grace period, show Access Restricted
-    if (!user && !loading && mountTime > 3) {
+    // If we reached here and still have no user, show Access Restricted
+    if (!user && !loading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
                 <ShieldCheck className="h-12 w-12 text-slate-300" />
-                <h2 className="text-xl font-semibold text-slate-900">Sincronizando sesión...</h2>
-                <p className="text-slate-500 max-w-xs">Si el problema persiste, por favor intenta refrescar la página manualmente.</p>
-                <Button onClick={() => window.location.reload()}>Refrescar Página</Button>
+                <h2 className="text-xl font-semibold text-slate-900">Acceso Restringido</h2>
+                <p className="text-slate-500 max-w-xs">No se encontró una sesión válida. Por favor, inicia sesión para acceder a la configuración.</p>
+                <Button onClick={() => window.location.href = '/'}>Ir al Inicio</Button>
             </div>
         );
     }
@@ -654,7 +659,7 @@ export default function ConfigPage() {
                     </div >
                 </TabsContent >
 
-                <TabsContent value="equipo" className="mt-6 space-y-6">
+                <TabsContent value="equipo" className="mt-6 space-y-6 data-[state=inactive]:hidden" forceMount>
                     <div className="flex items-center justify-between mb-2">
                         <h2 className="text-xl font-bold text-slate-900 tracking-tight">
                             Equipo ({team.length} {team.length === 1 ? 'miembro' : 'miembros'})
@@ -671,8 +676,16 @@ export default function ConfigPage() {
                     <AddMemberFAB onInviteSent={refreshTeam} />
                 </TabsContent>
 
+                <TabsContent value="tratamientos" className="mt-6 data-[state=inactive]:hidden" forceMount>
+                    <TratamientosTab clinicId={(user as any)?.clinic_id || ""} />
+                </TabsContent>
+
+                <TabsContent value="obras-sociales" className="mt-6 data-[state=inactive]:hidden" forceMount>
+                    <ObrasSocialesTab clinicId={(user as any)?.clinic_id || ""} />
+                </TabsContent>
+
                 {/* ─── Integraciones Tab ─────────────────────────────────────── */}
-                <TabsContent value="integraciones" className="mt-6 space-y-6">
+                <TabsContent value="integraciones" className="mt-6 space-y-6 data-[state=inactive]:hidden" forceMount>
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-base">
@@ -788,14 +801,6 @@ export default function ConfigPage() {
                 }}
             />
 
-            {/* Advanced Feature Modals */}
-            <TreatmentModal 
-                isOpen={showTreatmentModal}
-                onClose={() => setShowTreatmentModal(false)}
-                editingItem={editingTreatment}
-                clinicId={(user as any)?.clinic_id || ""}
-                onSuccess={fetchAdvancedData}
-            />
 
             <StockModal
                 isOpen={showStockModal}
