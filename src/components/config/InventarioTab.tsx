@@ -79,7 +79,29 @@ export function InventarioTab({ clinicId }: InventarioTabProps) {
         setLoading(true);
         const res = await getInventario(clinicId);
         if (res.success) {
-            setItems(res.data || []);
+            const data = res.data || [];
+            setItems(data);
+
+            // Alertas de vencimiento próximo (<= 10 días)
+            const hoy = new Date();
+            const porVencer = data.filter((i: any) => {
+                if (!i.vencimiento) return false;
+                const diff = differenceInDays(new Date(i.vencimiento), hoy);
+                return diff >= 0 && diff <= 10;
+            });
+
+            // Usamos setTimeout para no disparar toasts mientras aún está montando
+            if (porVencer.length > 0) {
+                setTimeout(() => {
+                    porVencer.forEach((item: any) => {
+                        const dias = differenceInDays(new Date(item.vencimiento), hoy);
+                        toast.warning(
+                            `⚠️ ${item.producto} vence en ${dias === 0 ? "hoy" : `${dias} día${dias === 1 ? "" : "s"}`}.`,
+                            { duration: 6000, id: `vencimiento-${item.id}` }
+                        );
+                    });
+                }, 300);
+            }
         } else {
             toast.error("Error al cargar el inventario: " + res.error);
         }

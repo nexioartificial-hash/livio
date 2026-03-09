@@ -49,6 +49,9 @@ export async function saveProducto(data: InventarioData) {
     if (!data.producto) return { success: false, error: "Producto es requerido" };
     if (!data.categoria) return { success: false, error: "Categoría es requerida" };
 
+    // Capitalizar primera letra del nombre
+    data = { ...data, producto: data.producto.charAt(0).toUpperCase() + data.producto.slice(1) };
+
     try {
         const { id, ...rest } = data;
         let response;
@@ -107,7 +110,7 @@ export async function seedInventarioDefault(clinicId: string) {
         // Si ya hay más de 0 productos, no sembrar
         if (count && count > 0) return { success: true, message: "Ya existen insumos" };
 
-        const seedData = [
+        const seedData: any[] = [
             { clinic_id: clinicId, producto: "Resina 3M Filtek Z350", categoria: "Restauración", stock_actual: 5, stock_min: 2, precio_unit: 14500, ubicacion: "Box 1" },
             { clinic_id: clinicId, producto: "Lidocaína 2% con Epinefrina", categoria: "Anestesia", stock_actual: 15, stock_min: 5, precio_unit: 8500, ubicacion: "Heladera Central" },
             { clinic_id: clinicId, producto: "Agujas Cortas 30G x 21mm", categoria: "Consumibles", stock_actual: 4, stock_min: 10, precio_unit: 3200, ubicacion: "Depósito" },

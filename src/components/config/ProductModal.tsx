@@ -70,7 +70,7 @@ export function ProductModal({ isOpen, onClose, editingItem, clinicId, onSuccess
     const [isSaving, setIsSaving] = useState(false);
 
     const form = useForm<FormValues>({
-        resolver: zodResolver(formSchema),
+        resolver: zodResolver(formSchema) as any,
         defaultValues: {
             producto: "",
             categoria: "",
@@ -158,7 +158,15 @@ export function ProductModal({ isOpen, onClose, editingItem, clinicId, onSuccess
                                     <FormItem>
                                         <FormLabel className="text-slate-700 font-bold">Nombre del Insumo / Producto</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Ej. Resina 3M Filtek..." className="border-slate-200 focus-visible:ring-[#76D7B6]" {...field} />
+                                            <Input
+                                                placeholder="Ej. Resina 3M Filtek..."
+                                                className="border-slate-200 focus-visible:ring-[#76D7B6]"
+                                                {...field}
+                                                onChange={(e) => {
+                                                    const v = e.target.value;
+                                                    field.onChange(v.length > 0 ? v.charAt(0).toUpperCase() + v.slice(1) : v);
+                                                }}
+                                            />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -290,7 +298,7 @@ export function ProductModal({ isOpen, onClose, editingItem, clinicId, onSuccess
                                                     mode="single"
                                                     selected={field.value || undefined}
                                                     onSelect={field.onChange}
-                                                    disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
+                                                    disabled={(date: Date) => date < new Date(new Date().setHours(0,0,0,0))}
                                                     locale={es}
                                                 />
                                             </PopoverContent>
