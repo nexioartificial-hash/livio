@@ -40,7 +40,7 @@ const clinicConfigSchema = z.object({
 
 type ClinicConfigValues = z.infer<typeof clinicConfigSchema>;
 
-export default function ClinicConfigForm() {
+export default function ClinicConfigForm({ sucursales = [] }: { sucursales?: any[] }) {
     const { user, clinic, loading: authLoading } = useAuth();
     const [isSaving, setIsSaving] = useState(false);
     const [isHorariosModalOpen, setIsHorariosModalOpen] = useState(false);
@@ -312,6 +312,7 @@ export default function ClinicConfigForm() {
                 isOpen={isHorariosModalOpen}
                 onClose={() => setIsHorariosModalOpen(false)}
                 clinicId={clinic?.id || (user as any)?.clinic_id || ""}
+                initialSedes={sucursales}
             />
         </Card>
     );

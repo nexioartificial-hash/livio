@@ -43,9 +43,10 @@ interface HorariosModalProps {
     isOpen: boolean;
     onClose: () => void;
     clinicId: string;
+    initialSedes?: any[];
 }
 
-export default function HorariosModal({ isOpen, onClose, clinicId }: HorariosModalProps) {
+export default function HorariosModal({ isOpen, onClose, clinicId, initialSedes }: HorariosModalProps) {
     const [horarios, setHorarios] = useState(DEFAULT_HORARIOS);
     const [sedes, setSedes] = useState<any[]>([]);
     const [selectedSedes, setSelectedSedes] = useState<string[]>([]);
@@ -60,7 +61,12 @@ export default function HorariosModal({ isOpen, onClose, clinicId }: HorariosMod
             setSelectedSedes([]);
             setSaving(false);
 
-            if (clinicId) {
+            if (initialSedes && initialSedes.length > 0) {
+                console.log("HorariosModal: Using initialSedes from props", initialSedes.length);
+                setSedes(initialSedes);
+                setSelectedSedes(initialSedes.map(s => s.id));
+                setLoading(false);
+            } else if (clinicId) {
                 fetchSedes();
             } else {
                 setLoading(false);

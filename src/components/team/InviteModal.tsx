@@ -33,10 +33,13 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "@/providers/auth-provider";
 import { inviteTeamMember } from "@/app/actions/team";
+import { titleCase } from "@/utils/masks";
 
 const inviteSchema = z.object({
     name: z.string().min(1, "El nombre es requerido"),
-    email: z.string().email("Email inválido"),
+    email: z.string().email("Email inválido").refine((val) => val.toLowerCase().endsWith(".com"), {
+        message: "El email debe terminar en .com",
+    }),
     role: z.string().min(1, "Selecciona un rol"),
 });
 
@@ -69,7 +72,7 @@ export default function InviteModal({ trigger, onInviteSent }: InviteModalProps)
     const onSubmit = async (values: InviteFormValues) => {
         setLoading(true);
         const result = await inviteTeamMember(
-            values.email,
+            values.email.toLowerCase(),
             values.name,
             values.role,
             user?.id
@@ -112,6 +115,10 @@ export default function InviteModal({ trigger, onInviteSent }: InviteModalProps)
                             </Label>
                             <Input
                                 {...register("name")}
+                                onChange={(e) => {
+                                    const formatted = titleCase(e.target.value);
+                                    setValue("name", formatted, { shouldValidate: true });
+                                }}
                                 placeholder="Ej: Dr. Juan Pérez"
                                 className="h-10 rounded-xl bg-slate-50 border-slate-200 focus:ring-[#10B981] focus:border-[#10B981]"
                             />
@@ -125,6 +132,9 @@ export default function InviteModal({ trigger, onInviteSent }: InviteModalProps)
                             <Input
                                 {...register("email")}
                                 type="email"
+                                onChange={(e) => {
+                                    setValue("email", e.target.value.toLowerCase(), { shouldValidate: true });
+                                }}
                                 placeholder="juan@clinica.com"
                                 className="h-10 rounded-xl bg-slate-50 border-slate-200"
                             />

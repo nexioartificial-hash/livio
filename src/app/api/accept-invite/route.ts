@@ -1,12 +1,14 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 export async function POST(request: Request) {
+    const supabaseAdmin = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321',
+        process.env.SUPABASE_SERVICE_ROLE_KEY || 'dummy-key'
+    );
+
     try {
         const { token, userId, fullName, license } = await request.json();
 

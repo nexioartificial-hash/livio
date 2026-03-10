@@ -159,7 +159,7 @@ export default function DashboardPage() {
                     leads24h: leads24hRes.count || 0,
                     noShowRate,
                     ingresosHoy: ingresosEstHoy,
-                    ingresosMes: 2450000,
+                    ingresosMes: 2450000, // Mantener hardcoded como placeholder por ahora
                     alertasStock: stockCountRes.count || 0,
                     proximoTurno: nextTurno
                 });
@@ -220,13 +220,6 @@ export default function DashboardPage() {
         ]);
     };
 
-    if (loading) {
-        return (
-            <div className="h-[80vh] flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-[#76D7B6]" />
-            </div>
-        );
-    }
 
     return (
         <ExpiredTrialGuard>

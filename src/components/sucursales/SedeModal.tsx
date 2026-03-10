@@ -325,15 +325,20 @@ export default function SedeModal({ isOpen, onClose, editingSede, clinicId, onSu
                                     name="google_maps_url"
                                     control={control}
                                     render={({ field }) => (
-                                        <Input
-                                            {...field}
-                                            className="text-xs h-9 bg-slate-50 italic truncate"
-                                            placeholder="Enlace automático"
-                                            onChange={(e) => {
-                                                setIsManualUrl(true);
-                                                field.onChange(e.target.value);
-                                            }}
-                                        />
+                                        <div className="space-y-1">
+                                            <Input
+                                                {...field}
+                                                className="text-xs h-9 bg-slate-50 italic truncate"
+                                                placeholder="Generado automáticamente o carga manual"
+                                                onChange={(e) => {
+                                                    setIsManualUrl(true);
+                                                    field.onChange(e.target.value);
+                                                }}
+                                            />
+                                            <p className="text-[10px] text-slate-400">
+                                                * El enlace se genera automáticamente al escribir la dirección, pero puedes pegarlo manualmente si lo prefieres.
+                                            </p>
+                                        </div>
                                     )}
                                 />
                                 <Controller

@@ -1,13 +1,15 @@
+export const dynamic = "force-dynamic";
+
 import { Resend } from 'resend';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: Request) {
-  const resend = new Resend(process.env.RESEND_API_KEY);
   const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321',
+      process.env.SUPABASE_SERVICE_ROLE_KEY || 'dummy-key'
   );
+  const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy');
 
   try {
     const body = await request.json();
@@ -55,13 +57,14 @@ export async function POST(request: Request) {
 
     // 2. Generate invite token and insert into DB
     const token = crypto.randomUUID();
-    const origin = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const origin = process.env.NEXT_PUBLIC_SITE_URL || 'https://liviodental.com';
     const inviteLink = `${origin}/accept-invite/${token}`;
 
     const { error: insertError } = await supabaseAdmin.from('invites').insert({
       clinic_id: clinicId || null,
       email,
       role,
+      invited_name: invitedName || null,
       inviter_id: inviterId || null,
       inviter_name: inviterName || 'Livio',
       status: 'pending',

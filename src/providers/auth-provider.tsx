@@ -166,30 +166,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const signOut = async () => {
         console.log("🚪 [Auth] Cerrando sesión...");
         
-        // 1. Clear localStorage Cache immediately
+        // 1. Clear localStorage Cache immediately for instant UI feedback
         localStorage.removeItem('livio_user_cache');
         localStorage.removeItem('livio_clinic_cache');
         
-        try {
-            // 2. Sign out from Supabase (Client)
-            // Catch error locally so we still proceed to clear cookies
-            await supabase.auth.signOut().catch(err => {
-                console.warn("⚠️ [Auth] Warning during Supabase signOut:", err);
-            });
-            
-            // 3. Delete the remember me cookie from client side just in case
-            document.cookie = 'livio_remember_me=; path=/; max-age=0; SameSite=Lax';
+        const performSignOut = async () => {
+            try {
+                // 2. Sign out from Supabase (Client)
+                await supabase.auth.signOut().catch(err => console.warn("⚠️ [Auth] Supabase signOut warning:", err));
+                
+                // 3. Delete cookie from client side
+                document.cookie = 'livio_remember_me=; path=/; max-age=0; SameSite=Lax';
 
-            // 4. Call Server Action to clear HTTP-only cookies thoroughly
-            await logoutAction();
-            
-            console.log("✅ [Auth] Sesión cerrada exitosamente.");
-        } catch (error) {
-            console.error("❌ [Auth] Error al cerrar sesión:", error);
-        } finally {
-            // 5. Force hard redirect to login and clear all memory state
-            window.location.replace('/login');
-        }
+                // 4. Call Server Action to clear HTTP-only cookies
+                await logoutAction().catch(err => console.warn("⚠️ [Auth] logoutAction warning:", err));
+                
+                console.log("✅ [Auth] Sesión cerrada físicamente.");
+            } catch (error) {
+                console.error("❌ [Auth] Error durante el proceso de salida:", error);
+            }
+        };
+
+        // 5. Safety timeout: if server/network is slow, force redirect anyway in 2s
+        const timeoutPromise = new Promise((resolve) => setTimeout(resolve, 2000));
+        
+        await Promise.race([performSignOut(), timeoutPromise]);
+        
+        // 6. Final absolute redirect
+        console.log("🚀 [Auth] Redirigiendo a login (forced)");
+        window.location.replace('/login');
     };
 
     return (

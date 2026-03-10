@@ -27,6 +27,7 @@ import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Stethoscope, Trash2, Clock, DollarSign } from "lucide-react";
 import { sentenceCase } from "@/utils/masks";
+import { formatCurrency, parseCurrency } from "@/utils/formatters";
 
 interface TreatmentModalProps {
     isOpen: boolean;
@@ -78,9 +79,9 @@ export default function TreatmentModal({
         defaultValues: {
             nombre: "",
             categoria: "Otros",
-            precio: 0,
-            duracion: 30,
-            codigo_noms: "",
+            precio: "0",
+            duracion: "30",
+            noms: "",
             color: "#76D7B6",
             activo: true,
             descripcion: "",
@@ -97,9 +98,9 @@ export default function TreatmentModal({
             reset({
                 nombre: editingItem.nombre,
                 categoria: editingItem.categoria || "Otros",
-                precio: Number(editingItem.precio) || 0,
-                duracion: Number(editingItem.duracion) || 30,
-                codigo_noms: editingItem.codigo_noms || "",
+                precio: String(editingItem.precio || 0),
+                duracion: String(editingItem.duracion || 30),
+                noms: editingItem.noms || "",
                 color: editingItem.color || "#76D7B6",
                 activo: editingItem.activo ?? true,
                 descripcion: editingItem.descripcion || "",
@@ -108,9 +109,9 @@ export default function TreatmentModal({
             reset({
                 nombre: "",
                 categoria: "Otros",
-                precio: 0,
-                duracion: 30,
-                codigo_noms: "",
+                precio: "0",
+                duracion: "30",
+                noms: "",
                 color: "#76D7B6",
                 activo: true,
                 descripcion: "",
@@ -226,14 +227,14 @@ export default function TreatmentModal({
                                 </Select>
                             </div>
 
-                            <div className="space-y-1.5">
+                             <div className="space-y-1.5">
                                 <Label className="text-xs font-semibold text-slate-600">Código NOMS</Label>
                                 <Input 
-                                    {...register("codigo_noms")} 
+                                    {...register("noms")} 
                                     placeholder="Código"
                                     className="h-9 text-sm"
                                 />
-                                {errors.codigo_noms && <p className="text-[10px] text-red-500">{errors.codigo_noms.message}</p>}
+                                {errors.noms && <p className="text-[10px] text-red-500">{errors.noms.message}</p>}
                             </div>
 
                             <div className="space-y-1.5">
@@ -282,7 +283,7 @@ export default function TreatmentModal({
                                     <span className="text-[11px] font-bold text-slate-700 truncate">{watchedDuration}min | ${Number(watchedPrice).toLocaleString()}</span>
                                 </div>
                                 <Badge className="text-[9px] h-4 px-1 bg-slate-200 text-slate-600 border-none">
-                                    {watch("codigo_noms") || "NOMS"}
+                                    {watch("noms") || "NOMS"}
                                 </Badge>
                             </div>
                         </div>
@@ -296,11 +297,10 @@ export default function TreatmentModal({
                                     <Input 
                                         className="h-9 pl-8 text-sm"
                                         placeholder="0"
-                                        value={watchedPrice === 0 ? "" : watchedPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
+                                        value={formatCurrency(watchedPrice)}
                                         onChange={(e) => {
-                                            const rawValue = e.target.value.replace(/\D/g, "");
-                                            const numValue = rawValue ? parseInt(rawValue, 10) : 0;
-                                            setValue("precio", numValue, { shouldValidate: true });
+                                            const numValue = parseCurrency(e.target.value);
+                                            setValue("precio", String(numValue), { shouldValidate: true });
                                         }}
                                     />
                                 </div>
@@ -353,7 +353,7 @@ export default function TreatmentModal({
                         size="sm"
                         disabled={isSaving || !isValid}
                         onClick={handleSubmit(onSubmit as any)}
-                        className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 font-bold h-8 px-4"
+                        className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 h-8 px-4"
                     >
                         {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : (editingItem ? "Actualizar" : "Crear")}
                     </Button>

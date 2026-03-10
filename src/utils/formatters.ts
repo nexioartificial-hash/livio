@@ -33,6 +33,28 @@ export const cleanValue = (value: string) => value.replace(/\D/g, "");
 export const cuitRegex = /^\d{2}-\d{8}-\d{1}$/;
 
 /**
+ * Formats a number or string as Argentine currency (thousands separator)
+ * Example: 1000 -> "1.000"
+ */
+export const formatCurrency = (value: string | number) => {
+    if (value === undefined || value === null || value === "") return "";
+    const stringValue = typeof value === "number" ? value.toString() : value;
+    const clean = stringValue.replace(/\D/g, "");
+    if (!clean) return "";
+    return Number(clean).toLocaleString("es-AR");
+};
+
+/**
+ * Parses a formatted currency string back to a number
+ * Example: "1.000" -> 1000
+ */
+export const parseCurrency = (value: string) => {
+    if (!value) return 0;
+    const clean = value.replace(/\D/g, "");
+    return Number(clean) || 0;
+};
+
+/**
  * Validates Argentine phone format after +54 prefix (10-15 digits)
  */
 export const phoneRegex = /^[1-9]\d{9,14}$/;

@@ -6,8 +6,8 @@ export async function createClient() {
     const isRememberMe = cookieStore.get('livio_remember_me')?.value === 'true'
 
     return createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        (process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co"),
+        (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key"),
         {
             cookies: {
                 get(name: string) {

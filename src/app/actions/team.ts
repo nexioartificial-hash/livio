@@ -6,7 +6,7 @@ import { headers } from "next/headers";
 
 // Admin client (server-side only)
 const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    (process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co"),
     process.env.SUPABASE_SERVICE_ROLE_KEY || "dummy-key"
 );
 
@@ -230,7 +230,7 @@ export async function getTeamMembers(clinicId?: string | null, ownerId?: string 
         const teamInvites = (invites || []).map(i => ({
             id: i.id,
             email: i.email,
-            full_name: i.email.split('@')[0], // Fallback name for invites
+            full_name: i.invited_name || i.email.split('@')[0], // Use invited_name if available
             role: i.role,
             status: "pendiente",
             created_at: i.created_at
@@ -334,6 +334,30 @@ export async function deleteMember(id: string) {
         return { error: "No se encontró el miembro a eliminar." };
     } catch (error: any) {
         console.error("Delete member error:", error);
+        return { error: error.message };
+    }
+}
+
+// ─── Update Member Professional Data ─────────────────────────────
+export async function updateMemberProfessional(userId: string, data: any) {
+    try {
+        const { error } = await supabaseAdmin
+            .from("professional")
+            .update({
+                matricula_nacional: data.matricula_nacional,
+                specialty: data.specialty,
+                sucursales: data.sucursales,
+                horarios: data.horarios,
+                activo: data.activo,
+            })
+            .eq("id", userId);
+
+        if (error) throw error;
+
+        revalidatePath("/config");
+        return { success: true };
+    } catch (error: any) {
+        console.error("Update member error:", error);
         return { error: error.message };
     }
 }

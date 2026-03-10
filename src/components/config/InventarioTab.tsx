@@ -69,6 +69,7 @@ export function InventarioTab({ clinicId }: InventarioTabProps) {
     const [searchTerm, setSearchTerm] = useState("");
     const [categoriaFilter, setCategoriaFilter] = useState("Todas");
     const [stockBajoOnly, setStockBajoOnly] = useState(false);
+    const [vencimientoProximoOnly, setVencimientoProximoOnly] = useState(false);
     
     // Modal
     const [modalOpen, setModalOpen] = useState(false);
@@ -143,8 +144,11 @@ export function InventarioTab({ clinicId }: InventarioTabProps) {
         const matchCategoria = categoriaFilter === "Todas" || item.categoria === categoriaFilter;
         const isStockBajo = item.stock_actual <= item.stock_min;
         const matchStock = stockBajoOnly ? isStockBajo : true;
+        
+        const isVencimientoProximo = item.vencimiento ? differenceInDays(new Date(item.vencimiento), new Date()) <= 30 : false;
+        const matchVencimiento = vencimientoProximoOnly ? isVencimientoProximo : true;
 
-        return matchSearch && matchCategoria && matchStock;
+        return matchSearch && matchCategoria && matchStock && matchVencimiento;
     });
 
     // Metrics
@@ -263,9 +267,14 @@ export function InventarioTab({ clinicId }: InventarioTabProps) {
                             </SelectContent>
                         </Select>
                         
-                        <div className="flex items-center space-x-2 border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 cursor-pointer" onClick={() => setStockBajoOnly(!stockBajoOnly)}>
+                        <div className="flex items-center space-x-2 border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 cursor-pointer transition-colors hover:bg-slate-100" onClick={() => setStockBajoOnly(!stockBajoOnly)}>
                             <Switch id="stock-bajo" checked={stockBajoOnly} onCheckedChange={setStockBajoOnly} />
-                            <Label htmlFor="stock-bajo" className="text-sm font-medium text-slate-700 cursor-pointer">Solo Stock Bajo</Label>
+                            <Label htmlFor="stock-bajo" className="text-sm font-medium text-slate-700 cursor-pointer whitespace-nowrap">Solo Stock Bajo</Label>
+                        </div>
+
+                        <div className="flex items-center space-x-2 border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 cursor-pointer transition-colors hover:bg-slate-100" onClick={() => setVencimientoProximoOnly(!vencimientoProximoOnly)}>
+                            <Switch id="vencimiento-proximo" checked={vencimientoProximoOnly} onCheckedChange={setVencimientoProximoOnly} />
+                            <Label htmlFor="vencimiento-proximo" className="text-sm font-medium text-slate-700 cursor-pointer whitespace-nowrap">Solo Vencimiento Próximo</Label>
                         </div>
                     </div>
                 </div>
@@ -299,7 +308,7 @@ export function InventarioTab({ clinicId }: InventarioTabProps) {
                                         <div className="flex flex-col items-center justify-center text-slate-500 gap-2">
                                             <Package className="h-8 w-8 text-slate-300" />
                                             <p className="text-sm font-medium">No se encontraron productos</p>
-                                            {searchTerm || stockBajoOnly || categoriaFilter !== "Todas" ? (
+                                            {searchTerm || stockBajoOnly || vencimientoProximoOnly || categoriaFilter !== "Todas" ? (
                                                 <p className="text-xs text-slate-400">Probá limpiando los filtros</p>
                                             ) : (
                                                 <Button variant="link" onClick={() => { setEditingItem(null); setModalOpen(true); }} className="text-[#76D7B6]">

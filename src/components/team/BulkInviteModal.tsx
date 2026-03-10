@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { inviteTeamMember } from "@/app/actions/team";
-import { Badge } from "@/components/ui/badge";
+import { titleCase } from "@/utils/masks";
 
 interface BulkInviteModalProps {
     open: boolean;
@@ -74,20 +74,24 @@ export function BulkInviteModal({ open, onOpenChange, onSuccess }: BulkInviteMod
 
         for (let i = 0; i < parsedData.length; i++) {
             const row = parsedData[i];
-            const email = row.email || row.Email || row.EMAIL;
+            let email = (row.email || row.Email || row.EMAIL || "").trim().toLowerCase();
             const role = row.role || row.Role || row.ROL || "profesional";
-            const name = row.nombre || row.Nombre || row.NAME || "";
+            let name = (row.nombre || row.Nombre || row.NAME || "").trim();
 
-            if (!email) {
+            if (!email || !email.endsWith(".com")) {
                 errorCount++;
                 continue;
+            }
+
+            if (name) {
+                name = titleCase(name);
             }
 
             try {
                 const res = await inviteTeamMember(
                     email,
                     name || email.split('@')[0],
-                    role.toLowerCase().includes("recep") ? "receptionist" : "professional"
+                    role.toLowerCase().includes("recep") ? "recepcionista" : "profesional"
                 );
                 if (res.success) successCount++;
                 else errorCount++;

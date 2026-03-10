@@ -17,6 +17,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { formatCurrency, parseCurrency } from "@/utils/formatters";
 
 const formSchema = z.object({
     producto: z.string().min(1, { message: "El producto es requerido" }),
@@ -259,7 +260,13 @@ export function ProductModal({ isOpen, onClose, editingItem, clinicId, onSuccess
                                             <FormControl>
                                                 <div className="relative">
                                                     <span className="absolute left-3 top-2 text-slate-500">$</span>
-                                                    <Input type="number" min="0" step="100" className="pl-6 border-slate-200 focus-visible:ring-[#76D7B6]" {...field} />
+                                                    <Input 
+                                                        type="text" 
+                                                        placeholder="0"
+                                                        className="pl-6 border-slate-200 focus-visible:ring-[#76D7B6]" 
+                                                        value={formatCurrency(field.value)}
+                                                        onChange={(e) => field.onChange(parseCurrency(e.target.value))}
+                                                    />
                                                 </div>
                                             </FormControl>
                                             <FormMessage />
@@ -312,7 +319,7 @@ export function ProductModal({ isOpen, onClose, editingItem, clinicId, onSuccess
                                 <Button type="button" variant="ghost" onClick={onClose} disabled={isSaving}>
                                     Cancelar
                                 </Button>
-                                <Button type="submit" disabled={isSaving} className="bg-[#76D7B6] text-slate-900 hover:bg-[#65cba8] font-bold">
+                                <Button type="submit" disabled={isSaving} className="bg-[#76D7B6] text-slate-900 hover:bg-[#65cba8]">
                                     {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                     Guardar Insumo
                                 </Button>

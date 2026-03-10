@@ -21,9 +21,11 @@ export const sedeSchema = z.object({
     name: z.string().min(1, "Nombre requerido").transform(titleCase),
     address: z.string().min(1, "Dirección requerida"),
     location: z.string().min(1, "Localidad requerida"),
-    aclaraciones: z.string().min(1, "Aclaraciones requeridas (depto/timbre...)").max(200, "Máx 200 caracteres"),
+    aclaraciones: z.string().max(200, "Máx 200 caracteres").optional().or(z.literal("")),
     phone: z.string().min(10, "Teléfono completo (+54...)"),
-    email: z.string().email("Email válido").min(1),
+    email: z.string().email("Email válido").refine((val) => val.toLowerCase().endsWith(".com"), {
+        message: "El email debe terminar en .com",
+    }),
     google_maps_url: z.string().url("Link Maps válido").min(1),
     confirmAddress: z.boolean().refine(v => v, "Debe confirmar ubicación"),
     horarios: z.record(z.string(), z.object({
@@ -61,11 +63,16 @@ export type TreatmentValues = z.infer<typeof treatmentSchema>;
 export const stockSchema = z.object({
     nombre: z.string().min(1, "El nombre del producto es requerido"),
     categoria: z.string().min(1, "La categoría es requerida"),
-    stock_actual: z.number().min(0, "Mínimo 0"),
-    stock_minimo: z.number().min(0, "Mínimo 0"),
+    stock_actual: z.coerce.number().min(0, "Mínimo 0"),
+    stock_minimo: z.coerce.number().min(0, "Mínimo 0"),
     sucursal_id: z.string().uuid("Seleccione una sede válida"),
     proveedor: z.string().optional().or(z.literal("")),
-    precio_costo: z.number().optional().or(z.literal(0)),
+    caduca: z.any(),
+    lote: z.string().optional().or(z.literal("")),
+    precio_compra: z.coerce.number().optional().or(z.literal(0)),
+    precio_venta: z.coerce.number().optional().or(z.literal(0)),
+    notas: z.string().optional().or(z.literal("")),
+    activo: z.boolean().default(true),
 });
 
 export type StockValues = z.infer<typeof stockSchema>;

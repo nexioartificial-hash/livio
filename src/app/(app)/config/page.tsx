@@ -269,10 +269,10 @@ export default function ConfigPage() {
     }, [(user as any)?.clinic_id]);
 
     const fetchAdvancedData = async () => {
-        setLoadingAdvanced(true);
         const clinicId = (user as any)?.clinic_id;
-        if (!clinicId) { setLoadingAdvanced(false); return; }
+        if (!clinicId || loadingAdvanced) return;
         
+        setLoadingAdvanced(true);
         try {
             // Solo necesitamos counts ligeros para los Badges del header, el contenido profundo se carga al cambiar de Tab
             const [tRes, osRes, sRes] = await Promise.all([
@@ -282,9 +282,9 @@ export default function ConfigPage() {
             ]);
 
             // Fake states just for total count since we use real Tabs for deep render
-            if (tRes.count) setTratamientos(Array(tRes.count).fill(null));
-            if (osRes.count) setObrasSociales(Array(osRes.count).fill(null));
-            if (sRes.count) setStockItems(Array(sRes.count).fill(null));
+            if (tRes.count !== null) setTratamientos(Array(tRes.count).fill(null));
+            if (osRes.count !== null) setObrasSociales(Array(osRes.count).fill(null));
+            if (sRes.count !== null) setStockItems(Array(sRes.count).fill(null));
         } catch (err) {
             console.error("Error fetching advanced data metric counts:", err);
         } finally {
@@ -301,23 +301,14 @@ export default function ConfigPage() {
             return;
         }
 
-        const localSupabase = createClient();
-        
         try {
             setLoadingSucursales(true);
             
-            // Add a safety timeout of 10 seconds
-            const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('TIMEOUT')), 10000)
-            );
-            
-            const fetchPromise = localSupabase
+            const { data, error } = await supabase
                 .from("sucursal")
                 .select("id, name, address, phone, google_maps_url, location, email, aclaraciones, horarios")
                 .eq("clinic_id", clinicId)
                 .order("created_at", { ascending: true });
-                
-            const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
 
             if (error) throw error;
             
@@ -326,9 +317,7 @@ export default function ConfigPage() {
             }
         } catch (err: any) {
             console.error("Error fetching sucursales:", err);
-            if (err.message === 'TIMEOUT') {
-                toast.error("La carga de sedes tardó demasiado. Por favor, intente de nuevo.");
-            }
+            toast.error("Error al cargar las sedes. Verifique su conexión.");
         } finally {
             setLoadingSucursales(false);
         }
@@ -527,7 +516,7 @@ export default function ConfigPage() {
                 <TabsContent value="clinica" className="mt-6 space-y-6">
                     <div className="grid gap-6 lg:grid-cols-3">
                         <div className="lg:col-span-2 space-y-6">
-                            <ClinicConfigForm />
+                            <ClinicConfigForm sucursales={sucursales} />
 
                             <Card>
                                 <CardHeader>

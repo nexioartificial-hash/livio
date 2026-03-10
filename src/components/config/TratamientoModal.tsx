@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Plus, Save, Stethoscope } from "lucide-react";
 import { toast } from "sonner";
 import { saveTratamiento } from "@/app/actions/tratamientos";
+import { formatCurrency, parseCurrency } from "@/utils/formatters";
 
 const formSchema = z.object({
     id: z.string().optional(),
@@ -205,10 +206,11 @@ export function TratamientoModal({ clinicId, open, setOpen, initialData, onSucce
                                             </FormLabel>
                                             <FormControl>
                                                 <Input 
-                                                    type="number"
+                                                    type="text"
                                                     placeholder="15000" 
                                                     className="h-11 rounded-xl bg-slate-50 border-slate-200 font-medium"
-                                                    {...field} 
+                                                    value={formatCurrency(field.value)}
+                                                    onChange={(e) => field.onChange(parseCurrency(e.target.value))}
                                                 />
                                             </FormControl>
                                             <FormMessage className="text-[10px]" />
@@ -220,7 +222,7 @@ export function TratamientoModal({ clinicId, open, setOpen, initialData, onSucce
                             <Button 
                                 type="submit" 
                                 disabled={form.formState.isSubmitting}
-                                className="w-full h-12 rounded-xl bg-[#10B981] hover:bg-[#059669] text-white font-bold text-sm gap-2 transition-all mt-4"
+                                className="w-full h-12 rounded-xl bg-[#10B981] hover:bg-[#059669] text-white text-sm gap-2 transition-all mt-4"
                             >
                                 {form.formState.isSubmitting ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />

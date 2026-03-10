@@ -223,32 +223,33 @@ export function TratamientosTab({ clinicId }: { clinicId: string }) {
             </div>
 
             {/* Filters Row */}
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest mr-2">
                     <Filter className="h-3 w-3" /> Filtrar por:
                 </div>
-                <Button
-                    variant={categoryFilter === "Todas" ? "secondary" : "ghost"}
-                    size="sm"
-                    onClick={() => setCategoryFilter("Todas")}
-                    className={cn("rounded-full px-4 h-8 text-[11px] font-bold", categoryFilter === "Todas" && "bg-slate-900 text-white hover:bg-slate-800")}
+                
+                <Select
+                    value={categoryFilter}
+                    onValueChange={setCategoryFilter}
                 >
-                    Todas
-                </Button>
-                {CATEGORIAS.map(cat => (
-                    <Button
-                        key={cat}
-                        variant={categoryFilter === cat ? "secondary" : "ghost"}
-                        size="sm"
-                        onClick={() => setCategoryFilter(cat)}
-                        className={cn(
-                            "rounded-full px-4 h-8 text-[11px] font-bold", 
-                            categoryFilter === cat && "bg-[#10B981] text-white hover:bg-[#059669]"
-                        )}
-                    >
-                        {cat}
-                    </Button>
-                ))}
+                    <SelectTrigger className="w-full md:w-[240px] h-10 rounded-xl bg-white border-slate-200 shadow-sm font-semibold text-slate-700">
+                        <div className="flex items-center gap-2">
+                            <SelectValue placeholder="Categoría" />
+                        </div>
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-slate-200 shadow-xl">
+                        <SelectItem value="Todas" className="font-semibold py-2.5">Todas las categorías</SelectItem>
+                        {CATEGORIAS.map(cat => (
+                            <SelectItem 
+                                key={cat} 
+                                value={cat}
+                                className="font-semibold py-2.5"
+                            >
+                                {cat}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
 
             {/* Main Table */}

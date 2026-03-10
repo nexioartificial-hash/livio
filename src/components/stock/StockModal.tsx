@@ -24,7 +24,8 @@ import {
 import { stockSchema, StockValues } from "@/lib/validators/config";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Package, Trash2 } from "lucide-react";
+import { Loader2, Package, Trash2, DollarSign } from "lucide-react";
+import { formatCurrency, parseCurrency } from "@/utils/formatters";
 
 interface StockModalProps {
     isOpen: boolean;
@@ -71,7 +72,7 @@ export default function StockModal({
             stock_actual: 0,
             stock_minimo: 0,
             proveedor: "",
-            caduca: "",
+            caduca: null,
             lote: "",
             precio_compra: 0,
             precio_venta: 0,
@@ -103,7 +104,7 @@ export default function StockModal({
                 stock_actual: editingItem.stock_actual || 0,
                 stock_minimo: editingItem.stock_minimo || 0,
                 proveedor: editingItem.proveedor || "",
-                caduca: editingItem.caduca || "",
+                caduca: editingItem.caduca || null,
                 lote: editingItem.lote || "",
                 precio_compra: Number(editingItem.precio_compra) || 0,
                 precio_venta: Number(editingItem.precio_venta) || 0,
@@ -118,7 +119,7 @@ export default function StockModal({
                 stock_actual: 0,
                 stock_minimo: 0,
                 proveedor: "",
-                caduca: "",
+                caduca: null,
                 lote: "",
                 precio_compra: 0,
                 precio_venta: 0,
@@ -211,7 +212,7 @@ export default function StockModal({
                                 {...register("nombre")} 
                                 placeholder="Ej: Lidocaína 2%" 
                             />
-                            {errors.nombre && <p className="text-xs text-red-500">{errors.nombre.message}</p>}
+                            {errors.nombre && <p className="text-xs text-red-500">{(errors.nombre.message as string)}</p>}
                         </div>
 
                         <div className="space-y-2">
@@ -286,20 +287,36 @@ export default function StockModal({
                         {/* Precios */}
                         <div className="space-y-2">
                             <Label>Precio Compra ($)</Label>
-                            <Input 
-                                type="number" 
-                                step="0.01" 
-                                {...register("precio_compra", { valueAsNumber: true })} 
-                            />
+                            <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+                                <Input 
+                                    type="text"
+                                    className="pl-7"
+                                    placeholder="0"
+                                    value={formatCurrency(watch("precio_compra") ?? 0)}
+                                    onChange={(e) => {
+                                        const parsed = parseCurrency(e.target.value);
+                                        setValue("precio_compra", parsed, { shouldValidate: true });
+                                    }}
+                                />
+                            </div>
                         </div>
 
                         <div className="space-y-2">
                             <Label>Precio Venta ($)</Label>
-                            <Input 
-                                type="number" 
-                                step="0.01" 
-                                {...register("precio_venta", { valueAsNumber: true })} 
-                            />
+                            <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+                                <Input 
+                                    type="text"
+                                    className="pl-7"
+                                    placeholder="0"
+                                    value={formatCurrency(watch("precio_venta") ?? 0)}
+                                    onChange={(e) => {
+                                        const parsed = parseCurrency(e.target.value);
+                                        setValue("precio_venta", parsed, { shouldValidate: true });
+                                    }}
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -331,7 +348,7 @@ export default function StockModal({
                             <Button 
                                 type="submit" 
                                 disabled={isSaving || !isValid}
-                                className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 font-bold min-w-[120px]"
+                                className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 min-w-[120px]"
                             >
                                 {isSaving ? (
                                     <>

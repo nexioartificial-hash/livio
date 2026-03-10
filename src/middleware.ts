@@ -54,7 +54,6 @@ export async function middleware(request: NextRequest) {
                         name,
                         value: '',
                         ...options,
-                        maxAge: 0
                     })
                     response = NextResponse.next({
                         request: {
@@ -65,7 +64,6 @@ export async function middleware(request: NextRequest) {
                         name,
                         value: '',
                         ...options,
-                        maxAge: 0
                     })
                 },
             },

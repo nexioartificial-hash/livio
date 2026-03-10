@@ -21,6 +21,13 @@ interface InviteData {
     status: string;
 }
 
+interface AcceptInviteFormValues {
+    fullName: string;
+    password: string;
+    confirmPassword: string;
+    license: string;
+}
+
 export default function AcceptInvitePage() {
     const router = useRouter();
     const params = useParams();
@@ -34,9 +41,10 @@ export default function AcceptInvitePage() {
     const [showPassword, setShowPassword] = useState(false);
 
     // Form state
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<AcceptInviteFormValues>({
         fullName: "",
         password: "",
+        confirmPassword: "",
         license: "",
     });
 
@@ -66,6 +74,11 @@ export default function AcceptInvitePage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!invite) return;
+
+        if (formData.password !== formData.confirmPassword) {
+            toast.error("Las contraseñas no coinciden");
+            return;
+        }
 
         setSubmitting(true);
 
@@ -247,6 +260,22 @@ export default function AcceptInvitePage() {
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                                Confirmar Contraseña <span className="text-red-400">*</span>
+                            </Label>
+                            <div className="relative">
+                                <Input
+                                    type={showPassword ? "text" : "password"}
+                                    required
+                                    minLength={6}
+                                    value={formData.confirmPassword}
+                                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                    className="h-11 rounded-xl bg-slate-50 border-slate-200 pr-10"
+                                />
                             </div>
                         </div>
 
