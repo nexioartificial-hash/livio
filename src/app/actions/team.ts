@@ -48,7 +48,10 @@ export async function inviteTeamMember(
         const headersList = await headers();
         const host = headersList.get("host");
         const protocol = host?.includes("localhost") ? "http" : "https";
-        const origin = process.env.NEXT_PUBLIC_SITE_URL || `${protocol}://${host}`;
+        let origin = process.env.NEXT_PUBLIC_SITE_URL || `${protocol}://${host}`;
+        if (origin.includes('vercel.app') || host?.includes('vercel.app')) {
+            origin = 'https://liviodental.com';
+        }
         
         console.log(`📡 [Team] Enviando invitación via: ${origin}/api/send-invite`);
         
@@ -131,7 +134,10 @@ export async function resendInvite(inviteId: string) {
         }
 
         // Call Resend API route to re-send email
-        const origin = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+        let origin = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+        if (origin.includes('vercel.app')) {
+            origin = 'https://liviodental.com';
+        }
         const res = await fetch(`${origin}/api/send-invite`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -216,17 +222,26 @@ export async function getTeamMembers(clinicId?: string | null, ownerId?: string 
         const { data: invites, error: inviteError } = await inviteQuery;
         if (inviteError) throw inviteError;
 
-        // 3. Map profiles to team members
+        // 3. Fetch real emails from Auth Admin for all these profiles
+        const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers();
+        const emailMap: Record<string, string> = {};
+        if (!authError && authUsers?.users) {
+            authUsers.users.forEach(u => {
+                if (u.email) emailMap[u.id] = u.email;
+            });
+        }
+
+        // 4. Map profiles to team members
         const teamProfiles = (profiles || []).map(p => ({
             id: p.id,
-            email: p.google_user_email || "Usuario Livio", // Try to find email
+            email: emailMap[p.id] || p.google_user_email || "Usuario Livio", 
             full_name: p.full_name || "Profesional",
             role: p.role,
             status: "activo",
             created_at: p.created_at
         }));
 
-        // 4. Map invites to team members
+        // 5. Map invites to team members
         const teamInvites = (invites || []).map(i => ({
             id: i.id,
             email: i.email,
@@ -304,12 +319,16 @@ export async function deleteMember(id: string) {
             .maybeSingle();
 
         if (profile) {
+            // Fetch real email from Auth to ensure we wipe the right invites
+            const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(id);
+            const userEmail = authUser?.user?.email || profile.google_user_email;
+
             // Delete associated invites first to avoid re-invite issues later
-            if (profile.google_user_email) {
+            if (userEmail) {
                 await supabaseAdmin
                     .from("invites")
                     .delete()
-                    .eq("email", profile.google_user_email);
+                    .eq("email", userEmail);
             }
 
             // Delete professional profile

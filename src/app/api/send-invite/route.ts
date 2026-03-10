@@ -57,7 +57,11 @@ export async function POST(request: Request) {
 
     // 2. Generate invite token and insert into DB
     const token = crypto.randomUUID();
-    const origin = process.env.NEXT_PUBLIC_SITE_URL || 'https://liviodental.com';
+    // Ensure production origin always uses custom domain, unless localhost
+    let origin = process.env.NEXT_PUBLIC_SITE_URL || 'https://liviodental.com';
+    if (origin.includes('vercel.app')) {
+      origin = 'https://liviodental.com';
+    }
     const inviteLink = `${origin}/accept-invite/${token}`;
 
     const { error: insertError } = await supabaseAdmin.from('invites').insert({

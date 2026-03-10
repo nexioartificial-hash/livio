@@ -18,6 +18,7 @@ interface InviteData {
     role: string;
     clinic_id: string;
     inviter_name: string;
+    invited_name?: string;
     status: string;
 }
 
@@ -65,6 +66,9 @@ export default function AcceptInvitePage() {
             }
 
             setInvite(data.invite);
+            if (data.invite.invited_name) {
+                setFormData(prev => ({ ...prev, fullName: data.invite.invited_name }));
+            }
         } catch {
             setError("Error al validar la invitación.");
         }
@@ -120,6 +124,16 @@ export default function AcceptInvitePage() {
                 if (!res.ok) {
                     console.error("Accept invite failed:", result.error);
                 }
+            }
+
+            // 3. Log the user in to ensure session is active
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email: invite.email,
+                password: formData.password,
+            });
+
+            if (signInError) {
+                console.error("Auto-login error:", signInError);
             }
 
             toast.success("¡Cuenta creada! Bienvenido al equipo.");

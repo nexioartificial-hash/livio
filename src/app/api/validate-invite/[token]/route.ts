@@ -16,7 +16,7 @@ export async function GET(
     try {
         const { data: invite, error } = await supabaseAdmin
             .from('invites')
-            .select('id, email, role, clinic_id, inviter_name, status, created_at')
+            .select('id, email, role, clinic_id, inviter_name, invited_name, status, created_at')
             .eq('token', token)
             .maybeSingle();
 
