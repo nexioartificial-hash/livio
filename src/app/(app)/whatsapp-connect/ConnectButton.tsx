@@ -33,7 +33,7 @@ function loadFBSDK(): Promise<void> {
 
         window.fbAsyncInit = () => {
             clearTimeout(timeout);
-            window.FB.init({ appId: APP_ID, cookie: true, xfbml: false, version: "v21.0" });
+            window.FB.init({ appId: APP_ID, cookie: true, xfbml: false, version: "v25.0" });
             resolve();
         };
 
