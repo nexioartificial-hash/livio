@@ -67,53 +67,51 @@ export function ConnectButton() {
             return;
         }
 
-        window.FB.login(
-            async (response: any) => {
-                const code = response.authResponse?.code;
+        // FB.login callback must be synchronous — call async handler inside
+        const handleFBResponse = (response: any) => {
+            const code = response.authResponse?.code;
 
-                if (!code) {
-                    setError(
-                        response.status === "unknown"
-                            ? "Cerró la ventana sin completar. Intentá de nuevo."
-                            : "No se obtuvo autorización de Meta."
-                    );
-                    setLoading(false);
-                    return;
-                }
+            if (!code) {
+                setError(
+                    response.status === "unknown"
+                        ? "Cerró la ventana sin completar. Intentá de nuevo."
+                        : "No se obtuvo autorización de Meta."
+                );
+                setLoading(false);
+                return;
+            }
 
-                try {
-                    const res = await fetch("/api/auth/whatsapp/callback", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ code }),
-                    });
-
-                    const data = await res.json();
-
+            fetch("/api/auth/whatsapp/callback", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code }),
+            })
+                .then((res) => res.json().then((data) => ({ res, data })))
+                .then(({ res, data }) => {
                     if (!res.ok) {
                         setError(data.error || "Error al conectar WhatsApp. Intentá de nuevo.");
                         setLoading(false);
                         return;
                     }
-
                     console.log("[WA] Connected:", data.display_number);
                     router.push("/whatsapp-success");
-                } catch {
+                })
+                .catch(() => {
                     setError("Error de red. Verificá tu conexión e intentá de nuevo.");
                     setLoading(false);
-                }
+                });
+        };
+
+        window.FB.login(handleFBResponse, {
+            config_id: CONFIG_ID,
+            response_type: "code",
+            override_default_response_type: true,
+            extras: {
+                setup: {},
+                featureType: "",
+                sessionInfoVersion: "3",
             },
-            {
-                config_id: CONFIG_ID,
-                response_type: "code",
-                override_default_response_type: true,
-                extras: {
-                    setup: {},
-                    featureType: "",
-                    sessionInfoVersion: "3",
-                },
-            }
-        );
+        });
     }, [router]);
 
     return (
