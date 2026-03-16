@@ -14,7 +14,8 @@ import {
     Settings,
     LogOut,
     User as UserIcon,
-    ChevronUp
+    ChevronUp,
+    MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -66,6 +67,11 @@ const sidebarItems = [
         icon: FileBarChart,
     },
     {
+        title: "WhatsApp",
+        href: "/whatsapp-connect",
+        icon: MessageSquare,
+    },
+    {
         title: "Configuración",
         href: "/config",
         icon: Settings,
@@ -74,7 +80,7 @@ const sidebarItems = [
 
 export function Sidebar() {
     const pathname = usePathname();
-    const { user, signOut } = useAuth();
+    const { user, loading: authLoading, signOut } = useAuth();
 
     const [isMounted, setIsMounted] = useState(false);
     useEffect(() => {
@@ -155,7 +161,9 @@ export function Sidebar() {
                             </Avatar>
                             <div className="flex-1 overflow-hidden">
                                 <p className="text-sm font-bold text-slate-900 truncate">
-                                    {(user as any)?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name || "Usuario"}
+                                    {authLoading && !user
+                                        ? <span className="inline-block w-24 h-3 bg-slate-200 rounded animate-pulse" />
+                                        : ((user as any)?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name || "Usuario")}
                                 </p>
                                 <p className="text-[11px] text-slate-500 truncate">
                                     {user?.email}
