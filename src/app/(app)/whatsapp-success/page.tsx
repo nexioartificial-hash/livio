@@ -49,16 +49,38 @@ interface QRResult {
 
 async function fetchQR(phoneId: string): Promise<QRResult> {
     try {
-        const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-        const res = await fetch(`${base}/api/whatsapp/qr/${phoneId}`, {
-            cache: "no-store",
-            // Forward cookies so the route can verify the session
-            headers: { Cookie: "" },
-        });
-        if (!res.ok) return { error: "No disponible" };
-        return res.json();
+        const admin = createAdminClient();
+        const { data: conn } = await admin
+            .from("user_whatsapps")
+            .select("access_token")
+            .eq("phone_id", phoneId)
+            .single();
+
+        if (!conn?.access_token) return { error: "No disponible" };
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+
+        const metaRes = await fetch(
+            `https://graph.facebook.com/v21.0/${phoneId}/generate_qr_code?generate_qr_image=SVG&messaging_product=whatsapp`,
+            {
+                headers: { Authorization: `Bearer ${conn.access_token}` },
+                cache: "no-store",
+                signal: controller.signal,
+            }
+        );
+        clearTimeout(timeout);
+
+        const data = await metaRes.json();
+        if (data.error) return { error: data.error.message ?? "No disponible" };
+
+        return {
+            qr_image_url: data.qr_image_url ?? null,
+            qr_code: data.code ?? null,
+            deep_link_url: data.deep_link_url ?? null,
+        };
     } catch {
-        return { error: "Error al generar QR" };
+        return { error: "No disponible" };
     }
 }
 
