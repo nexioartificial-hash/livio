@@ -112,21 +112,43 @@ export default function ClinicalHistoryPage() {
                         .single();
 
                     if (patientData) {
+                        // Fetch next appointment
+                        const today = new Date().toISOString().split("T")[0];
+                        const { data: nextTurno } = await supabase
+                            .from("turno")
+                            .select("date, time")
+                            .eq("patient_id", patientData.id)
+                            .gte("date", today)
+                            .in("status", ["pendiente", "confirmado"])
+                            .order("date", { ascending: true })
+                            .limit(1)
+                            .single();
+
+                        const nextAppt = nextTurno
+                            ? new Date(nextTurno.date + "T12:00:00").toLocaleDateString("es-AR", { day: "numeric", month: "short", year: "numeric" })
+                            : "Sin turno";
+
+                        const nameParts = patientData.full_name?.split(" ") ?? [];
+                        const initials = nameParts.length >= 2
+                            ? nameParts[0][0] + nameParts[1][0]
+                            : patientData.full_name?.slice(0, 2) ?? "?";
+
                         setPatient({
                             ...patientData,
                             id: patientData.id,
                             code: `PT-${patientData.id.slice(0, 4).toUpperCase()}`,
                             name: patientData.full_name,
+                            initials: initials.toUpperCase(),
                             age: patientData.birth_date ? new Date().getFullYear() - new Date(patientData.birth_date).getFullYear() : 30,
                             gender: patientData.gender || "M",
                             dni: patientData.dni || "-",
                             phone: patientData.phone || "-",
                             email: patientData.email || "-",
                             obraSocial: patientData.obra_social || "Particular",
-                            nextAppointment: "Cargando...",
+                            nextAppointment: nextAppt,
                             tags: patientData.tags || [],
-                            bloodType: "O+",
-                            allergies: "N/A",
+                            bloodType: patientData.blood_type || "A+",
+                            allergies: patientData.allergies || "Ninguna",
                             lastVisit: "Reciente",
                         });
 
@@ -197,16 +219,16 @@ export default function ClinicalHistoryPage() {
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex items-center gap-4">
                         <Avatar className="h-14 w-14 border-2 border-[#76D7B6]">
-                            <AvatarFallback className="bg-[#76D7B6]/10 text-[#76D7B6] text-lg font-bold">JD</AvatarFallback>
+                            <AvatarFallback className="bg-[#76D7B6]/10 text-[#76D7B6] text-lg font-bold">{patient?.initials ?? "?"}</AvatarFallback>
                         </Avatar>
                         <div>
                             <div className="flex items-center gap-2 flex-wrap">
                                 <h1 className="text-xl font-bold text-slate-900">{patient?.name}</h1>
-                                <Badge variant="outline" className="text-[10px] font-mono">#{patient?.code}</Badge>
+
                                 <Badge className="bg-green-100 text-green-700 text-[10px]">{patient?.status}</Badge>
                             </div>
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500 mt-1">
-                                <span>{patient?.age}y {patient?.gender?.charAt(0)}</span>
+                                <span>{patient?.age} años · {patient?.gender}</span>
                                 <span>·</span>
                                 <span className="flex items-center gap-0.5"><Shield className="h-3 w-3" /> {patient?.dni}</span>
                                 <span>·</span>
@@ -218,7 +240,7 @@ export default function ClinicalHistoryPage() {
                                 <Badge variant="secondary" className="text-[10px]">{patient?.obraSocial}</Badge>
                                 <Badge variant="outline" className="text-[10px] border-red-200 text-red-500"><AlertCircle className="h-2.5 w-2.5 mr-0.5" /> {patient?.allergies}</Badge>
                                 <Badge variant="outline" className="text-[10px] border-purple-200 text-purple-500"><Heart className="h-2.5 w-2.5 mr-0.5" /> {patient?.bloodType}</Badge>
-                                <span className="text-[10px] text-[#76D7B6] font-medium flex items-center gap-0.5"><Calendar className="h-3 w-3" /> Next: {patient?.nextAppointment}</span>
+                                <span className="text-[10px] text-[#76D7B6] font-medium flex items-center gap-0.5"><Calendar className="h-3 w-3" /> Próximo turno: {patient?.nextAppointment}</span>
                             </div>
                         </div>
                     </div>

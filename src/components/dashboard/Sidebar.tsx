@@ -8,7 +8,6 @@ import {
     Calendar,
     Users,
     UserX,
-    MessageCircle,
     FileText,
     FileBarChart,
     Settings,
@@ -16,12 +15,15 @@ import {
     User as UserIcon,
     ChevronUp,
     MessageSquare,
+    ChevronsLeft,
+    ChevronsRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useAuth } from "@/providers/auth-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TrialBadge } from "./TrialBadge";
+import { useSidebar } from "@/providers/sidebar-provider";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -52,9 +54,9 @@ const sidebarItems = [
         icon: UserX,
     },
     {
-        title: "Chat",
+        title: "WhatsApp",
         href: "/chat",
-        icon: MessageCircle,
+        icon: MessageSquare,
     },
     {
         title: "Historia Clínica",
@@ -67,11 +69,6 @@ const sidebarItems = [
         icon: FileBarChart,
     },
     {
-        title: "WhatsApp",
-        href: "/whatsapp-connect",
-        icon: MessageSquare,
-    },
-    {
         title: "Configuración",
         href: "/config",
         icon: Settings,
@@ -81,6 +78,7 @@ const sidebarItems = [
 export function Sidebar() {
     const pathname = usePathname();
     const { user, loading: authLoading, signOut } = useAuth();
+    const { collapsed, toggle } = useSidebar();
 
     const [isMounted, setIsMounted] = useState(false);
     useEffect(() => {
@@ -89,32 +87,64 @@ export function Sidebar() {
 
     const userInitial = (user as any)?.full_name?.charAt(0) || user?.email?.charAt(0) || "?";
 
-    if (!isMounted) return null; // Avoid hydration mismatch on IDs
+    if (!isMounted) return null;
 
     return (
-        <aside className="hidden h-screen w-64 flex-col border-r bg-white text-slate-900 md:flex fixed left-0 top-0 z-50 overflow-y-auto">
-            <div className="p-6 border-b flex items-center justify-center">
-                <Image
-                    src="/logo-transparent.png"
-                    alt="Livio"
-                    width={180}
-                    height={72}
-                    className="h-12 w-auto object-contain"
-                    priority
-                />
-            </div>
+        <aside
+            className={cn(
+                "hidden h-screen flex-col border-r bg-white text-slate-900 md:flex fixed left-0 top-0 z-50 overflow-hidden transition-all duration-300",
+                collapsed ? "w-20" : "w-64"
+            )}
+        >
+            {/* Logo + toggle */}
+            {collapsed ? (
+                <div className="border-b flex flex-col items-center justify-center gap-2 py-3 shrink-0">
+                    <Image
+                        src="/logo peuqueño.png"
+                        alt="Livio"
+                        width={36}
+                        height={36}
+                        className="h-9 w-auto object-contain"
+                        priority
+                    />
+                    <button
+                        onClick={toggle}
+                        className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                        aria-label="Expandir sidebar"
+                    >
+                        <ChevronsRight className="h-4 w-4" />
+                    </button>
+                </div>
+            ) : (
+                <div className="border-b relative flex items-center justify-center px-4 py-3 shrink-0">
+                    <Image
+                        src="/logo-transparent.png"
+                        alt="Livio"
+                        width={180}
+                        height={72}
+                        className="h-12 w-auto object-contain"
+                        priority
+                    />
+                    <button
+                        onClick={toggle}
+                        className="absolute right-3 rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                        aria-label="Minimizar sidebar"
+                    >
+                        <ChevronsLeft className="h-4 w-4" />
+                    </button>
+                </div>
+            )}
 
-            <nav className="flex-1 space-y-1 p-4">
+            <nav className={cn("flex-1 space-y-1 p-2", !collapsed && "p-4")}>
                 {sidebarItems.filter((item) => {
-                    if (!user?.role) return true; // Default to showing all if loading or no role
-
+                    if (!user?.role) return true;
                     if (user.role === 'recepcionista') {
-                        return ["Dashboard", "Agenda", "Pacientes", "Chat"].includes(item.title);
+                        return ["Dashboard", "Agenda", "Pacientes", "WhatsApp"].includes(item.title);
                     }
                     if (user.role === 'profesional') {
                         return ["Dashboard", "Agenda", "Pacientes", "Historia Clínica"].includes(item.title);
                     }
-                    return true; // Superadmin sees all
+                    return true;
                 }).map((item) => {
                     const isActive = pathname === item.href ||
                         pathname.startsWith(item.href + "/") ||
@@ -124,8 +154,10 @@ export function Sidebar() {
                         <Link
                             key={item.href}
                             href={item.href}
+                            title={collapsed ? item.title : undefined}
                             className={cn(
-                                "group flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+                                "group flex items-center rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+                                collapsed ? "justify-center gap-0" : "gap-3",
                                 isActive
                                     ? "bg-[#76D7B6]/10 text-[#76D7B6]"
                                     : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
@@ -133,43 +165,50 @@ export function Sidebar() {
                         >
                             <item.icon
                                 className={cn(
-                                    "h-5 w-5 flex-shrink-0",
+                                    "h-6 w-6 flex-shrink-0",
                                     isActive ? "text-[#76D7B6]" : "text-slate-400 group-hover:text-slate-500"
                                 )}
                             />
-                            {item.title}
+                            {!collapsed && item.title}
                         </Link>
                     );
                 })}
             </nav>
 
             {/* Trial / Upgrade Badge */}
-            <div className="px-4">
-                <TrialBadge />
+            <div className={collapsed ? "px-2" : "px-4"}>
+                <TrialBadge collapsed={collapsed} />
             </div>
 
             {/* Profile Footer */}
-            <div className="p-4 border-t mt-auto">
+            <div className={cn("border-t mt-auto", collapsed ? "p-2" : "p-4")}>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <button className="flex w-full items-center gap-3 rounded-lg p-2 transition-colors hover:bg-slate-50 text-left outline-none group">
-                            <Avatar className="h-9 w-9 border-2 border-transparent group-hover:border-[#76D7B6]/20 transition-all">
+                        <button className={cn(
+                            "flex w-full items-center rounded-lg p-2 transition-colors hover:bg-slate-50 text-left outline-none group",
+                            collapsed ? "justify-center" : "gap-3"
+                        )}>
+                            <Avatar className="h-9 w-9 border-2 border-transparent group-hover:border-[#76D7B6]/20 transition-all shrink-0">
                                 <AvatarImage src={user?.user_metadata?.avatar_url} />
                                 <AvatarFallback className="bg-[#76D7B6]/10 text-[#76D7B6] font-bold">
                                     {userInitial}
                                 </AvatarFallback>
                             </Avatar>
-                            <div className="flex-1 overflow-hidden">
-                                <p className="text-sm font-bold text-slate-900 truncate">
-                                    {authLoading && !user
-                                        ? <span className="inline-block w-24 h-3 bg-slate-200 rounded animate-pulse" />
-                                        : ((user as any)?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name || "Usuario")}
-                                </p>
-                                <p className="text-[11px] text-slate-500 truncate">
-                                    {user?.email}
-                                </p>
-                            </div>
-                            <ChevronUp className="h-4 w-4 text-slate-400" />
+                            {!collapsed && (
+                                <>
+                                    <div className="flex-1 overflow-hidden">
+                                        <p className="text-sm font-bold text-slate-900 truncate">
+                                            {authLoading && !user
+                                                ? <span className="inline-block w-24 h-3 bg-slate-200 rounded animate-pulse" />
+                                                : ((user as any)?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name || "Usuario")}
+                                        </p>
+                                        <p className="text-[11px] text-slate-500 truncate">
+                                            {user?.email}
+                                        </p>
+                                    </div>
+                                    <ChevronUp className="h-4 w-4 text-slate-400" />
+                                </>
+                            )}
                         </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-56 mb-2" align="start" side="top" forceMount>
