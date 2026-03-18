@@ -1,51 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 import { getOAuth2ClientForProfesional } from '@/lib/google';
 
-/**
- * POST /api/integrations/google/pull
- * Body: { profesionalId?: string }  (omit = pull for ALL sync-enabled profesionals)
- *
- * Fetches Google Calendar events → upserts bloqueo_horario.
- * Deletes stale bloqueos that no longer exist in Google Calendar.
- */
+// Allowed Google event ID characters
+const SAFE_EVENT_ID = /^[a-zA-Z0-9_\-]+$/;
+
 export async function POST(request: NextRequest) {
+    // Require authenticated session
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     try {
         const body = await request.json().catch(() => ({})) as { profesionalId?: string };
-        const supabase = createAdminClient();
+        const adminClient = createAdminClient();
 
-        // Load all sync-enabled profesionals (or just one specific)
-        let query = supabase
+        // If profesionalId is provided, it must match the authenticated user
+        // (general background sync is only allowed server-to-server, not from client)
+        const requestedId = body.profesionalId;
+        if (requestedId && requestedId !== user.id) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        let query = adminClient
             .from('professional')
             .select('id, full_name, google_calendar_id, calendar_sync_enabled');
 
-        if (body.profesionalId) {
-            query = query.eq('id', body.profesionalId);
+        if (requestedId) {
+            query = query.eq('id', requestedId);
         } else {
-            // General background sync: only those who enabled it
-            query = query.eq('calendar_sync_enabled', true);
+            query = query.eq('id', user.id);
         }
 
         const { data: profs, error } = await query;
         if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-        if (!profs || profs.length === 0) return NextResponse.json({ synced: 0, message: 'No sync-enabled profesionals' });
+        if (!profs || profs.length === 0) return NextResponse.json({ synced: 0, message: 'No professionals found' });
 
         const results: { profesionalId: string; found: number; inserted: number; deleted: number; error?: string }[] = [];
-
         const now = new Date();
         const futureDate = new Date();
         futureDate.setDate(now.getDate() + 30);
 
-        console.log(`[Google Pull] Starting sync for ${profs.length} professionals. Range: ${now.toISOString()} - ${futureDate.toISOString()}`);
-
         for (const prof of profs) {
+            if (!prof.calendar_sync_enabled) {
+                results.push({ profesionalId: prof.id, found: 0, inserted: 0, deleted: 0, error: 'sync_disabled' });
+                continue;
+            }
+
             let oauthClient;
             try {
                 const { client } = await getOAuth2ClientForProfesional(prof.id);
                 oauthClient = client;
             } catch (e: any) {
-                console.error(`[Google Pull] Token error for ${prof.id}:`, e.message);
                 results.push({ profesionalId: prof.id, found: 0, inserted: 0, deleted: 0, error: e.message });
                 continue;
             }
@@ -54,7 +62,6 @@ export async function POST(request: NextRequest) {
             const calendarId = prof.google_calendar_id || 'primary';
 
             try {
-                // Fetch events from Google
                 const { data: eventsData } = await cal.events.list({
                     calendarId,
                     timeMin: now.toISOString(),
@@ -64,19 +71,20 @@ export async function POST(request: NextRequest) {
                 });
 
                 const events = eventsData.items || [];
-                console.log(`[Google Pull] Found ${events.length} events in Google for ${prof.full_name} (${calendarId})`);
+                // Sanitize event IDs — reject any that don't match safe pattern
+                const googleEventIds = events
+                    .map((e: any) => e.id)
+                    .filter((id: any): id is string => typeof id === 'string' && SAFE_EVENT_ID.test(id));
 
-                const googleEventIds = events.map((e: any) => e.id).filter(Boolean) as string[];
-
-                // Upsert bloqueos
                 let inserted = 0;
                 for (const evt of events) {
+                    if (!evt.id || !SAFE_EVENT_ID.test(evt.id)) continue;
                     if (!evt.start?.dateTime && !evt.start?.date) continue;
 
                     const desde = evt.start.dateTime || `${evt.start.date}T00:00:00`;
                     const hasta = evt.end?.dateTime || `${evt.end?.date}T23:59:59`;
 
-                    const { error: upsertErr } = await supabase.from('bloqueo_horario').upsert({
+                    const { error: upsertErr } = await adminClient.from('bloqueo_horario').upsert({
                         profesional_id: prof.id,
                         bloqueo_desde: desde,
                         bloqueo_hasta: hasta,
@@ -85,20 +93,16 @@ export async function POST(request: NextRequest) {
                         google_event_id: evt.id,
                     }, {
                         onConflict: 'profesional_id,bloqueo_desde,bloqueo_hasta',
-                        ignoreDuplicates: false // Let it update if title changed
+                        ignoreDuplicates: false
                     });
 
-                    if (upsertErr) {
-                        console.error(`[Google Pull] Upsert error for event ${evt.id}:`, upsertErr.message);
-                    } else {
-                        inserted++;
-                    }
+                    if (!upsertErr) inserted++;
                 }
 
-                // Delete stale bloqueos
                 let deleted = 0;
                 if (googleEventIds.length > 0) {
-                    const { data: stale } = await supabase
+                    // Use the array form to avoid filter injection
+                    const { data: stale } = await adminClient
                         .from('bloqueo_horario')
                         .select('id')
                         .eq('profesional_id', prof.id)
@@ -107,35 +111,26 @@ export async function POST(request: NextRequest) {
 
                     if (stale && stale.length > 0) {
                         const staleIds = stale.map(s => s.id);
-                        await supabase.from('bloqueo_horario').delete().in('id', staleIds);
+                        await adminClient.from('bloqueo_horario').delete().in('id', staleIds);
                         deleted = staleIds.length;
                     }
                 } else {
-                    // If no events found in Google, delete ALL external blocks for this prof in range
-                    const { error: delErr } = await supabase
+                    await adminClient
                         .from('bloqueo_horario')
                         .delete()
                         .eq('profesional_id', prof.id)
                         .eq('tipo', 'externo_google');
-                    if (!delErr) console.log(`[Google Pull] Cleaned all blocks for ${prof.id} (no events in Google)`);
                 }
 
                 results.push({ profesionalId: prof.id, found: events.length, inserted, deleted });
-
             } catch (err: any) {
-                console.error(`[Google Pull] Error processing prof ${prof.id}:`, err.message);
                 results.push({ profesionalId: prof.id, found: 0, inserted: 0, deleted: 0, error: err.message });
             }
         }
 
-        return NextResponse.json({
-            success: true,
-            synced: results.length,
-            results
-        });
-
+        return NextResponse.json({ success: true, synced: results.length, results });
     } catch (error: any) {
-        console.error('[Google Pull] Global Error:', error.message);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error('[Google Pull] Error:', error.message);
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

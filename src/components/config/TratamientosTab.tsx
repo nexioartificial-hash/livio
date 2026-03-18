@@ -101,7 +101,7 @@ export function TratamientosTab({ clinicId }: { clinicId: string }) {
     const handleDelete = async (id: string) => {
         if (!confirm("¿Estás seguro de eliminar este tratamiento?")) return;
         
-        const res = await deleteTratamiento(id);
+        const res = await deleteTratamiento(id, clinicId);
         if (res.success) {
             toast.success("Tratamiento eliminado");
             fetchTratamientos();

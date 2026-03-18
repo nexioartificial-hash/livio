@@ -80,7 +80,7 @@ export default async function DashboardPage() {
     tratamientosRes.data?.forEach((t: any) => precioMap.set(t.nombre, Number(t.precio_promedio)));
     const ingresosHoy = turnosHoyData
         .filter((t) => t.status === "confirmado")
-        .reduce((acc, t) => acc + (precioMap.get(t.reason) || 15000), 0);
+        .reduce((acc, t) => acc + (precioMap.get(t.reason) || 0), 0);
 
     // System alerts
     const systemAlerts: any[] = [];

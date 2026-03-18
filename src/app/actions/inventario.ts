@@ -1,8 +1,8 @@
 "use server";
 
 import { createClient } from "@supabase/supabase-js";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 
-// Creamos un cliente de Supabase asumiendo que necesitamos saltar RLS en algunos casos de seed/admin
 const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co");
 const supabaseKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || "placeholder-key");
 
@@ -12,6 +12,21 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
         persistSession: false
     }
 });
+
+/** Verifies the calling user belongs to the given clinic. Throws if not. */
+async function assertCallerOwnsClinic(clinicId: string): Promise<void> {
+    const supabase = await createServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const { data: prof } = await supabaseAdmin
+        .from("professional")
+        .select("clinic_id")
+        .eq("id", user.id)
+        .single();
+
+    if (!prof || prof.clinic_id !== clinicId) throw new Error("Forbidden");
+}
 
 interface InventarioData {
     id?: string;
@@ -29,6 +44,8 @@ export async function getInventario(clinicId: string) {
     if (!clinicId) return { success: false, error: "clinic_id is required" };
 
     try {
+        await assertCallerOwnsClinic(clinicId);
+
         const { data, error } = await supabaseAdmin
             .from("inventario")
             .select("*")
@@ -39,8 +56,11 @@ export async function getInventario(clinicId: string) {
         if (error) throw error;
         return { success: true, data };
     } catch (err: any) {
+        if (err.message === "Unauthorized" || err.message === "Forbidden") {
+            return { success: false, error: err.message };
+        }
         console.error("Error fetching inventario:", err);
-        return { success: false, error: err.message };
+        return { success: false, error: "Error al obtener inventario" };
     }
 }
 
@@ -49,10 +69,15 @@ export async function saveProducto(data: InventarioData) {
     if (!data.producto) return { success: false, error: "Producto es requerido" };
     if (!data.categoria) return { success: false, error: "Categoría es requerida" };
 
-    // Capitalizar primera letra del nombre
+    // Validate numeric fields
+    if (data.stock_actual < 0 || data.stock_min < 0) return { success: false, error: "Stock no puede ser negativo" };
+    if (data.precio_unit < 0) return { success: false, error: "Precio no puede ser negativo" };
+
     data = { ...data, producto: data.producto.charAt(0).toUpperCase() + data.producto.slice(1) };
 
     try {
+        await assertCallerOwnsClinic(data.clinic_id);
+
         const { id, ...rest } = data;
         let response;
         if (id) {
@@ -73,25 +98,35 @@ export async function saveProducto(data: InventarioData) {
         if (response.error) throw response.error;
         return { success: true, data: response.data };
     } catch (err: any) {
+        if (err.message === "Unauthorized" || err.message === "Forbidden") {
+            return { success: false, error: err.message };
+        }
         console.error("Error saving producto:", err);
-        return { success: false, error: err.message };
+        return { success: false, error: "Error al guardar producto" };
     }
 }
 
-export async function deleteProducto(id: string) {
+export async function deleteProducto(id: string, clinicId: string) {
     if (!id) return { success: false, error: "id is required" };
+    if (!clinicId) return { success: false, error: "clinic_id is required" };
 
     try {
+        await assertCallerOwnsClinic(clinicId);
+
         const { error } = await supabaseAdmin
             .from("inventario")
             .delete()
-            .eq("id", id);
-        
+            .eq("id", id)
+            .eq("clinic_id", clinicId); // Extra safety: only delete if it belongs to the clinic
+
         if (error) throw error;
         return { success: true };
     } catch (err: any) {
+        if (err.message === "Unauthorized" || err.message === "Forbidden") {
+            return { success: false, error: err.message };
+        }
         console.error("Error deleting producto:", err);
-        return { success: false, error: err.message };
+        return { success: false, error: "Error al eliminar producto" };
     }
 }
 
@@ -99,15 +134,15 @@ export async function seedInventarioDefault(clinicId: string) {
     if (!clinicId) return { success: false, error: "clinic_id is required" };
 
     try {
-        // Verificar si ya hay inventario
+        await assertCallerOwnsClinic(clinicId);
+
+        // Check-then-insert is mitigated by the unique constraint on (clinic_id, producto)
         const { count, error: countErr } = await supabaseAdmin
             .from("inventario")
             .select("id", { count: "exact", head: true })
             .eq("clinic_id", clinicId);
 
         if (countErr) throw countErr;
-        
-        // Si ya hay más de 0 productos, no sembrar
         if (count && count > 0) return { success: true, message: "Ya existen insumos" };
 
         const seedData: any[] = [
@@ -128,17 +163,19 @@ export async function seedInventarioDefault(clinicId: string) {
             { clinic_id: clinicId, producto: "Implante Titanio Cono Morse 3.8x10", categoria: "Implantes", stock_actual: 6, stock_min: 4, precio_unit: 58000, ubicacion: "Vitrina Segura" },
         ];
 
-        // Añadimos vencimientos por defecto (algunos por vencer) para que el user vea los estilos
         const today = new Date();
-        seedData[1].vencimiento = new Date(today.getTime() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // Vence en 15 días (Lidocaína)
-        seedData[6].vencimiento = new Date(today.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];  // Vencido hace 5 días (Adhesivo)
-        seedData[12].vencimiento = new Date(today.getTime() + 120 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // Vence en meses
+        seedData[1].vencimiento = new Date(today.getTime() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        seedData[6].vencimiento = new Date(today.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        seedData[12].vencimiento = new Date(today.getTime() + 120 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
         const { error } = await supabaseAdmin.from("inventario").insert(seedData);
         if (error) throw error;
         return { success: true };
     } catch (err: any) {
+        if (err.message === "Unauthorized" || err.message === "Forbidden") {
+            return { success: false, error: err.message };
+        }
         console.error("Error seeding inventario:", err);
-        return { success: false, error: err.message };
+        return { success: false, error: "Error al inicializar inventario" };
     }
 }

@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@supabase/supabase-js";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 const supabaseAdmin = createClient(
@@ -8,8 +9,25 @@ const supabaseAdmin = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY || "dummy-key"
 );
 
+/** Verifies the calling user belongs to the given clinic. Throws if not. */
+async function assertCallerOwnsClinic(clinicId: string): Promise<void> {
+    const supabase = await createServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const { data: prof } = await supabaseAdmin
+        .from("professional")
+        .select("clinic_id")
+        .eq("id", user.id)
+        .single();
+
+    if (!prof || prof.clinic_id !== clinicId) throw new Error("Forbidden");
+}
+
 export async function getObrasSociales(clinicId: string) {
     try {
+        await assertCallerOwnsClinic(clinicId);
+
         const { data, error } = await supabaseAdmin
             .from("clinica_obras_sociales")
             .select("*")
@@ -19,8 +37,11 @@ export async function getObrasSociales(clinicId: string) {
         if (error) throw error;
         return { success: true, data };
     } catch (error: any) {
+        if (error.message === "Unauthorized" || error.message === "Forbidden") {
+            return { success: false, error: error.message };
+        }
         console.error("Error fetching health insurances:", error);
-        return { success: false, error: error.message };
+        return { success: false, error: "Error al obtener obras sociales" };
     }
 }
 
@@ -34,69 +55,87 @@ export async function saveObraSocial(data: {
     activo: boolean;
 }) {
     try {
+        await assertCallerOwnsClinic(data.clinic_id);
+
         const { id, ...rest } = data;
-        
+
         if (id) {
             const { error } = await supabaseAdmin
                 .from("clinica_obras_sociales")
                 .update(rest)
-                .eq("id", id);
+                .eq("id", id)
+                .eq("clinic_id", data.clinic_id);
             if (error) throw error;
         } else {
-            const tratamientosArray = data.tratamientos && data.tratamientos.length > 0 
-                ? data.tratamientos 
+            const tratamientosArray = data.tratamientos && data.tratamientos.length > 0
+                ? data.tratamientos
                 : ["Consulta", "Limpieza", "Obturación", "Endodoncia", "Extracción"];
-
-            const insertData = { ...data, tratamientos: tratamientosArray };
 
             const { error } = await supabaseAdmin
                 .from("clinica_obras_sociales")
-                .insert([insertData]);
+                .insert([{ ...data, tratamientos: tratamientosArray }]);
             if (error) throw error;
         }
 
         revalidatePath("/config");
         return { success: true };
     } catch (error: any) {
+        if (error.message === "Unauthorized" || error.message === "Forbidden") {
+            return { success: false, error: error.message };
+        }
         console.error("Error saving health insurance:", error);
-        return { success: false, error: error.message };
+        return { success: false, error: "Error al guardar obra social" };
     }
 }
 
-export async function toggleObraSocial(id: string, activo: boolean) {
+export async function toggleObraSocial(id: string, clinicId: string, activo: boolean) {
     try {
+        await assertCallerOwnsClinic(clinicId);
+
         const { error } = await supabaseAdmin
             .from("clinica_obras_sociales")
             .update({ activo })
-            .eq("id", id);
+            .eq("id", id)
+            .eq("clinic_id", clinicId);
 
         if (error) throw error;
         revalidatePath("/config");
         return { success: true };
     } catch (error: any) {
+        if (error.message === "Unauthorized" || error.message === "Forbidden") {
+            return { success: false, error: error.message };
+        }
         console.error("Error toggling health insurance:", error);
-        return { success: false, error: error.message };
+        return { success: false, error: "Error al actualizar obra social" };
     }
 }
 
-export async function deleteObraSocial(id: string) {
+export async function deleteObraSocial(id: string, clinicId: string) {
     try {
+        await assertCallerOwnsClinic(clinicId);
+
         const { error } = await supabaseAdmin
             .from("clinica_obras_sociales")
             .delete()
-            .eq("id", id);
+            .eq("id", id)
+            .eq("clinic_id", clinicId);
 
         if (error) throw error;
         revalidatePath("/config");
         return { success: true };
     } catch (error: any) {
+        if (error.message === "Unauthorized" || error.message === "Forbidden") {
+            return { success: false, error: error.message };
+        }
         console.error("Error deleting health insurance:", error);
-        return { success: false, error: error.message };
+        return { success: false, error: "Error al eliminar obra social" };
     }
 }
 
 export async function seedObrasSociales(clinicId: string) {
     try {
+        await assertCallerOwnsClinic(clinicId);
+
         const { count } = await supabaseAdmin
             .from("clinica_obras_sociales")
             .select("*", { count: 'exact', head: true })
@@ -125,7 +164,10 @@ export async function seedObrasSociales(clinicId: string) {
         revalidatePath("/config");
         return { success: true };
     } catch (error: any) {
+        if (error.message === "Unauthorized" || error.message === "Forbidden") {
+            return { success: false, error: error.message };
+        }
         console.error("Error seeding health insurances:", error);
-        return { success: false, error: error.message };
+        return { success: false, error: "Error al inicializar obras sociales" };
     }
 }

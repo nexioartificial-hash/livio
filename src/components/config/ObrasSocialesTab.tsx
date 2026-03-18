@@ -74,7 +74,7 @@ export function ObrasSocialesTab({ clinicId }: ObrasSocialesTabProps) {
         // Optimistic update
         setObrasSociales(prev => prev.map(os => os.id === id ? { ...os, activo: !currentStatus } : os));
         
-        const res = await toggleObraSocial(id, !currentStatus);
+        const res = await toggleObraSocial(id, clinicId, !currentStatus);
         if (!res.success) {
             toast.error("Error al cambiar estado");
             fetchOS(); // Rollback
@@ -83,7 +83,7 @@ export function ObrasSocialesTab({ clinicId }: ObrasSocialesTabProps) {
 
     const handleDelete = async (id: string) => {
         if (!confirm("¿Estás seguro de eliminar esta obra social?")) return;
-        const res = await deleteObraSocial(id);
+        const res = await deleteObraSocial(id, clinicId);
         if (res.success) {
             toast.success("Eliminada correctamente");
             fetchOS();

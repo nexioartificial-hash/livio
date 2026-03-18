@@ -125,6 +125,16 @@ export async function POST(request: Request) {
   }
 }
 
+// ─── HTML Escaping ────────────────────────────────────────────────
+function escapeHtml(str: string): string {
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 // ─── HTML Email Template ─────────────────────────────────────────
 function buildInviteEmailHtml({
   inviterName,
@@ -139,6 +149,11 @@ function buildInviteEmailHtml({
   roleName: string;
   inviteLink: string;
 }) {
+  // Escape all user-supplied values before embedding in HTML
+  inviterName = escapeHtml(inviterName);
+  invitedName = escapeHtml(invitedName);
+  clinicName = escapeHtml(clinicName);
+  roleName = escapeHtml(roleName);
   const origin = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   // Fallback to a publicly hosted logo if on localhost, otherwise the local one
   const logoUrl = origin.includes('localhost')

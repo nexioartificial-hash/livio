@@ -1,15 +1,10 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { getNotifications, markAsRead, markAllAsRead } from "@/app/actions/notifications";
 import type { Notification } from "@/app/actions/notifications";
-
-const supabase = createClient(
-    (process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co"),
-    (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key")
-);
 
 interface NotificationsContextValue {
     notifications: Notification[];
@@ -50,7 +45,7 @@ export function NotificationsProvider({ children, userId }: NotificationsProvide
 
     const refresh = useCallback(async () => {
         if (!userId) return;
-        const res = await getNotifications(userId);
+        const res = await getNotifications();
         if (res.success && res.data) {
             setNotifications(res.data);
         }
@@ -100,7 +95,7 @@ export function NotificationsProvider({ children, userId }: NotificationsProvide
     const handleMarkAllRead = useCallback(async () => {
         if (!userId) return;
         setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
-        await markAllAsRead(userId);
+        await markAllAsRead();
     }, [userId]);
 
     const unreadCount = notifications.filter((n) => n.unread).length;

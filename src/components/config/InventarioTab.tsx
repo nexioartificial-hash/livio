@@ -130,7 +130,7 @@ export function InventarioTab({ clinicId }: InventarioTabProps) {
 
     const handleDelete = async (id: string) => {
         if (!confirm("¿Seguro que deseas eliminar este producto?")) return;
-        const res = await deleteProducto(id);
+        const res = await deleteProducto(id, clinicId);
         if (res.success) {
             toast.success("Producto eliminado");
             setItems(items.filter(i => i.id !== id));

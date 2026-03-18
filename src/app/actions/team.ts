@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@supabase/supabase-js";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
@@ -10,6 +11,28 @@ const supabaseAdmin = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY || "dummy-key"
 );
 
+/** Returns the caller's profile with clinic_id and role. Throws if not authenticated. */
+async function getCallerProfile(): Promise<{ id: string; clinic_id: string | null; role: string }> {
+    const supabase = await createServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const { data: prof } = await supabaseAdmin
+        .from("professional")
+        .select("clinic_id, role")
+        .eq("id", user.id)
+        .single();
+
+    return { id: user.id, clinic_id: prof?.clinic_id ?? null, role: prof?.role ?? "profesional" };
+}
+
+/** Verifies the caller is a superadmin. Throws if not. */
+async function assertSuperadmin(): Promise<{ id: string; clinic_id: string | null }> {
+    const caller = await getCallerProfile();
+    if (caller.role !== "superadmin") throw new Error("Forbidden: superadmin required");
+    return caller;
+}
+
 // ─── Invite Team Member (via Resend API) ─────────────────────────
 export async function inviteTeamMember(
     email: string,
@@ -18,30 +41,26 @@ export async function inviteTeamMember(
     inviterId?: string
 ) {
     try {
+        // Verify the caller is the inviter (prevent impersonation)
+        const caller = await getCallerProfile();
+        if (inviterId && inviterId !== caller.id) throw new Error("Forbidden");
+
         // Get inviter's clinic_id & name
-        let clinicId: string | null = null;
+        let clinicId: string | null = caller.clinic_id;
         let clinicName = "Tu Clínica";
-        let inviterName = "Livio";
+        const inviterName = (await supabaseAdmin
+            .from("professional")
+            .select("full_name")
+            .eq("id", caller.id)
+            .single()).data?.full_name ?? "Livio";
 
-        if (inviterId) {
-            const { data: inviterProfile } = await supabaseAdmin
-                .from("professional")
-                .select("clinic_id, full_name")
-                .eq("id", inviterId)
+        if (clinicId) {
+            const { data: clinicData } = await supabaseAdmin
+                .from("clinic")
+                .select("name")
+                .eq("id", clinicId)
                 .maybeSingle();
-
-            clinicId = inviterProfile?.clinic_id || null;
-            inviterName = inviterProfile?.full_name || "Livio";
-
-            if (clinicId) {
-                const { data: clinicData } = await supabaseAdmin
-                    .from("clinic")
-                    .select("name")
-                    .eq("id", clinicId)
-                    .maybeSingle();
-                
-                if (clinicData?.name) clinicName = clinicData.name;
-            }
+            if (clinicData?.name) clinicName = clinicData.name;
         }
 
         // Call the Resend API route
@@ -52,9 +71,7 @@ export async function inviteTeamMember(
         if (origin.includes('vercel.app') || host?.includes('vercel.app')) {
             origin = 'https://liviodental.com';
         }
-        
-        console.log(`📡 [Team] Enviando invitación via: ${origin}/api/send-invite`);
-        
+
         const res = await fetch(`${origin}/api/send-invite`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -64,13 +81,12 @@ export async function inviteTeamMember(
                 clinicId,
                 clinicName,
                 inviterName,
-                inviterId,
+                inviterId: caller.id,
                 invitedName: fullName
             }),
         });
 
         const result = await res.json();
-        console.log(`📩 [Team] Respuesta de API de invitación:`, result);
 
         if (!res.ok) {
             return { error: result.error || "Error al enviar invitación" };
@@ -79,21 +95,19 @@ export async function inviteTeamMember(
         revalidatePath("/config");
         return { success: true };
     } catch (error: any) {
+        if (error.message === "Unauthorized" || error.message === "Forbidden") {
+            return { error: error.message };
+        }
         console.error("Invite error:", error);
-        return { error: error.message || "Error al enviar invitación" };
+        return { error: "Error al enviar invitación" };
     }
 }
 
 // ─── Get Invites for Clinic ──────────────────────────────────────
-export async function getClinicInvites(userId: string) {
+export async function getClinicInvites() {
     try {
-        const { data: profile } = await supabaseAdmin
-            .from("professional")
-            .select("clinic_id")
-            .eq("id", userId)
-            .maybeSingle();
-
-        const clinicId = profile?.clinic_id;
+        const caller = await getCallerProfile();
+        const clinicId = caller.clinic_id;
 
         const query = supabaseAdmin
             .from("invites")
@@ -103,7 +117,7 @@ export async function getClinicInvites(userId: string) {
         if (clinicId) {
             query.eq("clinic_id", clinicId);
         } else {
-            query.eq("inviter_id", userId); // Fallback for new clinics
+            query.eq("inviter_id", caller.id);
         }
 
         const { data: invites, error } = await query;
@@ -111,14 +125,17 @@ export async function getClinicInvites(userId: string) {
 
         return { success: true, data: invites || [] };
     } catch (error: any) {
+        if (error.message === "Unauthorized") return { error: error.message };
         console.error("Get invites error:", error);
-        return { error: error.message };
+        return { error: "Error al obtener invitaciones" };
     }
 }
 
 // ─── Resend Invite ───────────────────────────────────────────────
 export async function resendInvite(inviteId: string) {
     try {
+        const caller = await getCallerProfile();
+
         const { data: invite, error: fetchError } = await supabaseAdmin
             .from("invites")
             .select("*")
@@ -129,11 +146,15 @@ export async function resendInvite(inviteId: string) {
             return { error: "Invitación no encontrada." };
         }
 
+        // Verify the invite belongs to the caller's clinic
+        if (invite.clinic_id && invite.clinic_id !== caller.clinic_id) {
+            return { error: "Forbidden" };
+        }
+
         if (invite.status !== "pending") {
             return { error: "Solo se pueden reenviar invitaciones pendientes." };
         }
 
-        // Call Resend API route to re-send email
         let origin = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
         if (origin.includes('vercel.app')) {
             origin = 'https://liviodental.com';
@@ -150,9 +171,7 @@ export async function resendInvite(inviteId: string) {
             }),
         });
 
-        // The API will handle duplicate check — for resend, first cancel old one
         if (!res.ok) {
-            // If duplicate exists, just update the timestamp
             await supabaseAdmin
                 .from("invites")
                 .update({ updated_at: new Date().toISOString() })
@@ -162,14 +181,28 @@ export async function resendInvite(inviteId: string) {
         revalidatePath("/config");
         return { success: true };
     } catch (error: any) {
+        if (error.message === "Unauthorized") return { error: error.message };
         console.error("Resend invite error:", error);
-        return { error: error.message };
+        return { error: "Error al reenviar invitación" };
     }
 }
 
 // ─── Cancel Invite ───────────────────────────────────────────────
 export async function cancelInvite(inviteId: string) {
     try {
+        const caller = await getCallerProfile();
+
+        // Verify the invite belongs to the caller's clinic before cancelling
+        const { data: invite } = await supabaseAdmin
+            .from("invites")
+            .select("clinic_id")
+            .eq("id", inviteId)
+            .single();
+
+        if (invite && invite.clinic_id && invite.clinic_id !== caller.clinic_id) {
+            return { error: "Forbidden" };
+        }
+
         const { error } = await supabaseAdmin
             .from("invites")
             .update({ status: "cancelled", updated_at: new Date().toISOString() })
@@ -181,48 +214,53 @@ export async function cancelInvite(inviteId: string) {
         revalidatePath("/config");
         return { success: true };
     } catch (error: any) {
+        if (error.message === "Unauthorized") return { error: error.message };
         console.error("Cancel invite error:", error);
-        return { error: error.message };
+        return { error: "Error al cancelar invitación" };
     }
 }
 
 // ─── Get Team Members (Filtered by Clinic) ────────────────────────
 export async function getTeamMembers(clinicId?: string | null, ownerId?: string | null) {
     try {
-        if (!clinicId && !ownerId) {
+        const caller = await getCallerProfile();
+
+        // Enforce that the caller can only view their own clinic's team
+        const effectiveClinicId = caller.clinic_id;
+        if (!effectiveClinicId && !ownerId) {
             return { success: true, data: [] };
         }
+        // If a clinicId was passed but doesn't match the caller's, reject
+        if (clinicId && effectiveClinicId && clinicId !== effectiveClinicId) {
+            return { error: "Forbidden" };
+        }
 
-        // 1. Get professionals for this clinic
-        const query = supabaseAdmin
-            .from("professional")
-            .select("*")
+        const query = supabaseAdmin.from("professional").select("*");
 
-        if (clinicId) {
-            query.eq("clinic_id", clinicId);
+        if (effectiveClinicId) {
+            query.eq("clinic_id", effectiveClinicId);
         } else {
-            query.eq("id", ownerId); // Fallback for owner-only view if clinic_id not linked
+            query.eq("id", caller.id);
         }
 
         const { data: profiles, error: profileError } = await query;
         if (profileError) throw profileError;
 
-        // 2. Get pending invites for this clinic
         const inviteQuery = supabaseAdmin
             .from("invites")
             .select("*")
-            .eq("status", "pending")
+            .eq("status", "pending");
 
-        if (clinicId) {
-            inviteQuery.eq("clinic_id", clinicId);
-        } else if (ownerId) {
-            inviteQuery.eq("inviter_id", ownerId);
+        if (effectiveClinicId) {
+            inviteQuery.eq("clinic_id", effectiveClinicId);
+        } else {
+            inviteQuery.eq("inviter_id", caller.id);
         }
 
         const { data: invites, error: inviteError } = await inviteQuery;
         if (inviteError) throw inviteError;
 
-        // 3. Fetch real emails from Auth Admin for all these profiles
+        // Fetch real emails from Auth Admin
         const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers();
         const emailMap: Record<string, string> = {};
         if (!authError && authUsers?.users) {
@@ -231,34 +269,25 @@ export async function getTeamMembers(clinicId?: string | null, ownerId?: string 
             });
         }
 
-        // 4. Map profiles to team members
         const teamProfiles = (profiles || []).map(p => ({
             id: p.id,
-            email: emailMap[p.id] || p.google_user_email || "Usuario Livio", 
+            email: emailMap[p.id] || p.google_user_email || "Usuario Livio",
             full_name: p.full_name || "Profesional",
             role: p.role,
             status: "activo",
             created_at: p.created_at
         }));
 
-        // 5. Map invites to team members
         const teamInvites = (invites || []).map(i => ({
             id: i.id,
             email: i.email,
-            full_name: i.invited_name || i.email.split('@')[0], // Use invited_name if available
+            full_name: i.invited_name || i.email.split('@')[0],
             role: i.role,
             status: "pendiente",
             created_at: i.created_at
         }));
 
-        // Combined and sorted
-        const mergedTeam = [...teamProfiles, ...teamInvites];
-
-        // Final cleanup for auth data (optional but safer: only use database as source of truth for team list)
-        // We can't easily list emails from Auth for non-active users without admin privileges,
-        // but we can try to fetch the current user's email if they are in the list.
-
-        const sortedTeam = mergedTeam.sort((a, b) => {
+        const sortedTeam = [...teamProfiles, ...teamInvites].sort((a, b) => {
             if (a.role === 'superadmin' && b.role !== 'superadmin') return -1;
             if (a.role !== 'superadmin' && b.role === 'superadmin') return 1;
             return (a.full_name || "").localeCompare(b.full_name || "");
@@ -266,14 +295,33 @@ export async function getTeamMembers(clinicId?: string | null, ownerId?: string 
 
         return { success: true, data: sortedTeam };
     } catch (error: any) {
+        if (error.message === "Unauthorized") return { error: error.message };
         console.error("Fetch team error:", error);
-        return { error: error.message };
+        return { error: "Error al obtener equipo" };
     }
 }
 
 // ─── Update Member Role ──────────────────────────────────────────
 export async function updateMemberRole(userId: string, newRole: string) {
+    const ALLOWED_ROLES = ["superadmin", "profesional", "recepcionista"];
+    if (!ALLOWED_ROLES.includes(newRole)) {
+        return { error: "Rol inválido" };
+    }
+
     try {
+        const caller = await assertSuperadmin();
+
+        // Verify target user is in the same clinic
+        const { data: targetProf } = await supabaseAdmin
+            .from("professional")
+            .select("clinic_id")
+            .eq("id", userId)
+            .single();
+
+        if (!targetProf || targetProf.clinic_id !== caller.clinic_id) {
+            return { error: "Forbidden" };
+        }
+
         const { error } = await supabaseAdmin
             .from("professional")
             .update({ role: newRole })
@@ -284,34 +332,40 @@ export async function updateMemberRole(userId: string, newRole: string) {
         revalidatePath("/config");
         return { success: true };
     } catch (error: any) {
-        return { error: error.message };
+        if (error.message === "Unauthorized" || error.message.startsWith("Forbidden")) {
+            return { error: error.message };
+        }
+        return { error: "Error al actualizar rol" };
     }
 }
 
 // ─── Delete Member ───────────────────────────────────────────────
 export async function deleteMember(id: string) {
     try {
+        const caller = await assertSuperadmin();
+
         // 1. Try to see if it's a pending invite first
         const { data: invite } = await supabaseAdmin
             .from("invites")
-            .select("id, email")
+            .select("id, email, clinic_id")
             .eq("id", id)
             .maybeSingle();
 
         if (invite) {
-            // It's a pending invite, just delete it
+            // Verify invite belongs to caller's clinic
+            if (invite.clinic_id && invite.clinic_id !== caller.clinic_id) {
+                return { error: "Forbidden" };
+            }
             const { error: deleteInviteError } = await supabaseAdmin
                 .from("invites")
                 .delete()
                 .eq("id", id);
-            
             if (deleteInviteError) throw deleteInviteError;
-            
             revalidatePath("/config");
             return { success: true };
         }
 
-        // 2. If not an invite, it must be a professional profile
+        // 2. It must be a professional profile
         const { data: profile } = await supabaseAdmin
             .from("professional")
             .select("id, clinic_id, google_user_email")
@@ -319,31 +373,33 @@ export async function deleteMember(id: string) {
             .maybeSingle();
 
         if (profile) {
-            // Fetch real email from Auth to ensure we wipe the right invites
+            // Verify target is in the same clinic
+            if (profile.clinic_id !== caller.clinic_id) {
+                return { error: "Forbidden" };
+            }
+
+            // Prevent self-deletion
+            if (id === caller.id) {
+                return { error: "No podés eliminarte a vos mismo" };
+            }
+
             const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(id);
             const userEmail = authUser?.user?.email || profile.google_user_email;
 
-            // Delete associated invites first to avoid re-invite issues later
             if (userEmail) {
-                await supabaseAdmin
-                    .from("invites")
-                    .delete()
-                    .eq("email", userEmail);
+                await supabaseAdmin.from("invites").delete().eq("email", userEmail);
             }
 
-            // Delete professional profile
             const { error: deleteProfileError } = await supabaseAdmin
                 .from("professional")
                 .delete()
                 .eq("id", id);
-            
             if (deleteProfileError) throw deleteProfileError;
 
-            // Delete from Auth if possible (this might fail if the user doesn't exist anymore or other issues)
             try {
                 await supabaseAdmin.auth.admin.deleteUser(id);
             } catch (authError) {
-                console.warn("Auth deletion failed, maybe user was already gone:", authError);
+                console.warn("Auth deletion failed:", authError);
             }
 
             revalidatePath("/config");
@@ -352,14 +408,41 @@ export async function deleteMember(id: string) {
 
         return { error: "No se encontró el miembro a eliminar." };
     } catch (error: any) {
+        if (error.message === "Unauthorized" || error.message.startsWith("Forbidden")) {
+            return { error: error.message };
+        }
         console.error("Delete member error:", error);
-        return { error: error.message };
+        return { error: "Error al eliminar miembro" };
     }
 }
 
 // ─── Update Member Professional Data ─────────────────────────────
-export async function updateMemberProfessional(userId: string, data: any) {
+export async function updateMemberProfessional(userId: string, data: {
+    matricula_nacional?: string;
+    specialty?: string;
+    sucursales?: string[];
+    horarios?: any;
+    activo?: boolean;
+}) {
     try {
+        const caller = await getCallerProfile();
+
+        // Allow superadmin to edit any member of their clinic, or allow self-edit
+        if (userId !== caller.id) {
+            if (caller.role !== "superadmin") throw new Error("Forbidden: superadmin required");
+
+            // Verify target is in the same clinic
+            const { data: targetProf } = await supabaseAdmin
+                .from("professional")
+                .select("clinic_id")
+                .eq("id", userId)
+                .single();
+
+            if (!targetProf || targetProf.clinic_id !== caller.clinic_id) {
+                throw new Error("Forbidden");
+            }
+        }
+
         const { error } = await supabaseAdmin
             .from("professional")
             .update({
@@ -376,7 +459,10 @@ export async function updateMemberProfessional(userId: string, data: any) {
         revalidatePath("/config");
         return { success: true };
     } catch (error: any) {
+        if (error.message === "Unauthorized" || error.message.startsWith("Forbidden")) {
+            return { error: error.message };
+        }
         console.error("Update member error:", error);
-        return { error: error.message };
+        return { error: "Error al actualizar miembro" };
     }
 }

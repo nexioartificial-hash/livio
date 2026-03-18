@@ -23,9 +23,7 @@ export const sedeSchema = z.object({
     location: z.string().min(1, "Localidad requerida"),
     aclaraciones: z.string().max(200, "Máx 200 caracteres").optional().or(z.literal("")),
     phone: z.string().min(10, "Teléfono completo (+54...)"),
-    email: z.string().email("Email válido").refine((val) => val.toLowerCase().endsWith(".com"), {
-        message: "El email debe terminar en .com",
-    }),
+    email: z.string().email("Email válido"),
     google_maps_url: z.string().url("Link Maps válido").min(1),
     confirmAddress: z.boolean().refine(v => v, "Debe confirmar ubicación"),
     horarios: z.record(z.string(), z.object({

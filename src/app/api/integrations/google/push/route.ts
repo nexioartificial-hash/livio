@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 import { getOAuth2ClientForProfesional, turnoToGoogleEvent } from '@/lib/google';
 
-/**
- * POST /api/integrations/google/push
- * Body: { turnoId: string, action: 'create' | 'update' | 'delete' }
- *
- * Syncs a Livio turno to Google Calendar.
- * Silently no-ops if profesional has calendar_sync_enabled = false.
- */
 export async function POST(request: NextRequest) {
+    // Require authenticated session
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     try {
         const { turnoId, action } = await request.json() as {
             turnoId: string;
@@ -21,10 +20,9 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'turnoId and action are required' }, { status: 400 });
         }
 
-        const supabase = createAdminClient();
+        const adminClient = createAdminClient();
 
-        // Load the turno
-        const { data: turno, error: turnoError } = await supabase
+        const { data: turno, error: turnoError } = await adminClient
             .from('turno')
             .select('*')
             .eq('id', turnoId)
@@ -34,14 +32,23 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Turno not found' }, { status: 404 });
         }
 
-        // Find the profesional by name (turno stores professional_name as text)
-        const { data: prof } = await supabase
+        // Verify the turno belongs to the caller's clinic
+        const { data: callerProf } = await adminClient
+            .from('professional')
+            .select('clinic_id')
+            .eq('id', user.id)
+            .single();
+
+        if (!callerProf || callerProf.clinic_id !== turno.clinic_id) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        const { data: prof } = await adminClient
             .from('professional')
             .select('id, calendar_sync_enabled, google_calendar_id')
             .eq('full_name', turno.professional_name)
             .maybeSingle();
 
-        // Silently skip if no matching professional or sync disabled
         if (!prof || !prof.calendar_sync_enabled) {
             return NextResponse.json({ skipped: true, reason: 'sync_disabled_or_no_match' });
         }
@@ -60,7 +67,7 @@ export async function POST(request: NextRequest) {
         if (action === 'delete') {
             if (turno.google_event_id) {
                 await cal.events.delete({ calendarId, eventId: turno.google_event_id }).catch(() => { });
-                await supabase.from('turno').update({ google_event_id: null }).eq('id', turnoId);
+                await adminClient.from('turno').update({ google_event_id: null }).eq('id', turnoId);
             }
             return NextResponse.json({ success: true, action: 'deleted' });
         }
@@ -77,17 +84,16 @@ export async function POST(request: NextRequest) {
 
         if (action === 'create' || !turno.google_event_id) {
             const { data: created } = await cal.events.insert({ calendarId, requestBody: eventBody });
-            await supabase.from('turno').update({ google_event_id: created?.id }).eq('id', turnoId);
+            await adminClient.from('turno').update({ google_event_id: created?.id }).eq('id', turnoId);
             return NextResponse.json({ success: true, action: 'created', googleEventId: created?.id });
         }
 
-        // update
         await cal.events.update({ calendarId, eventId: turno.google_event_id, requestBody: eventBody });
         return NextResponse.json({ success: true, action: 'updated' });
 
     } catch (error: unknown) {
         const msg = error instanceof Error ? error.message : 'Unknown error';
         console.error('[Google Push] Error:', msg);
-        return NextResponse.json({ error: msg }, { status: 500 });
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

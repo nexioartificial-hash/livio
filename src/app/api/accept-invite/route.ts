@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createClient as createServerClient } from '@/lib/supabase/server';
 
 export async function POST(request: Request) {
     const supabaseAdmin = createClient(
@@ -17,6 +18,16 @@ export async function POST(request: Request) {
                 { error: 'Token y userId son requeridos.' },
                 { status: 400 }
             );
+        }
+
+        // Verify caller is authenticated and userId matches the session
+        const supabase = await createServerClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        if (user.id !== userId) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
         // 1. Find the invite
@@ -36,13 +47,18 @@ export async function POST(request: Request) {
             );
         }
 
+        // Verify the authenticated user's email matches the invite email
+        if (user.email && invite.email && user.email.toLowerCase() !== invite.email.toLowerCase()) {
+            return NextResponse.json(
+                { error: 'Esta invitación no corresponde a tu cuenta.' },
+                { status: 403 }
+            );
+        }
+
         // 2. Mark invite as accepted
         await supabaseAdmin
             .from('invites')
-            .update({
-                status: 'accepted',
-                updated_at: new Date().toISOString(),
-            })
+            .update({ status: 'accepted', updated_at: new Date().toISOString() })
             .eq('id', invite.id);
 
         // 3. Create/update professional profile
@@ -62,14 +78,9 @@ export async function POST(request: Request) {
             .maybeSingle();
 
         if (existing) {
-            await supabaseAdmin
-                .from('professional')
-                .update(profileData)
-                .eq('id', userId);
+            await supabaseAdmin.from('professional').update(profileData).eq('id', userId);
         } else {
-            await supabaseAdmin
-                .from('professional')
-                .insert(profileData);
+            await supabaseAdmin.from('professional').insert(profileData);
         }
 
         // 4. Update user metadata
@@ -82,13 +93,11 @@ export async function POST(request: Request) {
             },
         });
 
-        console.log('✅ Invite accepted:', invite.email, '→ role:', invite.role);
-
         return NextResponse.json({ success: true });
     } catch (error: any) {
         console.error('Accept invite error:', error);
         return NextResponse.json(
-            { error: error.message || 'Error al aceptar invitación' },
+            { error: 'Error al aceptar invitación' },
             { status: 500 }
         );
     }
