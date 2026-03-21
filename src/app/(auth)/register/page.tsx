@@ -13,7 +13,8 @@ import { toast } from "sonner";
 import { validatePassword, getStrengthLabel } from "@/lib/security/password-validator";
 import {
     toTitleCase, validateClinicName, formatCUIT, validateCUIT,
-    validateEmail, sanitizeText,
+    validateEmail, sanitizeText, validateProfessionalName,
+    formatMatricula, validateMatricula,
 } from "@/lib/security/register-validators";
 import { postRegistration } from "@/app/actions/register";
 
@@ -33,6 +34,8 @@ interface FieldErrors {
     cuit?: string;
     email?: string;
     password?: string;
+    fullName?: string;
+    license?: string;
 }
 
 export default function RegisterPage() {
@@ -87,6 +90,24 @@ export default function RegisterPage() {
         setFormData(prev => ({ ...prev, password: value }));
     }, []);
 
+    const handleFullNameChange = useCallback((value: string) => {
+        const formatted = toTitleCase(value);
+        setFormData(prev => ({ ...prev, fullName: formatted }));
+        if (touched.fullName) {
+            const v = validateProfessionalName(formatted);
+            setFieldErrors(prev => ({ ...prev, fullName: v.error }));
+        }
+    }, [touched.fullName]);
+
+    const handleLicenseChange = useCallback((value: string) => {
+        const formatted = formatMatricula(value);
+        setFormData(prev => ({ ...prev, license: formatted }));
+        if (touched.license) {
+            const v = validateMatricula(formatted);
+            setFieldErrors(prev => ({ ...prev, license: v.error }));
+        }
+    }, [touched.license]);
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         switch (name) {
@@ -94,6 +115,8 @@ export default function RegisterPage() {
             case "cuit": handleCUITChange(value); break;
             case "email": handleEmailChange(value); break;
             case "password": handlePasswordChange(value); break;
+            case "fullName": handleFullNameChange(value); break;
+            case "license": handleLicenseChange(value); break;
             default: setFormData(prev => ({ ...prev, [name]: value }));
         }
     };
@@ -120,6 +143,16 @@ export default function RegisterPage() {
                 setEmailSuggestion(v.suggestion || null);
                 break;
             }
+            case "fullName": {
+                const v = validateProfessionalName(formData.fullName);
+                setFieldErrors(prev => ({ ...prev, fullName: v.error }));
+                break;
+            }
+            case "license": {
+                const v = validateMatricula(formData.license);
+                setFieldErrors(prev => ({ ...prev, license: v.error }));
+                break;
+            }
         }
     };
 
@@ -137,6 +170,10 @@ export default function RegisterPage() {
         validateCUIT(formData.cuit).valid &&
         validateEmail(formData.email).valid &&
         passwordValidation.valid;
+
+    const isStep2Valid =
+        validateProfessionalName(formData.fullName).valid &&
+        validateMatricula(formData.license).valid;
 
     // ─── Email Suggestion Accept ─────────────────────────────
 
@@ -178,7 +215,15 @@ export default function RegisterPage() {
             return;
         }
 
-        // Step 2 — final submit
+        // Step 2 — validate and submit
+        const nameV2 = validateProfessionalName(formData.fullName);
+        const licV = validateMatricula(formData.license);
+
+        setFieldErrors(prev => ({ ...prev, fullName: nameV2.error, license: licV.error }));
+        setTouched(prev => ({ ...prev, fullName: true, license: true }));
+
+        if (!nameV2.valid || !licV.valid) return;
+
         if (loading) return; // Anti double-click
         setLoading(true);
 
@@ -412,9 +457,15 @@ export default function RegisterPage() {
                                     required
                                     autoComplete="name"
                                     aria-required="true"
+                                    aria-invalid={!!fieldErrors.fullName}
+                                    aria-describedby={fieldErrors.fullName ? "fullName-error" : undefined}
                                     value={formData.fullName}
                                     onChange={handleChange}
+                                    onBlur={() => handleBlur("fullName")}
                                 />
+                                {fieldErrors.fullName && (
+                                    <p id="fullName-error" role="alert" className="text-xs text-red-500">{fieldErrors.fullName}</p>
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="license">Matrícula Nacional (MN)</Label>
@@ -423,10 +474,18 @@ export default function RegisterPage() {
                                     name="license"
                                     placeholder="Ej: 123456"
                                     required
+                                    inputMode="numeric"
+                                    autoComplete="off"
                                     aria-required="true"
+                                    aria-invalid={!!fieldErrors.license}
+                                    aria-describedby={fieldErrors.license ? "license-error" : undefined}
                                     value={formData.license}
                                     onChange={handleChange}
+                                    onBlur={() => handleBlur("license")}
                                 />
+                                {fieldErrors.license && (
+                                    <p id="license-error" role="alert" className="text-xs text-red-500">{fieldErrors.license}</p>
+                                )}
                             </div>
 
                             <div className="p-4 bg-[#76D7B6]/10 rounded-lg text-sm text-slate-600 mt-4">
@@ -447,8 +506,8 @@ export default function RegisterPage() {
                     <Button
                         type="submit"
                         className="w-full bg-[#76D7B6] hover:bg-[#65cba8] text-white font-bold"
-                        disabled={loading || (step === 1 && !isStep1Valid)}
-                        aria-disabled={loading || (step === 1 && !isStep1Valid)}
+                        disabled={loading || (step === 1 && !isStep1Valid) || (step === 2 && !isStep2Valid)}
+                        aria-disabled={loading || (step === 1 && !isStep1Valid) || (step === 2 && !isStep2Valid)}
                     >
                         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         {step === 1 ? "Continuar" : "Crear Cuenta"}

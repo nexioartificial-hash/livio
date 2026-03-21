@@ -9,6 +9,7 @@ const LOWERCASE_WORDS = new Set(["de", "del", "la", "las", "los", "el", "y", "e"
 const UPPERCASE_WORDS: Record<string, string> = {
     srl: "SRL", sa: "SA", sas: "SAS", cuit: "CUIT",
     dr: "Dr.", "dr.": "Dr.", dra: "Dra.", "dra.": "Dra.", dres: "Dres.",
+    od: "Od.", "od.": "Od.", lic: "Lic.", "lic.": "Lic.",
 };
 
 export function toTitleCase(input: string): string {
@@ -154,6 +155,44 @@ export function validateEmail(email: string): { valid: boolean; error?: string; 
         const corrected = trimmed.replace(domain, DOMAIN_TYPOS[domain]);
         return { valid: true, suggestion: `¿Quisiste decir ${corrected}?` };
     }
+
+    return { valid: true };
+}
+
+// ─── Validación de Nombre Profesional ────────────────────────
+
+const PROFESSIONAL_NAME_REGEX = /^[a-záéíóúñüàèìòùA-ZÁÉÍÓÚÑÜ\s.\-']+$/;
+
+export function validateProfessionalName(name: string): { valid: boolean; error?: string } {
+    const trimmed = sanitizeText(name);
+
+    if (!trimmed) return { valid: false, error: "Ingresá tu nombre completo" };
+    if (trimmed.length < 3) return { valid: false, error: "El nombre debe tener al menos 3 caracteres" };
+    if (trimmed.length > 80) return { valid: false, error: "El nombre no puede superar los 80 caracteres" };
+    if (/\d/.test(trimmed)) return { valid: false, error: "El nombre no puede contener números" };
+    if (!PROFESSIONAL_NAME_REGEX.test(trimmed)) return { valid: false, error: "El nombre contiene caracteres no permitidos" };
+
+    // Must have at least 2 words (name + surname), excluding titles
+    const titleWords = new Set(["dr.", "dra.", "od.", "lic.", "dres."]);
+    const words = trimmed.split(/\s+/).filter(w => w.length > 0 && !titleWords.has(w.toLowerCase()));
+    if (words.length < 2) return { valid: false, error: "Ingresá tu nombre y apellido" };
+
+    return { valid: true };
+}
+
+// ─── Validación de Matrícula Nacional ────────────────────────
+
+export function formatMatricula(value: string): string {
+    return value.replace(/\D/g, "").slice(0, 7);
+}
+
+export function validateMatricula(matricula: string): { valid: boolean; error?: string } {
+    const cleaned = matricula.replace(/\D/g, "");
+
+    if (!cleaned) return { valid: false, error: "Ingresá tu número de matrícula nacional" };
+    if (cleaned.length < 2) return { valid: false, error: "La matrícula debe tener al menos 2 dígitos" };
+    if (cleaned.length > 7) return { valid: false, error: "La matrícula no puede tener más de 7 dígitos" };
+    if (/^0+$/.test(cleaned)) return { valid: false, error: "Ingresá un número de matrícula válido" };
 
     return { valid: true };
 }
