@@ -226,8 +226,18 @@ export default function RegisterPage() {
     // ─── Render ──────────────────────────────────────────────
 
     return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-4">
-            <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.2)] border border-slate-300">
+        <div className="relative flex h-screen flex-col items-center justify-center px-4 overflow-hidden">
+            {/* Background image — same as login */}
+            <Image
+                src="/login-bg.png"
+                alt=""
+                fill
+                className="object-cover blur-[2px]"
+                priority
+            />
+            <div className="absolute inset-0 bg-white/25" />
+
+            <div className="relative z-10 w-full max-w-md space-y-6 bg-white/95 backdrop-blur-sm p-8 rounded-2xl shadow-[0_25px_80px_rgba(0,0,0,0.25),0_8px_20px_rgba(0,0,0,0.1)] border border-white/50">
                 <div className="flex flex-col items-center text-center">
                     <Image
                         src="/logo-transparent.png"
