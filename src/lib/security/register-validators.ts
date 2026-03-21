@@ -12,11 +12,18 @@ const UPPERCASE_WORDS: Record<string, string> = {
 };
 
 export function toTitleCase(input: string): string {
-    const sanitized = sanitizeText(input);
-    const words = sanitized.split(/\s+/);
+    // Strip HTML/emojis but preserve trailing space (user is still typing)
+    const cleaned = input
+        .replace(/<[^>]*>/g, "")
+        .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, "")
+        .replace(/\s{2,}/g, " "); // collapse multiple spaces but DON'T trim
 
-    return words
+    const endsWithSpace = cleaned.endsWith(" ");
+    const words = cleaned.trim().split(/\s+/);
+
+    const result = words
         .map((word, index) => {
+            if (!word) return "";
             const lower = word.toLowerCase();
 
             // Check uppercase exceptions (SRL, Dr., etc.)
@@ -26,11 +33,13 @@ export function toTitleCase(input: string): string {
             if (index > 0 && LOWERCASE_WORDS.has(lower)) return lower;
 
             // Standard title case
-            if (lower.length === 0) return "";
             return lower.charAt(0).toUpperCase() + lower.slice(1);
         })
         .filter(Boolean)
         .join(" ");
+
+    // Preserve trailing space so the user can keep typing the next word
+    return endsWithSpace ? result + " " : result;
 }
 
 // ─── Sanitización de Texto ───────────────────────────────────

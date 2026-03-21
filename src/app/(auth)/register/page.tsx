@@ -232,10 +232,10 @@ export default function RegisterPage() {
                 src="/login-bg.png"
                 alt=""
                 fill
-                className="object-cover blur-[2px]"
+                className="object-cover"
                 priority
             />
-            <div className="absolute inset-0 bg-white/25" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/60" />
 
             <div className="relative z-10 w-full max-w-md space-y-6 bg-white/95 backdrop-blur-sm p-8 rounded-2xl shadow-[0_25px_80px_rgba(0,0,0,0.25),0_8px_20px_rgba(0,0,0,0.1)] border border-white/50">
                 <div className="flex flex-col items-center text-center">
