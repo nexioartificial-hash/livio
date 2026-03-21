@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -8,91 +8,211 @@ import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Loader2, Eye, EyeOff, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { validatePassword, getStrengthLabel } from "@/lib/security/password-validator";
+import {
+    toTitleCase, validateClinicName, formatCUIT, validateCUIT,
+    validateEmail, sanitizeText,
+} from "@/lib/security/register-validators";
+
+// Password requirement checks (for individual checklist items)
+function getPasswordChecks(pw: string) {
+    return [
+        { label: "Mínimo 8 caracteres", ok: pw.length >= 8 },
+        { label: "Una letra mayúscula", ok: /[A-Z]/.test(pw) },
+        { label: "Una letra minúscula", ok: /[a-z]/.test(pw) },
+        { label: "Un número", ok: /\d/.test(pw) },
+        { label: "Un carácter especial", ok: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(pw) },
+    ];
+}
+
+interface FieldErrors {
+    clinicName?: string;
+    cuit?: string;
+    email?: string;
+    password?: string;
+}
 
 export default function RegisterPage() {
     const [step, setStep] = useState(1);
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+    const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null);
+    const [touched, setTouched] = useState<Record<string, boolean>>({});
     const router = useRouter();
 
-    // Form State
     const [formData, setFormData] = useState({
         clinicName: "",
         cuit: "",
         email: "",
         password: "",
         fullName: "",
-        license: ""
+        license: "",
     });
 
-    const formatCUIT = (value: string) => {
-        const digits = value.replace(/\D/g, "");
-        if (digits.length <= 2) return digits;
-        if (digits.length <= 10) return `${digits.slice(0, 2)}-${digits.slice(2)}`;
-        return `${digits.slice(0, 2)}-${digits.slice(2, 10)}-${digits.slice(10, 11)}`;
-    };
+    // ─── Field Handlers ──────────────────────────────────────
+
+    const handleClinicNameChange = useCallback((value: string) => {
+        const formatted = toTitleCase(value);
+        setFormData(prev => ({ ...prev, clinicName: formatted }));
+        if (touched.clinicName) {
+            const v = validateClinicName(formatted);
+            setFieldErrors(prev => ({ ...prev, clinicName: v.error }));
+        }
+    }, [touched.clinicName]);
+
+    const handleCUITChange = useCallback((value: string) => {
+        const formatted = formatCUIT(value);
+        setFormData(prev => ({ ...prev, cuit: formatted }));
+        if (touched.cuit) {
+            const v = validateCUIT(formatted);
+            setFieldErrors(prev => ({ ...prev, cuit: v.error }));
+        }
+    }, [touched.cuit]);
+
+    const handleEmailChange = useCallback((value: string) => {
+        setFormData(prev => ({ ...prev, email: value }));
+        setEmailSuggestion(null);
+        if (touched.email) {
+            const v = validateEmail(value);
+            setFieldErrors(prev => ({ ...prev, email: v.error }));
+            setEmailSuggestion(v.suggestion || null);
+        }
+    }, [touched.email]);
+
+    const handlePasswordChange = useCallback((value: string) => {
+        setFormData(prev => ({ ...prev, password: value }));
+    }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        if (name === "cuit") {
-            setFormData({ ...formData, cuit: formatCUIT(value) });
-        } else {
-            setFormData({ ...formData, [name]: value });
+        switch (name) {
+            case "clinicName": handleClinicNameChange(value); break;
+            case "cuit": handleCUITChange(value); break;
+            case "email": handleEmailChange(value); break;
+            case "password": handlePasswordChange(value); break;
+            default: setFormData(prev => ({ ...prev, [name]: value }));
         }
     };
 
-    // Password validation in real-time
-    const passwordValidation = validatePassword(formData.password, formData.email, formData.fullName);
+    // ─── Blur Handlers (validate on blur) ────────────────────
+
+    const handleBlur = (field: string) => {
+        setTouched(prev => ({ ...prev, [field]: true }));
+
+        switch (field) {
+            case "clinicName": {
+                const v = validateClinicName(formData.clinicName);
+                setFieldErrors(prev => ({ ...prev, clinicName: v.error }));
+                break;
+            }
+            case "cuit": {
+                const v = validateCUIT(formData.cuit);
+                setFieldErrors(prev => ({ ...prev, cuit: v.error }));
+                break;
+            }
+            case "email": {
+                const v = validateEmail(formData.email);
+                setFieldErrors(prev => ({ ...prev, email: v.error }));
+                setEmailSuggestion(v.suggestion || null);
+                break;
+            }
+        }
+    };
+
+    // ─── Password Validation ─────────────────────────────────
+
+    const passwordValidation = validatePassword(formData.password, formData.email, formData.clinicName);
     const passwordStrength = getStrengthLabel(passwordValidation.score);
+    const passwordChecks = getPasswordChecks(formData.password);
+    const allPasswordChecksPassed = passwordChecks.every(c => c.ok);
+
+    // ─── Step 1 Form Validity ────────────────────────────────
+
+    const isStep1Valid =
+        validateClinicName(formData.clinicName).valid &&
+        validateCUIT(formData.cuit).valid &&
+        validateEmail(formData.email).valid &&
+        passwordValidation.valid;
+
+    // ─── Email Suggestion Accept ─────────────────────────────
+
+    const acceptEmailSuggestion = () => {
+        if (!emailSuggestion) return;
+        // Extract email from "¿Quisiste decir xxx?"
+        const match = emailSuggestion.match(/decir (.+)\?/);
+        if (match) {
+            setFormData(prev => ({ ...prev, email: match[1] }));
+            setEmailSuggestion(null);
+            setFieldErrors(prev => ({ ...prev, email: undefined }));
+        }
+    };
+
+    // ─── Submit Handler ──────────────────────────────────────
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (step < 2) {
-            // Validate password before going to step 2
-            if (!passwordValidation.valid) {
-                toast.error("La contraseña no cumple los requisitos de seguridad");
+        if (step === 1) {
+            // Validate all fields
+            const nameV = validateClinicName(formData.clinicName);
+            const cuitV = validateCUIT(formData.cuit);
+            const emailV = validateEmail(formData.email);
+
+            setFieldErrors({
+                clinicName: nameV.error,
+                cuit: cuitV.error,
+                email: emailV.error,
+                password: !passwordValidation.valid ? "La contraseña no cumple los requisitos" : undefined,
+            });
+            setTouched({ clinicName: true, cuit: true, email: true, password: true });
+
+            if (!nameV.valid || !cuitV.valid || !emailV.valid || !passwordValidation.valid) {
                 return;
             }
-            setStep(step + 1);
+
+            setStep(2);
             return;
         }
 
+        // Step 2 — final submit
+        if (loading) return; // Anti double-click
         setLoading(true);
 
         try {
+            const sanitizedClinicName = sanitizeText(formData.clinicName);
+            const sanitizedEmail = formData.email.trim().toLowerCase();
+            const sanitizedCuit = formData.cuit.trim() || null;
+
             const { data: authData, error: authError } = await supabase.auth.signUp({
-                email: formData.email.trim(),
+                email: sanitizedEmail,
                 password: formData.password,
                 options: {
                     data: {
-                        full_name: formData.fullName,
-                        license: formData.license,
-                        clinic_name: formData.clinicName,
-                        cuit: formData.cuit
-                    }
-                }
+                        full_name: sanitizeText(formData.fullName),
+                        license: formData.license.trim(),
+                        clinic_name: sanitizedClinicName,
+                        cuit: sanitizedCuit,
+                    },
+                },
             });
 
             if (authError) {
-                // Generic error — don't reveal if email already exists
                 toast.error("Error al registrar. Verificá los datos e intentá de nuevo.");
                 setLoading(false);
                 return;
             }
 
             if (authData.user) {
-                // The first user who creates a clinic gets "owner" role (not superadmin)
-                await supabase.from('professional').upsert({
+                await supabase.from("professional").upsert({
                     id: authData.user.id,
-                    full_name: formData.fullName,
-                    license: formData.license,
-                    role: 'owner',
+                    full_name: sanitizeText(formData.fullName),
+                    license: formData.license.trim(),
+                    role: "owner",
                     is_onboarded: false,
-                }, { onConflict: 'id' });
+                }, { onConflict: "id" });
             }
 
             toast.success("¡Cuenta creada! Revisá tu email para confirmar.");
@@ -102,6 +222,8 @@ export default function RegisterPage() {
             setLoading(false);
         }
     };
+
+    // ─── Render ──────────────────────────────────────────────
 
     return (
         <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-4">
@@ -130,18 +252,79 @@ export default function RegisterPage() {
                 <form onSubmit={handleRegister} className="space-y-4 mt-6">
                     {step === 1 && (
                         <>
+                            {/* Clinic Name */}
                             <div className="space-y-2">
                                 <Label htmlFor="clinicName">Nombre de la Clínica / Consultorio</Label>
-                                <Input id="clinicName" name="clinicName" placeholder="Ej: Consultorios Dentales Livio" required value={formData.clinicName} onChange={handleChange} />
+                                <Input
+                                    id="clinicName"
+                                    name="clinicName"
+                                    placeholder="Ej: Consultorios Dentales Livio"
+                                    required
+                                    autoComplete="organization"
+                                    aria-required="true"
+                                    aria-invalid={!!fieldErrors.clinicName}
+                                    aria-describedby={fieldErrors.clinicName ? "clinicName-error" : undefined}
+                                    value={formData.clinicName}
+                                    onChange={handleChange}
+                                    onBlur={() => handleBlur("clinicName")}
+                                />
+                                {fieldErrors.clinicName && (
+                                    <p id="clinicName-error" role="alert" className="text-xs text-red-500">{fieldErrors.clinicName}</p>
+                                )}
                             </div>
+
+                            {/* CUIT */}
                             <div className="space-y-2">
                                 <Label htmlFor="cuit">CUIT (Opcional)</Label>
-                                <Input id="cuit" name="cuit" placeholder="XX-XXXXXXXX-X" value={formData.cuit} onChange={handleChange} />
+                                <Input
+                                    id="cuit"
+                                    name="cuit"
+                                    placeholder="XX-XXXXXXXX-X"
+                                    inputMode="numeric"
+                                    autoComplete="off"
+                                    aria-invalid={!!fieldErrors.cuit}
+                                    aria-describedby={fieldErrors.cuit ? "cuit-error" : undefined}
+                                    value={formData.cuit}
+                                    onChange={handleChange}
+                                    onBlur={() => handleBlur("cuit")}
+                                />
+                                {fieldErrors.cuit && (
+                                    <p id="cuit-error" role="alert" className="text-xs text-red-500">{fieldErrors.cuit}</p>
+                                )}
                             </div>
+
+                            {/* Email */}
                             <div className="space-y-2">
                                 <Label htmlFor="email">Email Corporativo</Label>
-                                <Input id="email" name="email" type="email" placeholder="admin@clinica.com" required value={formData.email} onChange={handleChange} />
+                                <Input
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    placeholder="admin@clinica.com"
+                                    required
+                                    autoComplete="email"
+                                    inputMode="email"
+                                    aria-required="true"
+                                    aria-invalid={!!fieldErrors.email}
+                                    aria-describedby={fieldErrors.email ? "email-error" : emailSuggestion ? "email-suggestion" : undefined}
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    onBlur={() => handleBlur("email")}
+                                />
+                                {fieldErrors.email && (
+                                    <p id="email-error" role="alert" className="text-xs text-red-500">{fieldErrors.email}</p>
+                                )}
+                                {emailSuggestion && !fieldErrors.email && (
+                                    <p id="email-suggestion" className="text-xs text-amber-600">
+                                        {emailSuggestion}{" "}
+                                        <button type="button" onClick={acceptEmailSuggestion} className="underline font-medium">
+                                            Sí, corregir
+                                        </button>
+                                    </p>
+                                )}
                             </div>
+
+                            {/* Password */}
                             <div className="space-y-2">
                                 <Label htmlFor="password">Contraseña</Label>
                                 <div className="relative">
@@ -150,34 +333,49 @@ export default function RegisterPage() {
                                         name="password"
                                         type={showPassword ? "text" : "password"}
                                         required
+                                        autoComplete="new-password"
+                                        aria-required="true"
+                                        aria-invalid={touched.password && !passwordValidation.valid}
                                         value={formData.password}
                                         onChange={handleChange}
+                                        onBlur={() => setTouched(prev => ({ ...prev, password: true }))}
                                         className="pr-10"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
+                                        aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                                         className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
                                     >
                                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                     </button>
                                 </div>
-                                {/* Password strength indicator */}
+                                {/* Password strength bar + checklist */}
                                 {formData.password && (
-                                    <div className="space-y-1 mt-1">
+                                    <div className="space-y-2 mt-1" aria-live="polite">
                                         <div className="flex gap-1">
                                             {[1, 2, 3, 4, 5].map(i => (
                                                 <div
                                                     key={i}
-                                                    className="h-1 flex-1 rounded-full"
+                                                    className="h-1 flex-1 rounded-full transition-colors"
                                                     style={{ backgroundColor: i <= passwordValidation.score ? passwordStrength.color : "#e2e8f0" }}
                                                 />
                                             ))}
                                         </div>
-                                        <p className="text-xs" style={{ color: passwordStrength.color }}>{passwordStrength.label}</p>
-                                        {passwordValidation.errors.slice(0, 2).map((err, i) => (
-                                            <p key={i} className="text-xs text-red-500">{err}</p>
-                                        ))}
+                                        <p className="text-xs font-medium" style={{ color: passwordStrength.color }}>{passwordStrength.label}</p>
+                                        <div className="space-y-0.5">
+                                            {passwordChecks.map((check, i) => (
+                                                <div key={i} className="flex items-center gap-1.5">
+                                                    {check.ok
+                                                        ? <Check className="h-3 w-3 text-green-500" />
+                                                        : <X className="h-3 w-3 text-slate-300" />
+                                                    }
+                                                    <span className={`text-[11px] ${check.ok ? "text-green-600" : "text-slate-400"}`}>
+                                                        {check.label}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -188,21 +386,51 @@ export default function RegisterPage() {
                         <>
                             <div className="space-y-2">
                                 <Label htmlFor="fullName">Nombre Completo</Label>
-                                <Input id="fullName" name="fullName" placeholder="Dr. Juan Pérez" required value={formData.fullName} onChange={handleChange} />
+                                <Input
+                                    id="fullName"
+                                    name="fullName"
+                                    placeholder="Dr. Juan Pérez"
+                                    required
+                                    autoComplete="name"
+                                    aria-required="true"
+                                    value={formData.fullName}
+                                    onChange={handleChange}
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="license">Matrícula Nacional (MN)</Label>
-                                <Input id="license" name="license" placeholder="Ej: 123456" required value={formData.license} onChange={handleChange} />
+                                <Input
+                                    id="license"
+                                    name="license"
+                                    placeholder="Ej: 123456"
+                                    required
+                                    aria-required="true"
+                                    value={formData.license}
+                                    onChange={handleChange}
+                                />
                             </div>
 
                             <div className="p-4 bg-[#76D7B6]/10 rounded-lg text-sm text-slate-600 mt-4">
                                 <p className="font-semibold text-[#76D7B6] mb-1">✨ Plan Trial</p>
                                 <p>Tendrás acceso total a todas las funciones premium por 30 días. Sin cargos automáticos.</p>
                             </div>
+
+                            <button
+                                type="button"
+                                onClick={() => setStep(1)}
+                                className="text-sm text-slate-500 hover:text-slate-700 underline w-full text-center"
+                            >
+                                ← Volver al paso anterior
+                            </button>
                         </>
                     )}
 
-                    <Button type="submit" className="w-full bg-[#76D7B6] hover:bg-[#65cba8] text-white font-bold" disabled={loading}>
+                    <Button
+                        type="submit"
+                        className="w-full bg-[#76D7B6] hover:bg-[#65cba8] text-white font-bold"
+                        disabled={loading || (step === 1 && !isStep1Valid)}
+                        aria-disabled={loading || (step === 1 && !isStep1Valid)}
+                    >
                         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         {step === 1 ? "Continuar" : "Crear Cuenta"}
                     </Button>
