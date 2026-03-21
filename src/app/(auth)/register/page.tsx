@@ -15,6 +15,7 @@ import {
     toTitleCase, validateClinicName, formatCUIT, validateCUIT,
     validateEmail, sanitizeText,
 } from "@/lib/security/register-validators";
+import { postRegistration } from "@/app/actions/register";
 
 // Password requirement checks (for individual checklist items)
 function getPasswordChecks(pw: string) {
@@ -213,10 +214,18 @@ export default function RegisterPage() {
                     role: "owner",
                     is_onboarded: false,
                 }, { onConflict: "id" });
+
+                // Send branded verification email via Resend
+                await postRegistration({
+                    userId: authData.user.id,
+                    email: sanitizedEmail,
+                    clinicName: sanitizedClinicName,
+                    fullName: sanitizeText(formData.fullName),
+                });
             }
 
             toast.success("¡Cuenta creada! Revisá tu email para confirmar.");
-            router.push("/dashboard?trial=started");
+            router.push(`/check-email?email=${encodeURIComponent(sanitizedEmail)}`);
         } catch {
             toast.error("Error de conexión. Intentá de nuevo.");
             setLoading(false);
