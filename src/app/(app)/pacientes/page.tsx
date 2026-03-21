@@ -36,14 +36,14 @@ interface Patient {
 }
 
 const mockPatients: Patient[] = [
-    { id: "1", name: "Sofia", lastName: "Martinez", dni: "38.456.789", phone: "+54 11 5678-1234", obraSocial: "OSDE", tags: ["Ortodoncia"], nextAppointment: "2026-02-20 10:30", email: "sofia@email.com" },
-    { id: "2", name: "Carlos", lastName: "Ruiz", dni: "35.123.456", phone: "+54 11 4567-8901", obraSocial: "Swiss Medical", tags: ["Implantes", "Prótesis"], nextAppointment: "2026-02-22 14:00", email: "carlos@email.com" },
-    { id: "3", name: "Ana", lastName: "García", dni: "40.789.012", phone: "+54 11 3456-7890", obraSocial: "OSDE", tags: ["Limpieza"], nextAppointment: null, email: "ana@email.com" },
-    { id: "4", name: "Pedro", lastName: "López", dni: "33.654.321", phone: "+54 11 2345-6789", obraSocial: "Galeno", tags: ["Endodoncia"], nextAppointment: "2026-02-19 09:00", email: "pedro@email.com" },
-    { id: "5", name: "Lucía", lastName: "Fernández", dni: "42.987.654", phone: "+54 11 1234-5678", obraSocial: "Medifé", tags: ["Estética", "Blanqueamiento"], nextAppointment: "2026-02-25 16:00", email: "lucia@email.com" },
-    { id: "6", name: "Juan", lastName: "Martínez", dni: "36.321.987", phone: "+54 11 9876-5432", obraSocial: "OSDE", tags: ["Control"], nextAppointment: "2026-03-01 11:00", email: "juan@email.com" },
-    { id: "7", name: "María", lastName: "Torres", dni: "39.654.123", phone: "+54 11 8765-4321", obraSocial: "Swiss Medical", tags: ["Ortodoncia", "Limpieza"], nextAppointment: null, email: "maria@email.com" },
-    { id: "8", name: "Diego", lastName: "Sánchez", dni: "41.147.258", phone: "+54 11 7654-3210", obraSocial: "Galeno", tags: ["Cirugía"], nextAppointment: "2026-02-28 08:30", email: "diego@email.com" },
+    { id: "1", name: "Sofia", lastName: "Martinez", dni: "38.456.789", phone: "+54 11 5678-1234", obraSocial: "OSDE", obraSocialPlan: "310", tags: ["Ortodoncia"], nextAppointment: "2026-02-20 10:30", email: "sofia@email.com", birthDate: "1995-03-12", gender: "Femenino" },
+    { id: "2", name: "Carlos", lastName: "Ruiz", dni: "35.123.456", phone: "+54 11 4567-8901", obraSocial: "Swiss Medical", obraSocialPlan: "SMG20", tags: ["Implantes", "Prótesis"], nextAppointment: "2026-02-22 14:00", email: "carlos@email.com", birthDate: "1988-07-25", gender: "Masculino" },
+    { id: "3", name: "Ana", lastName: "García", dni: "40.789.012", phone: "+54 11 3456-7890", obraSocial: "OSDE", obraSocialPlan: "210", tags: ["Limpieza"], nextAppointment: null, email: "ana@email.com", birthDate: "2000-01-15", gender: "Femenino" },
+    { id: "4", name: "Pedro", lastName: "López", dni: "33.654.321", phone: "+54 11 2345-6789", obraSocial: "Galeno", obraSocialPlan: "Oro", tags: ["Endodoncia"], nextAppointment: "2026-02-19 09:00", email: "pedro@email.com", birthDate: "1982-11-03", gender: "Masculino" },
+    { id: "5", name: "Lucía", lastName: "Fernández", dni: "42.987.654", phone: "+54 11 1234-5678", obraSocial: "Medifé", obraSocialPlan: "Plata", tags: ["Estética", "Blanqueamiento"], nextAppointment: "2026-02-25 16:00", email: "lucia@email.com", birthDate: "1998-06-20", gender: "Femenino" },
+    { id: "6", name: "Juan", lastName: "Martínez", dni: "36.321.987", phone: "+54 11 9876-5432", obraSocial: "OSDE", obraSocialPlan: "410", tags: ["Control"], nextAppointment: "2026-03-01 11:00", email: "juan@email.com", birthDate: "1990-09-08", gender: "Masculino" },
+    { id: "7", name: "María", lastName: "Torres", dni: "39.654.123", phone: "+54 11 8765-4321", obraSocial: "Swiss Medical", obraSocialPlan: "SMG40", tags: ["Ortodoncia", "Limpieza"], nextAppointment: null, email: "maria@email.com", birthDate: "1993-04-17", gender: "Femenino" },
+    { id: "8", name: "Diego", lastName: "Sánchez", dni: "41.147.258", phone: "+54 11 7654-3210", obraSocial: "Galeno", obraSocialPlan: "Plata", tags: ["Cirugía"], nextAppointment: "2026-02-28 08:30", email: "diego@email.com", birthDate: "1985-12-30", gender: "Masculino" },
 ];
 
 type SortField = "name" | "dni" | "obraSocial" | "nextAppointment";

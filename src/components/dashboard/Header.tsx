@@ -74,7 +74,7 @@ const TYPE_CONFIG = {
 } as const;
 
 export function Header() {
-    const { user, signOut } = useAuth();
+    const { user, loading: authLoading, signOut } = useAuth();
     const router = useRouter();
     const { notifications, unreadCount, loading, handleMarkRead, handleMarkAllRead } = useNotifications();
 
@@ -86,7 +86,7 @@ export function Header() {
     const handleSeedDemo = async () => {
         const clinicId = (user as any)?.clinic_id;
         if (!user?.id || !clinicId) return;
-        const res = await seedNotifications(user.id, clinicId);
+        const res = await seedNotifications(clinicId);
         if (res.success) toast.success("Notificaciones de demo creadas");
         else toast.error("Error: " + res.error);
     };
@@ -248,7 +248,9 @@ export function Header() {
                         <DropdownMenuLabel className="font-normal">
                             <div className="flex flex-col space-y-1">
                                 <p className="text-sm font-medium leading-none">
-                                    {user?.full_name || user?.user_metadata?.full_name || "Usuario"}
+                                    {authLoading && !user
+                                        ? <span className="inline-block w-24 h-3 bg-slate-200 rounded animate-pulse" />
+                                        : (user?.full_name || user?.user_metadata?.full_name || "Usuario")}
                                 </p>
                                 <p className="text-xs text-slate-500 truncate">{user?.email}</p>
                             </div>

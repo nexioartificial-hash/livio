@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import { validatePassword, getStrengthLabel } from "@/lib/security/password-validator";
 
 export default function RegisterPage() {
     const [step, setStep] = useState(1);
@@ -43,46 +44,63 @@ export default function RegisterPage() {
         }
     };
 
+    // Password validation in real-time
+    const passwordValidation = validatePassword(formData.password, formData.email, formData.fullName);
+    const passwordStrength = getStrengthLabel(passwordValidation.score);
+
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
+
         if (step < 2) {
+            // Validate password before going to step 2
+            if (!passwordValidation.valid) {
+                toast.error("La contraseña no cumple los requisitos de seguridad");
+                return;
+            }
             setStep(step + 1);
             return;
         }
 
         setLoading(true);
 
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-            email: formData.email,
-            password: formData.password,
-            options: {
-                data: {
+        try {
+            const { data: authData, error: authError } = await supabase.auth.signUp({
+                email: formData.email.trim(),
+                password: formData.password,
+                options: {
+                    data: {
+                        full_name: formData.fullName,
+                        license: formData.license,
+                        clinic_name: formData.clinicName,
+                        cuit: formData.cuit
+                    }
+                }
+            });
+
+            if (authError) {
+                // Generic error — don't reveal if email already exists
+                toast.error("Error al registrar. Verificá los datos e intentá de nuevo.");
+                setLoading(false);
+                return;
+            }
+
+            if (authData.user) {
+                // The first user who creates a clinic gets "owner" role (not superadmin)
+                await supabase.from('professional').upsert({
+                    id: authData.user.id,
                     full_name: formData.fullName,
                     license: formData.license,
-                    clinic_name: formData.clinicName,
-                    cuit: formData.cuit
-                }
+                    role: 'owner',
+                    is_onboarded: false,
+                }, { onConflict: 'id' });
             }
-        });
 
-        if (authError) {
-            toast.error("Error al registrar: " + authError.message);
+            toast.success("¡Cuenta creada! Revisá tu email para confirmar.");
+            router.push("/dashboard?trial=started");
+        } catch {
+            toast.error("Error de conexión. Intentá de nuevo.");
             setLoading(false);
-            return;
         }
-
-        if (authData.user) {
-            await supabase.from('professional').upsert({
-                id: authData.user.id,
-                full_name: formData.fullName,
-                license: formData.license,
-                role: 'superadmin',
-                is_onboarded: false,
-            }, { onConflict: 'id' });
-        }
-
-        toast.success("¡Cuenta creada! Revisa tu email para confirmar.");
-        router.push("/dashboard?trial=started");
     };
 
     return (
@@ -144,6 +162,24 @@ export default function RegisterPage() {
                                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                     </button>
                                 </div>
+                                {/* Password strength indicator */}
+                                {formData.password && (
+                                    <div className="space-y-1 mt-1">
+                                        <div className="flex gap-1">
+                                            {[1, 2, 3, 4, 5].map(i => (
+                                                <div
+                                                    key={i}
+                                                    className="h-1 flex-1 rounded-full"
+                                                    style={{ backgroundColor: i <= passwordValidation.score ? passwordStrength.color : "#e2e8f0" }}
+                                                />
+                                            ))}
+                                        </div>
+                                        <p className="text-xs" style={{ color: passwordStrength.color }}>{passwordStrength.label}</p>
+                                        {passwordValidation.errors.slice(0, 2).map((err, i) => (
+                                            <p key={i} className="text-xs text-red-500">{err}</p>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </>
                     )}

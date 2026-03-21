@@ -10,6 +10,11 @@ export async function middleware(request: NextRequest) {
         },
     })
 
+    // Add security headers to every response
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    response.headers.set('X-Frame-Options', 'DENY');
+    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+
     // Skip auth checks if Supabase is not configured yet
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
