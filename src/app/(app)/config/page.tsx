@@ -74,6 +74,7 @@ import ImportObrasSocialesModal from "@/components/obras-sociales/ImportObrasSoc
 import { TratamientosTab } from "@/components/config/TratamientosTab";
 import { ObrasSocialesTab } from "@/components/config/ObrasSocialesTab";
 import { InventarioTab } from "@/components/config/InventarioTab";
+import WhatsAppBotTab from "@/components/config/WhatsAppBotTab";
 
 /**
  * Small component that reads OAuth redirect result from URL params.
@@ -82,7 +83,8 @@ import { InventarioTab } from "@/components/config/InventarioTab";
 
 export default function ConfigPage() {
     const { user, clinic, loading } = useAuth();
-    const { subscription, daysLeft, trialProgress, isPro, loading: subLoading, refresh: refreshSub } = useSubscription();
+    const { subscription, daysLeft: daysLeftRaw, trialProgress, isPro, loading: subLoading, refresh: refreshSub } = useSubscription();
+    const daysLeft = daysLeftRaw ?? 0;
     const isSuperAdmin = user?.role === 'superadmin' || user?.role === 'admin';
 
     // Google Calendar integration state
@@ -435,7 +437,7 @@ export default function ConfigPage() {
     if (isInitialSessionLoading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 p-8">
-                <Loader2 className="h-8 w-8 animate-spin text-[#76D7B6]" />
+                <Loader2 className="h-8 w-8 animate-spin text-accent" />
             </div>
         );
     }
@@ -445,8 +447,8 @@ export default function ConfigPage() {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
                 <ShieldCheck className="h-12 w-12 text-slate-300" />
-                <h2 className="text-xl font-semibold text-slate-900">Acceso Restringido</h2>
-                <p className="text-slate-500 max-w-xs">No se encontró una sesión válida. Por favor, inicia sesión para acceder a la configuración.</p>
+                <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Acceso Restringido</h2>
+                <p className="text-slate-500 dark:text-slate-400 max-w-xs">No se encontró una sesión válida. Por favor, inicia sesión para acceder a la configuración.</p>
                 <Button onClick={() => window.location.href = '/'}>Ir al Inicio</Button>
             </div>
         );
@@ -479,7 +481,7 @@ export default function ConfigPage() {
     const getRoleBadge = (role: string) => {
         switch (role) {
             case 'superadmin':
-                return <Badge className="bg-[#76D7B6] hover:bg-[#76D7B6] text-slate-900 border-none gap-1 font-bold text-[10px]"><Crown className="h-3 w-3" /> Dueño</Badge>;
+                return <Badge className="bg-accent hover:bg-accent text-slate-900 dark:text-white border-none gap-1 font-bold text-[10px]"><Crown className="h-3 w-3" /> Dueño</Badge>;
             case 'recepcionista':
                 return <Badge className="bg-blue-500 hover:bg-blue-500 text-white border-none gap-1 font-bold text-[10px]"><MessageSquare className="h-3 w-3" /> Recepción</Badge>;
             case 'profesional':
@@ -494,23 +496,24 @@ export default function ConfigPage() {
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Configuración</h1>
-                <p className="text-slate-500 text-sm">Gestiona la información de tu clínica y equipo de trabajo.</p>
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Configuración</h1>
+                <p className="text-slate-500 dark:text-slate-400 text-sm">Gestiona la información de tu clínica y equipo de trabajo.</p>
             </div>
 
             <Tabs defaultValue="clinica" className="w-full">
                 <TabsList className={cn(
-                    "grid w-full bg-slate-100 p-1",
+                    "grid w-full bg-slate-100 dark:bg-slate-800 p-1",
                     isSuperAdmin ? "grid-cols-6" : "grid-cols-5"
                 )}>
-                    <TabsTrigger value="clinica" className="data-[state=active]:bg-white data-[state=active]:text-[#76D7B6] data-[state=active]:shadow-sm">Mi Clínica</TabsTrigger>
+                    <TabsTrigger value="clinica" className="data-[state=active]:bg-white dark:bg-slate-950 data-[state=active]:text-accent data-[state=active]:shadow-sm">Mi Clínica</TabsTrigger>
                     {isSuperAdmin && (
-                        <TabsTrigger value="equipo" className="data-[state=active]:bg-white data-[state=active]:text-[#76D7B6] data-[state=active]:shadow-sm">Equipo</TabsTrigger>
+                        <TabsTrigger value="equipo" className="data-[state=active]:bg-white dark:bg-slate-950 data-[state=active]:text-accent data-[state=active]:shadow-sm">Equipo</TabsTrigger>
                     )}
-                    <TabsTrigger value="tratamientos" className="data-[state=active]:bg-white data-[state=active]:text-[#76D7B6] data-[state=active]:shadow-sm">Tratamientos</TabsTrigger>
-                    <TabsTrigger value="obras-sociales" className="data-[state=active]:bg-white data-[state=active]:text-[#76D7B6] data-[state=active]:shadow-sm">Obras Sociales</TabsTrigger>
-                    <TabsTrigger value="inventario" className="data-[state=active]:bg-white data-[state=active]:text-[#76D7B6] data-[state=active]:shadow-sm">Inventario</TabsTrigger>
-                    <TabsTrigger value="integraciones" className="data-[state=active]:bg-white data-[state=active]:text-[#76D7B6] data-[state=active]:shadow-sm">Integraciones</TabsTrigger>
+                    <TabsTrigger value="tratamientos" className="data-[state=active]:bg-white dark:bg-slate-950 data-[state=active]:text-accent data-[state=active]:shadow-sm">Tratamientos</TabsTrigger>
+                    <TabsTrigger value="obras-sociales" className="data-[state=active]:bg-white dark:bg-slate-950 data-[state=active]:text-accent data-[state=active]:shadow-sm">Obras Sociales</TabsTrigger>
+                    <TabsTrigger value="inventario" className="data-[state=active]:bg-white dark:bg-slate-950 data-[state=active]:text-accent data-[state=active]:shadow-sm">Inventario</TabsTrigger>
+                    <TabsTrigger value="integraciones" className="data-[state=active]:bg-white dark:bg-slate-950 data-[state=active]:text-accent data-[state=active]:shadow-sm">Integraciones</TabsTrigger>
+                    <TabsTrigger value="whatsapp-bot" className="data-[state=active]:bg-white dark:bg-slate-950 data-[state=active]:text-accent data-[state=active]:shadow-sm">WhatsApp Bot</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="clinica" className="mt-6 space-y-6">
@@ -522,14 +525,14 @@ export default function ConfigPage() {
                                 <CardHeader>
                                     <div className="flex items-center justify-between">
                                         <CardTitle className="flex items-center gap-2 text-base">
-                                            <MapPin className="h-5 w-5 text-[#76D7B6]" />
+                                            <MapPin className="h-5 w-5 text-accent" />
                                             Sucursales
                                         </CardTitle>
                                         {isSuperAdmin && (
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                className="gap-1 border-[#76D7B6] text-[#76D7B6] hover:bg-[#76D7B6]/10"
+                                                className="gap-1 border-accent text-accent hover:bg-accent/10"
                                                 onClick={() => setShowNewSedeDialog(true)}
                                             >
                                                 <Plus className="h-4 w-4" /> Nueva Sede
@@ -541,22 +544,22 @@ export default function ConfigPage() {
                                     {loadingSucursales ? (
                                         <div className="grid gap-4 sm:grid-cols-2">
                                             {[1, 2].map((i) => (
-                                                <div key={i} className="p-4 rounded-xl border border-slate-100 bg-slate-50 animate-pulse h-28" />
+                                                <div key={i} className="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 animate-pulse h-28" />
                                             ))}
                                         </div>
                                     ) : sucursales.length === 0 ? (
                                         <div className="flex flex-col items-center justify-center py-12 text-center gap-4">
-                                            <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center">
+                                            <div className="h-16 w-16 bg-slate-50 dark:bg-slate-900 rounded-full flex items-center justify-center">
                                                 <MapPin className="h-8 w-8 text-slate-300" />
                                             </div>
                                             <div className="space-y-1">
-                                                <p className="text-sm font-bold text-slate-900">No hay sedes registradas todavía</p>
-                                                <p className="text-xs text-slate-500 max-w-[200px]">Agrega tu primera sucursal para comenzar a gestionar los horarios y turnos.</p>
+                                                <p className="text-sm font-bold text-slate-900 dark:text-white">No hay sedes registradas todavía</p>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs">Agrega tu primera sucursal para comenzar a gestionar los horarios y turnos.</p>
                                             </div>
                                             {isSuperAdmin && (
                                                 <Button
                                                     size="sm"
-                                                    className="mt-2 bg-[#76D7B6] text-slate-900 hover:bg-[#65cba8] font-bold"
+                                                    className="mt-2 bg-accent text-slate-900 dark:text-white hover:bg-accent/90 font-bold"
                                                     onClick={() => setShowNewSedeDialog(true)}
                                                 >
                                                     <Plus className="h-4 w-4 mr-1" /> Agregar primera sede
@@ -568,24 +571,24 @@ export default function ConfigPage() {
                                             {sucursales.map((suc) => (
                                                 <div
                                                     key={suc.id}
-                                                    className="p-3 rounded-xl border border-slate-100 bg-white shadow-sm hover:border-[#76D7B6]/30 transition-all cursor-pointer group/sede flex items-center gap-4"
+                                                    className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm hover:border-accent/30 transition-all cursor-pointer group/sede flex items-center gap-4"
                                                     onClick={() => {
                                                         setEditingSedeId(suc.id);
                                                         setNewSede({ ...suc as any });
                                                         setShowNewSedeDialog(true);
                                                     }}
                                                 >
-                                                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center group-hover/sede:bg-[#76D7B6]/10 transition-colors">
-                                                        <MapPin className="h-5 w-5 text-slate-400 group-hover/sede:text-[#76D7B6]" />
+                                                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-slate-50 dark:bg-slate-900 flex items-center justify-center group-hover/sede:bg-accent/10 transition-colors">
+                                                        <MapPin className="h-5 w-5 text-slate-400 group-hover/sede:text-accent" />
                                                     </div>
                                                     
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center gap-2 mb-0.5">
-                                                            <p className="font-bold text-sm text-slate-900 truncate">{suc.name}</p>
+                                                            <p className="font-bold text-sm text-slate-900 dark:text-white truncate">{suc.name}</p>
                                                             <div className="w-1 h-1 rounded-full bg-green-500" />
                                                             <span className="text-[10px] text-green-600 font-bold uppercase tracking-tight">Activa</span>
                                                         </div>
-                                                        <p className="text-[11px] text-slate-500 truncate flex items-center gap-1">
+                                                        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate flex items-center gap-1">
                                                             {suc.address || <span className="italic text-slate-300">Sin dirección</span>}
                                                             {suc.phone && (
                                                                 <>
@@ -602,7 +605,7 @@ export default function ConfigPage() {
                                                                 href={suc.google_maps_url}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
-                                                                className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-[#76D7B6] hover:bg-[#76D7B6]/10 transition-all"
+                                                                className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-accent hover:bg-accent/10 transition-all"
                                                                 onClick={(e) => e.stopPropagation()}
                                                                 title="Ver en Google Maps"
                                                             >
@@ -613,7 +616,7 @@ export default function ConfigPage() {
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
-                                                                className="h-8 text-[11px] text-[#76D7B6] hover:text-[#65cba8] hover:bg-[#76D7B6]/5 font-bold"
+                                                                className="h-8 text-[11px] text-accent hover:text-accent/90 hover:bg-accent/5 font-bold"
                                                             >
                                                                 Editar
                                                             </Button>
@@ -638,13 +641,13 @@ export default function ConfigPage() {
                                             : "bg-slate-900"
                                 )}>
                                     <div className="absolute top-0 right-0 p-4 opacity-10">
-                                        <ShieldCheck className="h-24 w-24 text-[#76D7B6]" />
+                                        <ShieldCheck className="h-24 w-24 text-accent" />
                                     </div>
                                     <CardHeader className="pb-2">
                                         <CardTitle className="text-sm font-bold flex items-center gap-2">
                                             <Crown className={cn(
                                                 "h-4 w-4",
-                                                daysLeft <= 3 ? "text-red-400" : "text-[#76D7B6]"
+                                                daysLeft <= 3 ? "text-red-400" : "text-accent"
                                             )} />
                                             Suscripción Premium
                                         </CardTitle>
@@ -660,35 +663,39 @@ export default function ConfigPage() {
                                             <div className="space-y-2">
                                                 <div className="flex justify-between text-xs font-medium">
                                                     <span className="text-slate-400">Días de prueba</span>
-                                                    <span className={cn(
-                                                        "font-bold",
-                                                        daysLeft <= 3 ? "text-red-400 animate-pulse" : "text-[#76D7B6]"
-                                                    )}>{daysLeft} restantes</span>
+                                                    {subLoading ? (
+                                                        <span className="w-16 h-3 bg-slate-700 rounded animate-pulse" />
+                                                    ) : (
+                                                        <span className={cn(
+                                                            "font-bold",
+                                                            daysLeft <= 3 ? "text-red-400 animate-pulse" : "text-accent"
+                                                        )}>{daysLeft} restantes</span>
+                                                    )}
                                                 </div>
                                                 <div className="h-2 w-full bg-slate-800/50 rounded-full overflow-hidden">
                                                     <div
                                                         className={cn(
                                                             "h-full transition-all duration-1000",
-                                                            daysLeft <= 3 ? "bg-red-500 animate-pulse-slow" : "bg-[#76D7B6] animate-pulse-slow"
+                                                            daysLeft <= 3 ? "bg-red-500 animate-pulse-slow" : "bg-accent animate-pulse-slow"
                                                         )}
-                                                        style={{ width: `${trialProgress}%` }}
+                                                        style={{ width: subLoading ? 0 : `${trialProgress}%` }}
                                                     ></div>
                                                 </div>
                                             </div>
                                         </div>
                                         <div className="space-y-3">
                                             <div className="flex items-start gap-2 text-xs text-slate-300">
-                                                <Plus className="h-3 w-3 mt-0.5 text-[#76D7B6]" />
+                                                <Plus className="h-3 w-3 mt-0.5 text-accent" />
                                                 Pacientes ilimitados
                                             </div>
                                             <div className="flex items-start gap-2 text-xs text-slate-300">
-                                                <Plus className="h-3 w-3 mt-0.5 text-[#76D7B6]" />
+                                                <Plus className="h-3 w-3 mt-0.5 text-accent" />
                                                 Soporte prioritario
                                             </div>
                                         </div>
                                          <Button 
                                               size="sm"
-                                              className="w-full bg-white text-slate-900 hover:bg-[#76D7B6] hover:text-white transition-all font-bold group/btn h-9"
+                                              className="w-full bg-white dark:bg-slate-950 text-slate-900 dark:text-white hover:bg-accent hover:text-white transition-all font-bold group/btn h-9"
                                               onClick={() => {
                                                   window.location.href = '/#pricing';
                                               }}
@@ -704,7 +711,7 @@ export default function ConfigPage() {
 
                 <TabsContent value="equipo" className="mt-6 space-y-6 data-[state=inactive]:hidden" forceMount>
                     <div className="flex items-center justify-between mb-2">
-                        <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
                             Equipo ({team.length} {team.length === 1 ? 'miembro' : 'miembros'})
                         </h2>
                     </div>
@@ -736,7 +743,7 @@ export default function ConfigPage() {
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-base">
-                                <CalendarDays className="h-5 w-5 text-[#76D7B6]" />
+                                <CalendarDays className="h-5 w-5 text-accent" />
                                 Google Calendar
                             </CardTitle>
                             <CardDescription>
@@ -745,7 +752,7 @@ export default function ConfigPage() {
                         </CardHeader>
                         <CardContent className="space-y-5">
                             {/* Connection status */}
-                            <div className="flex items-center justify-between p-4 rounded-xl border bg-slate-50">
+                            <div className="flex items-center justify-between p-4 rounded-xl border bg-slate-50 dark:bg-slate-900">
                                 <div className="flex items-center gap-3">
                                     {googleProfile.connected ? (
                                         <CheckCircle2 className="h-5 w-5 text-green-500" />
@@ -753,11 +760,11 @@ export default function ConfigPage() {
                                         <XCircle className="h-5 w-5 text-slate-300" />
                                     )}
                                     <div>
-                                        <p className="text-sm font-semibold text-slate-900">
+                                        <p className="text-sm font-semibold text-slate-900 dark:text-white">
                                             {googleProfile.connected ? 'Cuenta conectada' : 'Sin conexión'}
                                         </p>
                                         {googleProfile.email && (
-                                            <p className="text-xs text-slate-500 flex items-center gap-1">
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
                                                 <LinkIcon className="h-3 w-3" /> {googleProfile.email}
                                             </p>
                                         )}
@@ -767,7 +774,7 @@ export default function ConfigPage() {
                                     variant="outline"
                                     size="sm"
                                     onClick={handleConnectGoogle}
-                                    className="gap-2 border-[#76D7B6] text-[#76D7B6] hover:bg-[#76D7B6]/10"
+                                    className="gap-2 border-accent text-accent hover:bg-accent/10"
                                 >
                                     <CalendarDays className="h-4 w-4" />
                                     {googleProfile.connected ? 'Reconectar' : 'Conectar Google Calendar'}
@@ -778,19 +785,19 @@ export default function ConfigPage() {
                             {googleProfile.connected && (
                                 <div className="flex items-center justify-between p-4 rounded-xl border">
                                     <div>
-                                        <p className="text-sm font-semibold text-slate-900">Sincronización automática</p>
-                                        <p className="text-xs text-slate-500">Los turnos nuevos se crearán automáticamente en tu Google Calendar.</p>
+                                        <p className="text-sm font-semibold text-slate-900 dark:text-white">Sincronización automática</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">Los turnos nuevos se crearán automáticamente en tu Google Calendar.</p>
                                     </div>
                                     <button
                                         onClick={() => handleSyncToggle(!googleProfile.syncEnabled)}
                                         disabled={isSyncToggling}
                                         className={cn(
                                             'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none',
-                                            googleProfile.syncEnabled ? 'bg-[#76D7B6]' : 'bg-slate-200'
+                                            googleProfile.syncEnabled ? 'bg-accent' : 'bg-slate-200'
                                         )}
                                     >
                                         <span className={cn(
-                                            'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
+                                            'inline-block h-4 w-4 transform rounded-full bg-white dark:bg-slate-950 shadow transition-transform',
                                             googleProfile.syncEnabled ? 'translate-x-6' : 'translate-x-1'
                                         )} />
                                     </button>
@@ -801,8 +808,8 @@ export default function ConfigPage() {
                             {googleProfile.connected && (
                                 <div className="flex items-center justify-between p-4 rounded-xl border">
                                     <div>
-                                        <p className="text-sm font-semibold text-slate-900">Importar eventos ahora</p>
-                                        <p className="text-xs text-slate-500">Importá eventos de Google Calendar como bloqueos en la agenda (próximos 30 días).</p>
+                                        <p className="text-sm font-semibold text-slate-900 dark:text-white">Importar eventos ahora</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">Importá eventos de Google Calendar como bloqueos en la agenda (próximos 30 días).</p>
                                     </div>
                                     <Button
                                         variant="outline"
@@ -818,6 +825,10 @@ export default function ConfigPage() {
                             )}
                         </CardContent>
                     </Card>
+                </TabsContent>
+
+                <TabsContent value="whatsapp-bot" className="mt-6 data-[state=inactive]:hidden" forceMount>
+                    {clinic?.id && <WhatsAppBotTab clinicId={clinic.id} />}
                 </TabsContent>
             </Tabs >
 
