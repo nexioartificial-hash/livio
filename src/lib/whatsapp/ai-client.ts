@@ -66,7 +66,7 @@ export async function chatWithGemini(
       };
 
       for (const part of functionCalls) {
-        if (!("functionCall" in part)) continue;
+        if (!("functionCall" in part) || !part.functionCall) continue;
         const fc = part.functionCall;
         console.log(
           `[AI Client] Tool call: ${fc.name}(${JSON.stringify(fc.args)})`
