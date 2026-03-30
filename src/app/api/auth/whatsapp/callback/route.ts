@@ -175,6 +175,30 @@ export async function POST(req: NextRequest) {
 
         console.log("[WA callback] Saved connection for user:", user.id, "→", wabaInfo.display_number);
 
+        // Create default bot config for this connection
+        const clinicIdForBot = prof?.clinic_id;
+        if (clinicIdForBot) {
+            await admin
+                .from("whatsapp_bot_config")
+                .upsert(
+                    {
+                        clinic_id: clinicIdForBot,
+                        phone_id: wabaInfo.phone_id,
+                        enabled: true,
+                        greeting_message:
+                            "¡Hola! Soy el asistente virtual de la clínica. ¿En qué puedo ayudarte?",
+                        out_of_hours_message:
+                            "Gracias por escribirnos. Estamos fuera del horario de atención. Te responderemos a la brevedad.",
+                        bot_hours_start: "08:00",
+                        bot_hours_end: "20:00",
+                        bot_active_days: [1, 2, 3, 4, 5, 6],
+                        ai_model: "gemini-2.0-flash",
+                    },
+                    { onConflict: "clinic_id,phone_id" }
+                );
+            console.log("[WA callback] Bot config created for phone:", wabaInfo.phone_id);
+        }
+
         return NextResponse.json({
             success: true,
             phone_id: wabaInfo.phone_id,
