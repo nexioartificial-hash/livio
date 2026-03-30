@@ -17,6 +17,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { processInboundMessage } from "@/lib/whatsapp/bot-processor";
 
 const VERIFY_TOKEN = process.env.META_VERIFY_TOKEN!;
 const APP_SECRET = process.env.META_APP_SECRET!;
@@ -125,6 +126,18 @@ export async function POST(req: NextRequest) {
                         console.error("[WA Webhook] Error saving message:", error.message);
                     } else {
                         console.log("[WA Webhook] Message saved:", msg.id, "from:", msg.from);
+
+                        // Trigger bot processing for text messages (fire-and-forget to respond to Meta fast)
+                        if (msg.type === "text" && clinicId && record.body) {
+                            processInboundMessage(
+                                clinicId,
+                                phoneId,
+                                msg.from as string,
+                                record.body
+                            ).catch((err) =>
+                                console.error("[WA Webhook] Bot error:", err?.message ?? err)
+                            );
+                        }
                     }
                 }
 
