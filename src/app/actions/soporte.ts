@@ -15,11 +15,11 @@ const supabaseAdmin = createClient(
 // ─── Schemas Zod ─────────────────────────────────────────────────
 
 const TICKET_CATEGORIES = [
-    "facturacion",
-    "tecnico",
+    "agenda",
+    "whatsapp",
+    "pagos",
+    "calendar",
     "cuenta",
-    "integraciones",
-    "funcionalidad",
     "otro",
 ] as const;
 
