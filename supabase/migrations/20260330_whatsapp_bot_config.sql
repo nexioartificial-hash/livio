@@ -20,10 +20,10 @@ ALTER TABLE whatsapp_bot_config ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "clinic_members_can_read_bot_config" ON whatsapp_bot_config
   FOR SELECT USING (
-    clinic_id IN (SELECT clinic_id FROM professional WHERE user_id = auth.uid())
+    clinic_id IN (SELECT clinic_id FROM professional WHERE id = auth.uid())
   );
 
 CREATE POLICY "clinic_admins_can_manage_bot_config" ON whatsapp_bot_config
   FOR ALL USING (
-    clinic_id IN (SELECT clinic_id FROM professional WHERE user_id = auth.uid() AND role = 'superadmin')
+    clinic_id IN (SELECT clinic_id FROM professional WHERE id = auth.uid() AND role = 'superadmin')
   );

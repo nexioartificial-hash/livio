@@ -4,18 +4,15 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Loader2, Rocket, CreditCard } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export function TrialBadge({ collapsed = false }: { collapsed?: boolean }) {
-    const { subscription, loading, daysLeft, isTrialExpired, isPro } = useSubscription();
-    const [isUpgrading, setIsUpgrading] = useState(false);
+    const { subscription, loading, daysLeft, isTrialExpired, isPro, startCheckout, isCheckoutLoading } = useSubscription();
 
     if (loading) return <Loader2 className="h-4 w-4 animate-spin opacity-20" />;
 
-    const handleUpgrade = async () => {
-        window.location.href = '/#pricing';
+    const handleUpgrade = () => {
+        startCheckout();
     };
 
     // daysLeft is null while loading (guarded above), safe to assert
@@ -25,14 +22,14 @@ export function TrialBadge({ collapsed = false }: { collapsed?: boolean }) {
         if (collapsed) {
             return (
                 <div className="flex justify-center pb-3">
-                    <div className="bg-[#76D7B6]/10 text-[#76D7B6] p-2 rounded-full border border-[#76D7B6]/20">
+                    <div className="bg-accent/10 text-accent p-2 rounded-full border border-accent/20">
                         <Rocket className="h-4 w-4" />
                     </div>
                 </div>
             );
         }
         return (
-            <div className="bg-[#76D7B6]/10 text-[#76D7B6] px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2 border border-[#76D7B6]/20">
+            <div className="bg-accent/10 text-accent px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2 border border-accent/20">
                 <Rocket className="h-3 w-3" />
                 PLAN PRO
             </div>
@@ -60,7 +57,7 @@ export function TrialBadge({ collapsed = false }: { collapsed?: boolean }) {
                             "p-1.5 rounded-full transition-colors",
                             days <= 3
                                 ? "bg-red-500/20 text-red-400 hover:bg-red-500/30"
-                                : "bg-[#76D7B6]/20 text-[#76D7B6] hover:bg-[#76D7B6]/30"
+                                : "bg-accent/20 text-accent hover:bg-accent/30"
                         )}
                         title="Mejorar a Pro"
                     >
@@ -87,9 +84,9 @@ export function TrialBadge({ collapsed = false }: { collapsed?: boolean }) {
                     <span className={cn(
                         "text-[10px] font-bold px-2 py-0.5 rounded-full",
                         isPro
-                            ? "bg-[#76D7B6]/20 text-[#76D7B6]"
+                            ? "bg-accent/20 text-accent"
                             : days > 3
-                                ? "bg-[#76D7B6]/20 text-[#76D7B6]"
+                                ? "bg-accent/20 text-accent"
                                 : days > 0
                                     ? "bg-red-500/20 text-red-500 animate-pulse"
                                     : "bg-red-500/20 text-red-500"
@@ -117,14 +114,15 @@ export function TrialBadge({ collapsed = false }: { collapsed?: boolean }) {
                 {!isPro && (
                     <Button
                         onClick={handleUpgrade}
+                        disabled={isCheckoutLoading}
                         className={cn(
                             "w-full rounded-lg py-2 text-xs font-bold transition-colors h-9",
                             days <= 3
                                 ? "bg-red-500 text-white hover:bg-red-600 border-none"
-                                : "bg-[#76D7B6] text-slate-900 hover:bg-[#65cba8] border-none"
+                                : "bg-accent text-slate-900 dark:text-white hover:bg-accent/90 border-none"
                         )}
                     >
-                        MEJORAR A PRO
+                        {isCheckoutLoading ? "PROCESANDO..." : "MEJORAR A PRO"}
                     </Button>
                 )}
             </div>

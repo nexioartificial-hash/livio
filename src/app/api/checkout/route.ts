@@ -1,6 +1,6 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
-import { MercadoPagoConfig, Preference } from 'mercadopago';
+import { MercadoPagoConfig, PreApproval } from 'mercadopago';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -17,8 +17,12 @@ export async function POST(req: Request) {
             }, { status: 401 });
         }
 
-        const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co");
-        const serviceRole = (process.env.SUPABASE_SERVICE_ROLE_KEY || "placeholder-key") || (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key");
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+        if (!supabaseUrl || !serviceRole) {
+            return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+        }
 
         const supabaseAdmin = createSupabaseClient(supabaseUrl, serviceRole);
 
@@ -41,45 +45,38 @@ export async function POST(req: Request) {
         }
 
         const mpClient = new MercadoPagoConfig({ accessToken: mpAccessToken });
-        const preference = new Preference(mpClient);
+        const preApproval = new PreApproval(mpClient);
 
         const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.liviodental.com';
 
-        const result = await preference.create({
+        const result = await preApproval.create({
             body: {
-                items: [{
-                    id: 'livio-pro',
-                    title: 'Livio PRO - Suscripción Mensual',
-                    unit_price: 99000,
-                    quantity: 1,
+                reason: 'Livio PRO - Suscripción Mensual',
+                external_reference: clinicId,
+                payer_email: user.email!,
+                auto_recurring: {
+                    frequency: 1,
+                    frequency_type: 'months',
+                    transaction_amount: 99000,
                     currency_id: 'ARS',
-                }],
-                back_urls: {
-                    success: `${siteUrl}/success`,
-                    failure: `${siteUrl}/dashboard`,
-                    pending: `${siteUrl}/dashboard`,
                 },
-                auto_return: 'approved',
-                notification_url: `${siteUrl}/api/mp-webhook`,
-                metadata: {
-                    clinica_id: clinicId,
-                    user_id: user.id
-                },
+                back_url: `${siteUrl}/success`,
+                status: 'pending',
             },
         });
 
-        // Bookkeeping
+        // Bookkeeping: save preapproval ID for future cancel/update
         await supabaseAdmin.from('subscriptions').upsert({
             clinica_id: clinicId,
             user_id: user.id,
-            mp_preference_id: result.id,
+            mp_preapproval_id: result.id,
             plan: 'pro',
-            status: 'pending'
+            status: 'pending',
         }, { onConflict: 'clinica_id' });
 
         return NextResponse.json({
             init_point: result.init_point,
-            preference_id: result.id
+            preapproval_id: result.id,
         });
 
     } catch (error: any) {

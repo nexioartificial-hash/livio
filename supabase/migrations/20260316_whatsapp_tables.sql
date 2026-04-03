@@ -51,6 +51,6 @@ create policy "Clinic members read WA messages"
     on whatsapp_messages for select
     using (
         clinic_id in (
-            select clinic_id from professional where user_id = auth.uid()
+            select clinic_id from professional where id = auth.uid()
         )
     );

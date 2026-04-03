@@ -1,5 +1,5 @@
 CREATE TABLE inventario (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   clinic_id UUID REFERENCES clinic(id) ON DELETE CASCADE,
   producto VARCHAR NOT NULL,
   categoria VARCHAR NOT NULL,

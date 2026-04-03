@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { NextResponse } from 'next/server';
 import { createHmac, timingSafeEqual } from 'crypto';
 
@@ -38,18 +38,66 @@ export async function POST(req: Request) {
         const body = JSON.parse(rawBody);
         const { searchParams } = new URL(req.url);
         const type = body.type || searchParams.get('type');
+        const supabase = createAdminClient();
 
+        // --- Handle subscription preapproval events ---
+        if (type === 'subscription_preapproval') {
+            const preapprovalId = body.data?.id;
+            if (!preapprovalId) {
+                return NextResponse.json({ error: 'Missing preapproval id' }, { status: 400 });
+            }
+
+            // Fetch preapproval details from MP
+            const response = await fetch(`https://api.mercadopago.com/preapproval/${preapprovalId}`, {
+                headers: { Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}` },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch preapproval details');
+            }
+
+            const preapproval = await response.json();
+            const clinicId = preapproval.external_reference;
+
+            if (!clinicId) {
+                return NextResponse.json({ error: 'Missing external_reference' }, { status: 400 });
+            }
+
+            if (preapproval.status === 'authorized') {
+                await supabase
+                    .from('subscriptions')
+                    .update({
+                        status: 'active',
+                        plan: 'pro',
+                        mp_preapproval_id: preapprovalId,
+                        current_period_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                    })
+                    .eq('clinica_id', clinicId);
+            } else if (preapproval.status === 'paused') {
+                await supabase
+                    .from('subscriptions')
+                    .update({ status: 'past_due' })
+                    .eq('clinica_id', clinicId);
+            } else if (preapproval.status === 'cancelled') {
+                await supabase
+                    .from('subscriptions')
+                    .update({
+                        status: 'canceled',
+                        cancel_at_period_end: true,
+                    })
+                    .eq('clinica_id', clinicId);
+            }
+        }
+
+        // --- Handle individual payment events (renewal payments) ---
         if (type === 'payment') {
             const paymentId = body.data?.id || searchParams.get('data.id');
             if (!paymentId) {
                 return NextResponse.json({ error: 'Missing payment id' }, { status: 400 });
             }
 
-            // Fetch payment details from MP
             const response = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
-                headers: {
-                    Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`,
-                },
+                headers: { Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}` },
             });
 
             if (!response.ok) {
@@ -59,24 +107,21 @@ export async function POST(req: Request) {
             const payment = await response.json();
 
             if (payment.status === 'approved') {
-                const supabase = await createClient();
-
-                const { clinica_id } = payment.metadata;
-                if (!clinica_id) {
-                    return NextResponse.json({ error: 'Missing clinica_id in metadata' }, { status: 400 });
+                // For recurring payments, external_reference has the clinic ID
+                const clinicId = payment.external_reference || payment.metadata?.clinica_id;
+                if (!clinicId) {
+                    return NextResponse.json({ error: 'Missing clinica_id' }, { status: 400 });
                 }
 
-                const { error } = await supabase
+                await supabase
                     .from('subscriptions')
                     .update({
                         status: 'active',
-                        mp_payment_id: paymentId.toString(),
                         plan: 'pro',
+                        mp_payment_id: paymentId.toString(),
                         current_period_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
                     })
-                    .eq('clinica_id', clinica_id);
-
-                if (error) throw error;
+                    .eq('clinica_id', clinicId);
             }
         }
 
