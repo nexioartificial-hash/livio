@@ -1,16 +1,13 @@
 "use server";
 
-import { createClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import * as z from "zod";
 import { sendSupportNotification } from "@/lib/email/send";
 
 // ─── Admin client (server-side only, bypasea RLS) ────────────────
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co",
-    process.env.SUPABASE_SERVICE_ROLE_KEY || "dummy-key"
-);
+const supabaseAdmin = createAdminClient();
 
 // ─── Schemas Zod ─────────────────────────────────────────────────
 
@@ -250,6 +247,8 @@ export async function updateTicketStatus(
             return { error: "Estado inválido" };
         }
 
+        // Verificar autenticación y ownership
+        const caller = await getCallerWithClinic();
         const supabase = await createServerClient();
 
         const updatePayload: Record<string, string> = {

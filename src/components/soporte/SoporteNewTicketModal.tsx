@@ -136,11 +136,15 @@ export default function SoporteNewTicketModal({
                     throw new Error("Error al subir la imagen: " + uploadError.message);
                 }
 
-                const { data: publicUrlData } = supabase.storage
+                const { data: signedUrlData, error: signedUrlError } = await supabase.storage
                     .from("support-attachments")
-                    .getPublicUrl(path);
+                    .createSignedUrl(path, 60 * 60 * 24 * 365); // 1 año
 
-                attachmentUrl = publicUrlData.publicUrl;
+                if (signedUrlError || !signedUrlData?.signedUrl) {
+                    throw new Error("Error al generar URL del adjunto");
+                }
+
+                attachmentUrl = signedUrlData.signedUrl;
             }
 
             // ── Llamada al Server Action ───────────────────────────────────

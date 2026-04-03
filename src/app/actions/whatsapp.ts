@@ -32,7 +32,17 @@ export async function getWhatsAppConnection() {
 }
 
 export async function getConversations(clinicId: string) {
+    // Verificar que el caller pertenece a esta clínica
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
     const admin = createAdminClient();
+    const { data: prof } = await admin
+        .from("professional")
+        .select("clinic_id")
+        .eq("id", user.id)
+        .maybeSingle();
+    if (!prof || prof.clinic_id !== clinicId) return [];
 
     const { data: msgs, error } = await admin
         .from("whatsapp_messages")
@@ -84,7 +94,17 @@ export async function getConversations(clinicId: string) {
 }
 
 export async function getMessages(clinicId: string, phone: string) {
+    // Verificar que el caller pertenece a esta clínica
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
     const admin = createAdminClient();
+    const { data: prof } = await admin
+        .from("professional")
+        .select("clinic_id")
+        .eq("id", user.id)
+        .maybeSingle();
+    if (!prof || prof.clinic_id !== clinicId) return [];
 
     const { data, error } = await admin
         .from("whatsapp_messages")
