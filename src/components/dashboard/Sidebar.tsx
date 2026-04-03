@@ -15,6 +15,7 @@ import {
     User as UserIcon,
     ChevronUp,
     MessageSquare,
+    MessageCircleQuestion,
     ChevronsLeft,
     ChevronsRight,
     Moon,
@@ -70,6 +71,11 @@ const sidebarItems = [
         title: "Reportes",
         href: "/reportes",
         icon: FileBarChart,
+    },
+    {
+        title: "Soporte",
+        href: "/soporte",
+        icon: MessageCircleQuestion,
     },
     {
         title: "Configuración",
@@ -143,10 +149,10 @@ export function Sidebar() {
                 {sidebarItems.filter((item) => {
                     if (!user?.role) return true;
                     if (user.role === 'recepcionista') {
-                        return ["Dashboard", "Agenda", "Pacientes", "WhatsApp"].includes(item.title);
+                        return ["Dashboard", "Agenda", "Pacientes", "WhatsApp", "Soporte"].includes(item.title);
                     }
                     if (user.role === 'profesional') {
-                        return ["Dashboard", "Agenda", "Pacientes", "Historia Clínica"].includes(item.title);
+                        return ["Dashboard", "Agenda", "Pacientes", "Historia Clínica", "Soporte"].includes(item.title);
                     }
                     return true;
                 }).map((item) => {

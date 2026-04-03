@@ -3,6 +3,7 @@ import { Header } from "@/components/dashboard/Header";
 import { NotificationsWrapper } from "@/components/dashboard/NotificationsWrapper";
 import { SidebarProvider } from "@/providers/sidebar-provider";
 import { SidebarAwareMain } from "@/components/dashboard/SidebarAwareMain";
+import SoporteFloatingButton from "@/components/soporte/SoporteFloatingButton";
 
 export default function AppLayout({
     children,
@@ -25,6 +26,9 @@ export default function AppLayout({
                             {children}
                         </main>
                     </SidebarAwareMain>
+
+                    {/* Floating Support Button */}
+                    <SoporteFloatingButton />
                 </div>
             </SidebarProvider>
         </NotificationsWrapper>
