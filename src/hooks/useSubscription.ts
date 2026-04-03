@@ -13,13 +13,14 @@ export interface Subscription {
 }
 
 export function useSubscription() {
-    const { user } = useAuth() as { user: (any & { clinic_id?: string; trial_ends_at?: string }) | null };
+    const { user, loading: authLoading } = useAuth() as { user: (any & { clinic_id?: string; trial_ends_at?: string }) | null; loading: boolean };
     // Simplified global state for subscription to sync between components
     const [subscription, setSubscription] = useState<Subscription | null>(null);
     const [loading, setLoading] = useState(true);
     const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
     const fetchSubscription = async () => {
+        if (authLoading) return; // Wait for auth to settle before concluding no clinic
         if (!user?.clinic_id) {
             setLoading(false);
             return;
@@ -81,21 +82,23 @@ export function useSubscription() {
 
         window.addEventListener('subscription-updated', handleGlobalUpdate);
         return () => window.removeEventListener('subscription-updated', handleGlobalUpdate);
-    }, [user?.clinic_id]);
+    }, [user?.clinic_id, authLoading]);
 
-    const daysLeft = subscription?.trial_ends_at
-        ? Math.ceil(DateTime.fromISO(subscription.trial_ends_at).diffNow('days').days)
-        : 0;
+    const daysLeft = loading
+        ? null
+        : subscription?.trial_ends_at
+            ? Math.max(0, Math.ceil(DateTime.fromISO(subscription.trial_ends_at).diffNow('days').days))
+            : 0;
 
-    const trialProgress = Math.max(0, Math.min(100, (daysLeft / 30) * 100));
+    const trialProgress = daysLeft == null ? 0 : Math.max(0, Math.min(100, (daysLeft / 30) * 100));
 
-    const isTrialExpired = daysLeft <= 0 && subscription?.status === 'trialing';
+    const isTrialExpired = daysLeft != null && daysLeft <= 0 && subscription?.status === 'trialing';
     const isPro = subscription?.status === 'active' && subscription?.plan === 'pro';
 
     return {
         subscription,
         loading,
-        daysLeft,
+        daysLeft,            // null while loading, number once loaded
         trialProgress,
         isTrialExpired,
         isPro,

@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { titleCase } from "@/utils/masks";
+import { titleCase } from "@/utils/formatters";
 
 export const clinicConfigSchema = z.object({
     name: z.string().min(1, "El nombre comercial es requerido"),

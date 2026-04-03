@@ -39,6 +39,25 @@ export async function getOAuth2ClientForProfesional(profesionalId: string) {
         expiry_date: prof.google_token_expires_at ? new Date(prof.google_token_expires_at).getTime() : undefined,
     });
 
+    // Auto-refresh if token is expired or expires within 5 minutes
+    const expiresAt = prof.google_token_expires_at ? new Date(prof.google_token_expires_at).getTime() : 0;
+    const fiveMinFromNow = Date.now() + 5 * 60 * 1000;
+    if (!prof.google_access_token || expiresAt < fiveMinFromNow) {
+        try {
+            const { credentials } = await client.refreshAccessToken();
+            client.setCredentials(credentials);
+            // Persist refreshed tokens to DB
+            await supabase.from('professional').update({
+                google_access_token: credentials.access_token,
+                google_token_expires_at: credentials.expiry_date
+                    ? new Date(credentials.expiry_date).toISOString()
+                    : null,
+            }).eq('id', profesionalId);
+        } catch (e) {
+            console.error(`[Google] Failed to refresh token for ${profesionalId}:`, e);
+        }
+    }
+
     return { client, calendarId: prof.google_calendar_id || 'primary', syncEnabled: prof.calendar_sync_enabled };
 }
 

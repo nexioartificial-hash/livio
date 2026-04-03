@@ -58,3 +58,12 @@ export const parseCurrency = (value: string) => {
  * Validates Argentine phone format after +54 prefix (10-15 digits)
  */
 export const phoneRegex = /^[1-9]\d{9,14}$/;
+
+/**
+ * Converts a string to Sentence Case: "hello world" -> "Hello world"
+ */
+export function sentenceCase(str: string): string {
+    if (!str) return "";
+    const lower = str.toLowerCase();
+    return lower.charAt(0).toUpperCase() + lower.slice(1);
+}

@@ -54,7 +54,15 @@ export function NotificationsProvider({ children, userId }: NotificationsProvide
 
     useEffect(() => {
         if (!userId) return;
-        refresh();
+        // Fetch initial notifications (async IIFE to avoid direct setState in effect body)
+        const controller = new AbortController();
+        (async () => {
+            const res = await getNotifications();
+            if (!controller.signal.aborted && res.success && res.data) {
+                setNotifications(res.data);
+            }
+            if (!controller.signal.aborted) setLoading(false);
+        })();
 
         // Supabase Realtime subscribe
         const channel = supabase
@@ -81,9 +89,10 @@ export function NotificationsProvider({ children, userId }: NotificationsProvide
             .subscribe();
 
         return () => {
+            controller.abort();
             supabase.removeChannel(channel);
         };
-    }, [userId, refresh]);
+    }, [userId]);
 
     const handleMarkRead = useCallback(async (id: string) => {
         setNotifications((prev) =>
