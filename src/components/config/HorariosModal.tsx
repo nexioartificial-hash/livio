@@ -183,14 +183,14 @@ export default function HorariosModal({ isOpen, onClose, clinicId, initialSedes 
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[1000px] w-[95vw] max-h-[90vh] overflow-hidden p-0 border-none bg-slate-50 shadow-xl rounded-[24px]">
+            <DialogContent className="sm:max-w-[1000px] w-[95vw] max-h-[90vh] overflow-hidden p-0 border-none bg-slate-50 dark:bg-slate-900 shadow-xl rounded-[24px]">
                 {/* Fixed Top Header */}
-                <div className="bg-white px-8 py-4 border-b border-slate-100 flex items-center justify-between sticky top-0 z-10">
+                <div className="bg-white dark:bg-slate-950 px-8 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between sticky top-0 z-10">
                     <div className="space-y-0">
-                        <DialogTitle className="text-xl font-semibold text-slate-900 tracking-tight">
+                        <DialogTitle className="text-xl font-semibold text-slate-900 dark:text-white tracking-tight">
                             Horarios de Atención
                         </DialogTitle>
-                        <DialogDescription className="text-slate-500 font-medium text-[12px] tracking-tight">
+                        <DialogDescription className="text-slate-500 dark:text-slate-400 font-medium text-[12px] tracking-tight">
                             Configura la disponibilidad semanal y sincroniza los cambios con tus sedes de forma centralizada.
                         </DialogDescription>
                     </div>
@@ -199,12 +199,12 @@ export default function HorariosModal({ isOpen, onClose, clinicId, initialSedes 
                             variant="ghost" 
                             onClick={onClose} 
                             disabled={saving} 
-                            className="text-slate-500 hover:text-slate-700 font-medium px-5 h-10 rounded-xl transition-colors text-sm"
+                            className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300 font-medium px-5 h-10 rounded-xl transition-colors text-sm"
                         >
                             Cancelar
                         </Button>
                         <Button
-                            className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 font-medium px-6 h-10 rounded-xl shadow-md shadow-[#76D7B6]/10 transition-all hover:scale-[1.02] active:scale-98 flex items-center gap-2 text-sm"
+                            className="bg-accent hover:bg-accent/90 text-slate-900 dark:text-white font-medium px-6 h-10 rounded-xl shadow-md shadow-accent/10 transition-all hover:scale-[1.02] active:scale-98 flex items-center gap-2 text-sm"
                             onClick={handleSave}
                             disabled={saving || loading || selectedSedes.length === 0}
                         >
@@ -223,24 +223,24 @@ export default function HorariosModal({ isOpen, onClose, clinicId, initialSedes 
                         {/* Horarios List - Col 7 */}
                         <div className="md:col-span-7 space-y-1 lg:space-y-2">
                             <div className="flex items-center justify-between px-2">
-                                <h4 className="text-base font-semibold text-slate-900 tracking-tight">Configuración Semanal</h4>
+                                <h4 className="text-base font-semibold text-slate-900 dark:text-white tracking-tight">Configuración Semanal</h4>
                             </div>
                             
-                            <div className="bg-white rounded-[16px] border border-slate-100 divide-y divide-slate-50 shadow-sm overflow-hidden">
+                            <div className="bg-white dark:bg-slate-950 rounded-[16px] border border-slate-100 dark:border-slate-800 divide-y divide-slate-50 dark:divide-slate-800 shadow-sm overflow-hidden">
                                 {(Object.keys(DAYS_ES) as Array<keyof typeof DAYS_ES>).map((day) => (
                                     <div key={day} className={cn(
                                         "group flex items-center justify-between p-2.5 px-4 transition-all duration-300",
-                                        horarios[day].enabled ? "bg-white" : "bg-slate-50/40"
+                                        horarios[day].enabled ? "bg-white dark:bg-slate-950" : "bg-slate-50 dark:bg-slate-900/40 dark:bg-slate-900/40"
                                     )}>
                                         <div className="flex items-center gap-4">
                                             <Switch
                                                 checked={horarios[day].enabled}
                                                 onCheckedChange={(enabled) => updateDay(day, { enabled })}
-                                                className="data-[state=checked]:bg-[#76D7B6] scale-90"
+                                                className="data-[state=checked]:bg-accent scale-90"
                                             />
                                             <span className={cn(
                                                 "font-semibold text-sm tracking-tight w-20 lg:w-24 capitalize transition-colors",
-                                                horarios[day].enabled ? "text-slate-900" : "text-slate-400"
+                                                horarios[day].enabled ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-400"
                                             )}>
                                                 {DAYS_ES[day]}
                                             </span>
@@ -253,9 +253,9 @@ export default function HorariosModal({ isOpen, onClose, clinicId, initialSedes 
                                                         type="time"
                                                         value={horarios[day].slots[0].start}
                                                         onChange={(e) => updateSlot(day, 0, { start: e.target.value })}
-                                                        className="text-[13px] font-medium bg-slate-100/50 border border-slate-100/60 rounded-lg px-3 py-1.5 focus:ring-4 focus:ring-[#76D7B6]/10 transition-all outline-none text-slate-700 pr-8 hover:bg-slate-100 hover:border-slate-200"
+                                                        className="text-[13px] font-medium bg-slate-100 dark:bg-slate-800/50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/60 dark:border-slate-700/60 rounded-lg px-3 py-1.5 focus:ring-4 focus:ring-accent/10 transition-all outline-none text-slate-700 dark:text-slate-300 pr-8 hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-800 hover:border-slate-200 dark:border-slate-700 dark:hover:border-slate-700"
                                                     />
-                                                    <Clock className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none group-hover/input:text-[#76D7B6] transition-colors" />
+                                                    <Clock className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none group-hover/input:text-accent transition-colors" />
                                                 </div>
                                                 <span className="text-slate-300 text-xs font-medium lowercase">a</span>
                                                 <div className="relative group/input">
@@ -263,9 +263,9 @@ export default function HorariosModal({ isOpen, onClose, clinicId, initialSedes 
                                                         type="time"
                                                         value={horarios[day].slots[0].end}
                                                         onChange={(e) => updateSlot(day, 0, { end: e.target.value })}
-                                                        className="text-[13px] font-medium bg-slate-100/50 border border-slate-100/60 rounded-lg px-3 py-1.5 focus:ring-4 focus:ring-[#76D7B6]/10 transition-all outline-none text-slate-700 pr-8 hover:bg-slate-100 hover:border-slate-200"
+                                                        className="text-[13px] font-medium bg-slate-100 dark:bg-slate-800/50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/60 dark:border-slate-700/60 rounded-lg px-3 py-1.5 focus:ring-4 focus:ring-accent/10 transition-all outline-none text-slate-700 dark:text-slate-300 pr-8 hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-800 hover:border-slate-200 dark:border-slate-700 dark:hover:border-slate-700"
                                                     />
-                                                    <Clock className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none group-hover/input:text-[#76D7B6] transition-colors" />
+                                                    <Clock className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none group-hover/input:text-accent transition-colors" />
                                                 </div>
                                             </div>
                                         ) : (
@@ -280,43 +280,43 @@ export default function HorariosModal({ isOpen, onClose, clinicId, initialSedes 
                         <div className="md:col-span-5 space-y-1 lg:space-y-2 flex flex-col h-full">
                             <div className="flex items-center justify-between px-2">
                                 <div className="flex items-center gap-2">
-                                    <div className="h-6 w-6 bg-slate-100 rounded-lg flex items-center justify-center">
-                                        <MapPin className="h-3.5 w-3.5 text-slate-900" />
+                                    <div className="h-6 w-6 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
+                                        <MapPin className="h-3.5 w-3.5 text-slate-900 dark:text-white" />
                                     </div>
-                                    <h4 className="text-base font-semibold text-slate-900 tracking-tight">Aplicar a Sedes</h4>
+                                    <h4 className="text-base font-semibold text-slate-900 dark:text-white tracking-tight">Aplicar a Sedes</h4>
                                 </div>
                             </div>
                             
-                            <div className="bg-white rounded-[16px] border border-slate-100 shadow-sm flex flex-col flex-1 overflow-hidden min-h-[300px]">
+                            <div className="bg-white dark:bg-slate-950 rounded-[16px] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col flex-1 overflow-hidden min-h-[300px]">
                                 {loading ? (
                                     <div className="flex flex-col items-center justify-center flex-1 gap-4 py-20">
                                         <div className="relative">
-                                            <Loader2 className="h-12 w-12 animate-spin text-[#76D7B6] opacity-30" />
-                                            <Loader2 className="h-12 w-12 animate-spin text-[#76D7B6] absolute top-0 left-0" style={{ animationDelay: '0.2s' }} />
+                                            <Loader2 className="h-12 w-12 animate-spin text-accent opacity-30" />
+                                            <Loader2 className="h-12 w-12 animate-spin text-accent absolute top-0 left-0" style={{ animationDelay: '0.2s' }} />
                                         </div>
                                         <p className="text-sm font-semibold text-slate-400 uppercase tracking-[0.2em]">Cargando sedes...</p>
                                     </div>
                                 ) : sedes.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center flex-1 py-10 text-center gap-6">
-                                        <div className="h-20 w-20 bg-slate-50 rounded-[32px] flex items-center justify-center shadow-inner">
+                                        <div className="h-20 w-20 bg-slate-50 dark:bg-slate-900 rounded-[32px] flex items-center justify-center shadow-inner">
                                             <MapPin className="h-10 w-10 text-slate-200" />
                                         </div>
                                         <div className="space-y-1">
-                                            <p className="text-lg text-slate-900 font-semibold px-8 leading-tight">No hay sedes configuradas</p>
+                                            <p className="text-lg text-slate-900 dark:text-white font-semibold px-8 leading-tight">No hay sedes configuradas</p>
                                             <p className="text-sm text-slate-400 font-medium px-12">Agrega sedes en la configuración de la clínica para aplicar horarios.</p>
                                         </div>
                                     </div>
                                 ) : (
                                     <div className="flex flex-col h-full">
                                         {/* Info card moved up here */}
-                                        <div className="p-3 bg-slate-50 shadow-inner">
-                                            <div className="bg-[#76D7B6]/5 rounded-xl p-2.5 flex gap-2.5 border border-[#76D7B6]/10 shadow-sm">
-                                                <div className="h-7 w-7 bg-white rounded-lg flex items-center justify-center shadow-sm shrink-0">
-                                                    <Info className="h-3.5 w-3.5 text-[#76D7B6]" />
+                                        <div className="p-3 bg-slate-50 dark:bg-slate-900 shadow-inner">
+                                            <div className="bg-accent/5 rounded-xl p-2.5 flex gap-2.5 border border-accent/10 shadow-sm">
+                                                <div className="h-7 w-7 bg-white dark:bg-slate-950 rounded-lg flex items-center justify-center shadow-sm shrink-0">
+                                                    <Info className="h-3.5 w-3.5 text-accent" />
                                                 </div>
                                                 <div className="space-y-0 text-[11px]">
-                                                    <p className="font-semibold text-[#76D7B6] uppercase tracking-wider text-[9px]">Aviso importante</p>
-                                                    <p className="font-medium text-slate-500 leading-tight">
+                                                    <p className="font-semibold text-accent uppercase tracking-wider text-[9px]">Aviso importante</p>
+                                                    <p className="font-medium text-slate-500 dark:text-slate-400 leading-tight">
                                                         Se sincronizarán inmediatamente.
                                                     </p>
                                                 </div>
@@ -325,7 +325,7 @@ export default function HorariosModal({ isOpen, onClose, clinicId, initialSedes 
 
                                         <div className="divide-y divide-slate-50">
                                             {/* Select All */}
-                                            <div className="flex items-center gap-3 p-4 cursor-pointer hover:bg-slate-50 transition-colors bg-slate-50/10"
+                                            <div className="flex items-center gap-3 p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900 dark:hover:bg-slate-900 transition-colors bg-slate-50 dark:bg-slate-900/10"
                                                  onClick={() => {
                                                      if (selectedSedes.length === sedes.length) setSelectedSedes([]);
                                                      else setSelectedSedes(sedes.map(s => s.id));
@@ -337,20 +337,20 @@ export default function HorariosModal({ isOpen, onClose, clinicId, initialSedes 
                                                         if (checked) setSelectedSedes(sedes.map(s => s.id));
                                                         else setSelectedSedes([]);
                                                     }}
-                                                    className="data-[state=checked]:bg-[#76D7B6] data-[state=checked]:border-[#76D7B6] h-4 w-4 rounded-md border-2"
+                                                    className="data-[state=checked]:bg-accent data-[state=checked]:border-accent h-4 w-4 rounded-md border-2"
                                                 />
                                                 <div className="flex flex-col">
-                                                    <label htmlFor="select-all-sedes" className="text-sm font-semibold text-slate-900 cursor-pointer tracking-tight">
+                                                    <label htmlFor="select-all-sedes" className="text-sm font-semibold text-slate-900 dark:text-white cursor-pointer tracking-tight">
                                                         Seleccionar Todas
                                                     </label>
                                                     <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">Sincronización global</span>
                                                 </div>
                                             </div>
 
-                                            <div className="flex-1 max-h-[300px] overflow-y-auto custom-scrollbar divide-y divide-slate-100/10">
+                                            <div className="flex-1 max-h-[300px] overflow-y-auto custom-scrollbar divide-y divide-slate-100 dark:divide-slate-800/10">
                                                 {sedes.map((sede) => (
                                                     <div key={sede.id} 
-                                                         className="flex items-center gap-4 p-4 hover:bg-slate-50 transition-all cursor-pointer group"
+                                                         className="flex items-center gap-4 p-4 hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900 dark:hover:bg-slate-900 transition-all cursor-pointer group"
                                                          onClick={() => {
                                                             if (selectedSedes.includes(sede.id)) setSelectedSedes(selectedSedes.filter(id => id !== sede.id));
                                                             else setSelectedSedes([...selectedSedes, sede.id]);
@@ -362,10 +362,10 @@ export default function HorariosModal({ isOpen, onClose, clinicId, initialSedes 
                                                                 if (checked) setSelectedSedes([...selectedSedes, sede.id]);
                                                                 else setSelectedSedes(selectedSedes.filter(id => id !== sede.id));
                                                             }}
-                                                            className="data-[state=checked]:bg-[#76D7B6] data-[state=checked]:border-[#76D7B6] h-4 w-4 rounded-md border-2"
+                                                            className="data-[state=checked]:bg-accent data-[state=checked]:border-accent h-4 w-4 rounded-md border-2"
                                                         />
                                                         <div className="flex flex-col">
-                                                            <span className="text-sm font-semibold text-slate-900 tracking-tight group-hover:text-[#76D7B6] transition-colors">{sede.name}</span>
+                                                            <span className="text-sm font-semibold text-slate-900 dark:text-white tracking-tight group-hover:text-accent transition-colors">{sede.name}</span>
                                                             <div className="flex items-center gap-1.5 text-slate-400">
                                                                 <MapPin className="h-2.5 w-2.5 opacity-50" />
                                                                 <span className="text-[11px] font-semibold">Sucursal operativa</span>

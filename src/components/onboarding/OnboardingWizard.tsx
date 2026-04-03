@@ -31,7 +31,7 @@ export default function OnboardingWizard() {
     };
 
     return (
-        <div className="w-full max-w-4xl bg-white/40 backdrop-blur-xl border border-white/40 rounded-[2.5rem] overflow-hidden min-h-[420px] max-h-full flex flex-col" style={{ boxShadow: '0 25px 60px -12px rgba(0, 0, 0, 0.25), 0 10px 20px -5px rgba(0, 0, 0, 0.1)' }}>
+        <div className="w-full max-w-4xl bg-white dark:bg-slate-950/40 backdrop-blur-xl border border-white/40 rounded-[2.5rem] overflow-hidden min-h-[420px] max-h-full flex flex-col" style={{ boxShadow: '0 25px 60px -12px rgba(0, 0, 0, 0.25), 0 10px 20px -5px rgba(0, 0, 0, 0.1)' }}>
             {/* Header / Progress */}
             {step > 1 && (
                 <div className="p-8 pb-0 flex flex-col items-center">
@@ -49,7 +49,7 @@ export default function OnboardingWizard() {
                                 {[1, 2, 3, 4, 5].map(i => (
                                     <div
                                         key={i}
-                                        className={`h-2 w-12 rounded-full transition-all duration-500 ${i <= step ? "bg-[#76D7B6]" : "bg-slate-200"
+                                        className={`h-2 w-12 rounded-full transition-all duration-500 ${i <= step ? "bg-accent" : "bg-slate-200"
                                             }`}
                                     />
                                 ))}

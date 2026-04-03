@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { titleCase } from "@/utils/masks";
+import { titleCase } from "@/utils/formatters";
 import { obraSocialSchema, type ObraSocialValues } from "@/lib/validators/config";
 
 interface ObrasSocialesModalProps {
@@ -126,21 +126,21 @@ export default function ObrasSocialesModal({ isOpen, onClose, editingItem, clini
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-auto p-6 relative animate-in fade-in zoom-in duration-200">
+            <div className="bg-white dark:bg-slate-950 rounded-2xl shadow-2xl w-full max-w-sm mx-auto p-6 relative animate-in fade-in zoom-in duration-200">
                 <button
                     onClick={onClose}
-                    className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 transition-colors"
+                    className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:text-slate-400 transition-colors"
                 >
                     <X className="h-5 w-5" />
                 </button>
 
-                <h3 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <CreditCard className="h-5 w-5 text-[#76D7B6]" /> {editingItem ? "Editar Obra Social" : "Nueva Obra Social"}
+                <h3 className="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                    <CreditCard className="h-5 w-5 text-accent" /> {editingItem ? "Editar Obra Social" : "Nueva Obra Social"}
                 </h3>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     <div>
-                        <Label className="text-xs font-medium text-slate-600 mb-1 block">Nombre Comercial*</Label>
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">Nombre Comercial*</Label>
                         <Controller
                             name="nombre"
                             control={control}
@@ -157,7 +157,7 @@ export default function ObrasSocialesModal({ isOpen, onClose, editingItem, clini
                     </div>
 
                     <div>
-                        <Label className="text-xs font-medium text-slate-600 mb-1 block">Código Externo / RNAS</Label>
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">Código Externo / RNAS</Label>
                         <Controller
                             name="codigo"
                             control={control}
@@ -198,7 +198,7 @@ export default function ObrasSocialesModal({ isOpen, onClose, editingItem, clini
                             <Button
                                 type="submit"
                                 size="sm"
-                                className="bg-[#76D7B6] text-slate-900 hover:bg-[#65cba8] font-bold"
+                                className="bg-accent text-slate-900 dark:text-white hover:bg-accent/90 font-bold"
                                 disabled={saving || !isValid}
                             >
                                 {saving ? "Guardando..." : (editingItem ? "Actualizar" : "Crear")}

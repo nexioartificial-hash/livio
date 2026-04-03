@@ -28,30 +28,30 @@ export default function SuccessPage() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4">
             <Card className="max-w-md w-full border-none shadow-2xl">
                 <CardHeader className="text-center pb-2">
-                    <div className="mx-auto mb-4 bg-[#76D7B6]/10 w-20 h-20 rounded-full flex items-center justify-center">
-                        <CheckCircle2 className="h-10 w-10 text-[#76D7B6]" />
+                    <div className="mx-auto mb-4 bg-accent/10 w-20 h-20 rounded-full flex items-center justify-center">
+                        <CheckCircle2 className="h-10 w-10 text-accent" />
                     </div>
-                    <CardTitle className="text-2xl font-bold text-slate-900 flex items-center justify-center gap-2">
+                    <CardTitle className="text-2xl font-bold text-slate-900 dark:text-white flex items-center justify-center gap-2">
                         ¡PLAN PRO ACTIVADO! <Sparkles className="h-5 w-5 text-yellow-500" />
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="text-center space-y-6 pt-4">
-                    <p className="text-slate-500">
+                    <p className="text-slate-500 dark:text-slate-400">
                         Tu suscripción se ha procesado correctamente. Ahora tienes acceso a
                         <strong> pacientes ilimitados</strong>, campañas de WhatsApp y todas las funciones PRO de Livio.
                     </p>
 
-                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center justify-center gap-3">
-                        <div className="w-2 h-2 rounded-full bg-[#76D7B6] animate-ping" />
-                        <span className="text-sm font-medium text-slate-700">Estado: Activo ✅</span>
+                    <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800 flex items-center justify-center gap-3">
+                        <div className="w-2 h-2 rounded-full bg-accent animate-ping" />
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Estado: Activo ✅</span>
                     </div>
 
                     <Button
                         onClick={() => router.push("/dashboard")}
-                        className="w-full bg-[#76D7B6] hover:bg-[#65cba8] text-white font-bold h-12 shadow-lg hover:shadow-xl transition-all"
+                        className="w-full bg-accent hover:bg-accent/90 text-white font-bold h-12 shadow-lg hover:shadow-xl transition-all"
                     >
                         IR AL DASHBOARD
                     </Button>

@@ -142,7 +142,7 @@ export default function StockModal({
 
             if (editingItem) {
                 const { data, error } = await supabase
-                    .from("stock")
+                    .from("inventario")
                     .update(payload)
                     .eq("id", editingItem.id)
                     .select("*")
@@ -153,7 +153,7 @@ export default function StockModal({
                 onSuccess(data, true);
             } else {
                 const { data, error } = await supabase
-                    .from("stock")
+                    .from("inventario")
                     .insert(payload)
                     .select("*")
                     .single();
@@ -178,7 +178,7 @@ export default function StockModal({
         setIsDeleting(true);
         try {
             const { error } = await supabase
-                .from("stock")
+                .from("inventario")
                 .delete()
                 .eq("id", editingItem.id);
 
@@ -198,7 +198,7 @@ export default function StockModal({
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <Package className="h-5 w-5 text-[#76D7B6]" />
+                        <Package className="h-5 w-5 text-accent" />
                         {editingItem ? "Editar Producto" : "Nuevo Producto"}
                     </DialogTitle>
                 </DialogHeader>
@@ -348,7 +348,7 @@ export default function StockModal({
                             <Button 
                                 type="submit" 
                                 disabled={isSaving || !isValid}
-                                className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 min-w-[120px]"
+                                className="bg-accent hover:bg-accent/90 text-slate-900 dark:text-white min-w-[120px]"
                             >
                                 {isSaving ? (
                                     <>

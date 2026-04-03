@@ -16,19 +16,6 @@ import Papa from "papaparse";
 import { toast } from "sonner";
 import { z } from "zod";
 
-// Mock Data
-const professionals = [
-    { id: "all", name: "Todos" },
-    { id: "1", name: "Dr. Juan Pérez" },
-    { id: "2", name: "Dra. María López" },
-    { id: "3", name: "Dr. Carlos García" },
-];
-
-const branches = [
-    { id: "all", name: "Todas" },
-    { id: "1", name: "Sede Central" },
-    { id: "2", name: "Sede Palermo" },
-];
 
 const hours = Array.from({ length: 12 }, (_, i) => `${(8 + i).toString().padStart(2, '0')}:00`); /* 08:00 to 19:00 */
 
@@ -78,6 +65,7 @@ function AgendaContent() {
     const [importStep, setImportStep] = useState<"select" | "action">("select");
     const [importSource, setImportSource] = useState<"csv" | "google" | "calendly" | "manual" | null>(null);
     const [isImporting, setIsImporting] = useState(false);
+    const [googleConnected, setGoogleConnected] = useState(false);
 
     // Details Modal State
     const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
@@ -87,6 +75,7 @@ function AgendaContent() {
     const [isBloqueoModalOpen, setIsBloqueoModalOpen] = useState(false);
 
     const { user, loading } = useAuth();
+    const clinicId = (user as any)?.clinic_id as string | undefined;
     const { DateTime } = require("luxon");
     const [currentDate, setCurrentDate] = useState(DateTime.now());
     const [newAppointment, setNewAppointment] = useState({
@@ -97,7 +86,7 @@ function AgendaContent() {
         duration: "30",
         reason: "",
         obrasocial_id: "",
-        sucursal: "Sede Central",
+        sucursal: "",
         atencion_particular: false,
     });
     const [isCreating, setIsCreating] = useState(false);
@@ -106,24 +95,21 @@ function AgendaContent() {
     const [obrasSociales, setObrasSociales] = useState<ObraSocial[]>([]);
     const [obraSearch, setObraSearch] = useState("");
     const [obraOpen, setObraOpen] = useState(false);
+    const [professionals, setProfessionals] = useState<{ id: string; name: string }[]>([{ id: "all", name: "Todos" }]);
+    const [branches, setBranches] = useState<{ id: string; name: string }[]>([{ id: "all", name: "Todas" }]);
 
-    // Load Appointments
-    const fetchAppointments = useCallback(async () => {
-        let query = supabase.from('turno').select('*');
+    // Core fetch logic extracted so it can be called imperatively too
+    const doFetch = useCallback(async (cId: string, vw: string, date: any) => {
+        let query = supabase.from('turno').select('*').eq('clinic_id', cId);
 
-        // Filter by date range based on view
         let start, end;
-        if (view === "dia") {
-            start = currentDate.toISODate();
-            end = currentDate.toISODate();
-        } else if (view === "semana") {
-            start = currentDate.startOf('week').toISODate();
-            end = currentDate.endOf('week').toISODate();
+        if (vw === "dia") {
+            start = date.toISODate(); end = date.toISODate();
+        } else if (vw === "semana") {
+            start = date.startOf('week').toISODate(); end = date.endOf('week').toISODate();
         } else {
-            start = currentDate.startOf('month').toISODate();
-            end = currentDate.endOf('month').toISODate();
+            start = date.startOf('month').toISODate(); end = date.endOf('month').toISODate();
         }
-
         query = query.gte('date', start).lte('date', end);
 
         const { data, error } = await query;
@@ -145,32 +131,75 @@ function AgendaContent() {
             })));
         }
 
-        // Also fetch bloqueos for the same date range
-        const startISO = (
-            view === 'dia' ? currentDate.startOf('day') :
-                view === 'semana' ? currentDate.startOf('week') :
-                    currentDate.startOf('month')
-        ).toISO();
-
-        const endISO = (
-            view === 'dia' ? currentDate.endOf('day') :
-                view === 'semana' ? currentDate.endOf('week') :
-                    currentDate.endOf('month')
-        ).toISO();
+        const startISO = (vw === 'dia' ? date.startOf('day') : vw === 'semana' ? date.startOf('week') : date.startOf('month')).toISO();
+        const endISO = (vw === 'dia' ? date.endOf('day') : vw === 'semana' ? date.endOf('week') : date.endOf('month')).toISO();
 
         const { data: bloqueosData } = await supabase
-            .from('bloqueo_horario')
-            .select('*')
-            .gte('bloqueo_hasta', startISO)
-            .lte('bloqueo_desde', endISO);
+            .from('bloqueo_horario').select('*')
+            .gte('bloqueo_hasta', startISO).lte('bloqueo_desde', endISO);
         if (bloqueosData) setBloqueos(bloqueosData);
-    }, [currentDate, view, supabase]);
+    }, []); // no deps — all data passed as args
 
+    // Imperative fetch (called after create/sync/etc)
+    const fetchAppointments = useCallback(() => {
+        if (!clinicId) return Promise.resolve();
+        return doFetch(clinicId, view, currentDate);
+    }, [clinicId, view, currentDate, doFetch]);
+
+    // Auto-fetch: wait for auth to settle (loading=false) AND clinicId to be available
     useEffect(() => {
-        if (!loading && user) {
-            fetchAppointments();
-        }
-    }, [loading, user, fetchAppointments]);
+        if (loading || !clinicId) return;
+        doFetch(clinicId, view, currentDate);
+    }, [loading, clinicId, view, currentDate, doFetch]);
+
+    // Load professionals and branches from Supabase
+    useEffect(() => {
+        if (!clinicId) return;
+
+        supabase
+            .from('professional')
+            .select('id, full_name')
+            .eq('clinic_id', clinicId)
+            .eq('activo', true)
+            .then(({ data }) => {
+                if (data && data.length > 0) {
+                    const list = [
+                        { id: "all", name: "Todos" },
+                        ...data.map(p => ({ id: p.id, name: p.full_name || "Sin nombre" }))
+                    ];
+                    setProfessionals(list);
+                    // Auto-set first professional in form if not already set
+                    setNewAppointment(prev => prev.professional ? prev : { ...prev, professional: data[0].id });
+                }
+            });
+
+        supabase
+            .from('sucursal')
+            .select('id, name')
+            .eq('clinic_id', clinicId)
+            .then(({ data }) => {
+                if (data && data.length > 0) {
+                    const list = [
+                        { id: "all", name: "Todas" },
+                        ...data.map(s => ({ id: s.id, name: s.name }))
+                    ];
+                    setBranches(list);
+                    // Auto-set first branch in form
+                    setNewAppointment(prev => ({ ...prev, sucursal: data[0].name }));
+                }
+            });
+    }, [clinicId]);
+
+    // Check Google Calendar connection status
+    useEffect(() => {
+        if (!user?.id) return;
+        supabase
+            .from('professional')
+            .select('google_refresh_token')
+            .eq('id', user.id)
+            .single()
+            .then(({ data }) => setGoogleConnected(!!data?.google_refresh_token));
+    }, [user?.id]);
 
     // Load obras sociales once
     useEffect(() => {
@@ -241,6 +270,8 @@ function AgendaContent() {
             }
 
             const { data: inserted, error } = await supabase.from('turno').insert({
+                clinic_id: (user as any).clinic_id,
+                professional_id: newAppointment.professional,
                 patient_name: newAppointment.patient,
                 professional_name: profName,
                 date: newAppointment.date,
@@ -251,30 +282,34 @@ function AgendaContent() {
                 sucursal: newAppointment.sucursal,
                 source: 'manual',
                 obra_social: obraNombre,
-            }).select('id').single();
+            }).select('id');
 
             if (error) throw error;
 
             // Push to Google Calendar asynchronously (fire and forget)
-            if (inserted?.id) {
+            const turnoId = Array.isArray(inserted) ? inserted[0]?.id : (inserted as any)?.id;
+            if (turnoId) {
                 fetch('/api/integrations/google/push', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ turnoId: inserted.id, action: 'create' }),
+                    body: JSON.stringify({ turnoId, action: 'create' }),
                 }).catch(() => { }); // silent — don't block UX
             }
 
             toast.success("Turno agendado correctamente");
             setIsModalOpen(false);
+            // Reset form keeping the current professional/branch defaults
+            const firstBranch = branches.find(b => b.id !== "all")?.name ?? "";
+            const firstProfessional = professionals.find(p => p.id !== "all")?.id ?? "";
             setNewAppointment({
                 patient: "",
-                professional: "",
+                professional: firstProfessional,
                 date: DateTime.now().toISODate(),
                 time: "09:00",
                 duration: "30",
                 reason: "",
                 obrasocial_id: "",
-                sucursal: "Sede Central",
+                sucursal: firstBranch,
                 atencion_particular: false,
             });
             setObraSearch("");
@@ -346,9 +381,9 @@ function AgendaContent() {
             case "en curso": return "bg-blue-100 border-l-blue-500 text-blue-800 animate-pulse";
             case "confirmado": return "bg-green-100 border-l-green-500 text-green-800";
             case "pendiente": return "bg-yellow-50 border-l-yellow-500 text-yellow-800";
-            case "finalizado": return "bg-slate-100 border-l-slate-400 text-slate-600";
+            case "finalizado": return "bg-slate-100 dark:bg-slate-800 border-l-slate-400 text-slate-600 dark:text-slate-400";
             case "cancelado": return "bg-red-50 border-l-red-400 text-red-700";
-            default: return "bg-slate-50 border-l-slate-300";
+            default: return "bg-slate-50 dark:bg-slate-900 border-l-slate-300";
         }
     };
 
@@ -393,6 +428,7 @@ function AgendaContent() {
                     const syncData = await res.json();
                     const syncedCount = syncData.results?.[0]?.found || 0;
 
+                    setGoogleConnected(true);
                     toast.success(`✅ Google Calendar conectado! Se encontraron ${syncedCount} eventos.`);
                     setIsImportModalOpen(false);
                     fetchAppointments(); // Refresh grid
@@ -407,6 +443,49 @@ function AgendaContent() {
         };
 
         window.addEventListener('message', handleMessage);
+    };
+
+    const handleGoogleDisconnect = async () => {
+        if (!user?.id) return;
+        setIsImporting(true);
+        try {
+            const res = await fetch('/api/integrations/google/disconnect', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ profesionalId: user.id })
+            });
+            if (!res.ok) throw new Error('Error al desconectar');
+            setGoogleConnected(false);
+            toast.success("Google Calendar desconectado");
+            setIsImportModalOpen(false);
+            fetchAppointments();
+        } catch (error: any) {
+            toast.error("Error al desconectar: " + error.message);
+        } finally {
+            setIsImporting(false);
+        }
+    };
+
+    const handleGoogleResync = async () => {
+        if (!user?.id) return;
+        setIsImporting(true);
+        try {
+            const res = await fetch('/api/integrations/google/pull', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ profesionalId: user.id })
+            });
+            if (!res.ok) throw new Error('Error al sincronizar');
+            const syncData = await res.json();
+            const syncedCount = syncData.results?.[0]?.found || 0;
+            toast.success(`✅ Sincronizado! ${syncedCount} eventos encontrados.`);
+            setIsImportModalOpen(false);
+            fetchAppointments();
+        } catch (error: any) {
+            toast.error("Error al sincronizar: " + error.message);
+        } finally {
+            setIsImporting(false);
+        }
     };
 
     // --- CALENDLY INTEGRATION ---
@@ -569,13 +648,13 @@ function AgendaContent() {
         <div className="space-y-6">
             {/* Header */}
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <h1 className="text-3xl font-bold text-slate-900">Agenda</h1>
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Agenda</h1>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" className="border-slate-200 text-slate-600 font-bold gap-2 h-10 px-4" onClick={() => setIsImportModalOpen(true)}>
+                    <Button variant="outline" className="border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold gap-2 h-10 px-4" onClick={() => setIsImportModalOpen(true)}>
                         <Download className="h-4 w-4" /> Importar
                     </Button>
 
-                    <Button className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 font-bold gap-2 h-10 px-6 shadow-sm hover:shadow-md transition-all" onClick={() => setIsModalOpen(true)}>
+                    <Button className="bg-accent hover:bg-accent/90 text-slate-900 dark:text-white font-bold gap-2 h-10 px-6 shadow-sm hover:shadow-md transition-all" onClick={() => setIsModalOpen(true)}>
                         <Plus className="h-4 w-4" /> Nuevo Turno
                     </Button>
                 </div>
@@ -631,17 +710,17 @@ function AgendaContent() {
 
                 <div className="flex items-center gap-2">
                     <Button variant="ghost" size="icon" onClick={handlePrev}><ChevronLeft className="h-4 w-4" /></Button>
-                    <span className="font-medium text-sm text-slate-700 min-w-[140px] text-center capitalize">
+                    <span className="font-medium text-sm text-slate-700 dark:text-slate-300 min-w-[140px] text-center capitalize">
                         {monthLabel}
                     </span>
                     <Button variant="ghost" size="icon" onClick={handleNext}><ChevronRight className="h-4 w-4" /></Button>
 
-                    <div className="flex ml-4 bg-slate-100 rounded-lg p-0.5">
+                    <div className="flex ml-4 bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
                         {(["dia", "semana", "mes"] as ViewMode[]).map(v => (
                             <button
                                 key={v}
                                 onClick={() => setView(v)}
-                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${view === v ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${view === v ? "bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300"}`}
                             >
                                 {v === "dia" ? "Día" : v === "semana" ? "Semana" : "Mes"}
                             </button>
@@ -657,14 +736,14 @@ function AgendaContent() {
                         <div className="overflow-x-auto">
                             <div className="min-w-[800px]">
                                 {/* Day Headers */}
-                                <div className="grid grid-cols-[80px_repeat(7,1fr)] border-b bg-slate-50">
-                                    <div className="p-3 text-xs font-medium text-slate-500 border-r">Hora</div>
+                                <div className="grid grid-cols-[80px_repeat(7,1fr)] border-b bg-slate-50 dark:bg-slate-900">
+                                    <div className="p-3 text-xs font-medium text-slate-500 dark:text-slate-400 border-r">Hora</div>
                                     {weekDays.map((day, i) => {
                                         const isToday = day.date.hasSame(DateTime.now(), 'day');
                                         return (
-                                            <div key={i} className={`p-3 text-center text-xs font-medium border-r last:border-r-0 ${isToday ? "bg-[#76D7B6]/5 text-[#76D7B6] font-bold" : "text-slate-600"}`}>
+                                            <div key={i} className={`p-3 text-center text-xs font-medium border-r last:border-r-0 ${isToday ? "bg-accent/5 text-accent font-bold" : "text-slate-600 dark:text-slate-400"}`}>
                                                 {day.label}
-                                                {isToday && <div className="mt-1 h-1.5 w-1.5 rounded-full bg-[#76D7B6] mx-auto"></div>}
+                                                {isToday && <div className="mt-1 h-1.5 w-1.5 rounded-full bg-accent mx-auto"></div>}
                                             </div>
                                         )
                                     })}
@@ -701,7 +780,7 @@ function AgendaContent() {
                                             });
 
                                             return (
-                                                <div key={dayIdx} className={`border-r last:border-r-0 p-1 ${isToday ? "bg-[#76D7B6]/[0.02]" : ""}`}>
+                                                <div key={dayIdx} className={`border-r last:border-r-0 p-1 ${isToday ? "bg-accent/[0.02]" : ""}`}>
                                                     {/* Bloqueos externos */}
                                                     {dayBloqueos.map(b => (
                                                         <div
@@ -712,7 +791,7 @@ function AgendaContent() {
                                                                 setIsBloqueoModalOpen(true);
                                                             }}
                                                             title={b.descripcion}
-                                                            className="rounded-md border-l-[3px] border-slate-300 bg-slate-50 p-2 text-xs text-slate-500 mb-1 cursor-pointer hover:bg-slate-100 transition-colors"
+                                                            className="rounded-md border-l-[3px] border-slate-300 bg-slate-50 dark:bg-slate-900 p-2 text-xs text-slate-500 dark:text-slate-400 mb-1 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800 transition-colors"
                                                         >
                                                             <p className="font-semibold truncate flex items-center gap-1.5">
                                                                 <span className="w-2 h-2 rounded-full bg-slate-300" />
@@ -749,8 +828,8 @@ function AgendaContent() {
             {view === "dia" && (
                 <Card>
                     <CardContent className="p-0">
-                        <div className="border-b bg-slate-50 p-3 text-center">
-                            <span className="text-sm font-bold text-[#76D7B6] capitalize">
+                        <div className="border-b bg-slate-50 dark:bg-slate-900 p-3 text-center">
+                            <span className="text-sm font-bold text-accent capitalize">
                                 {currentDate.toFormat("cccc d 'de' MMMM", { locale: 'es' })}
                             </span>
                         </div>
@@ -787,7 +866,7 @@ function AgendaContent() {
                                                     setSelectedBloqueo(b);
                                                     setIsBloqueoModalOpen(true);
                                                 }}
-                                                className="rounded-lg border-l-[3px] border-slate-300 bg-slate-50 p-3 text-slate-500 mb-1 cursor-pointer hover:bg-slate-100 transition-colors"
+                                                className="rounded-lg border-l-[3px] border-slate-300 bg-slate-50 dark:bg-slate-900 p-3 text-slate-500 dark:text-slate-400 mb-1 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-800 transition-colors"
                                             >
                                                 <div className="flex items-center justify-between">
                                                     <span className="font-semibold text-sm flex items-center gap-2">
@@ -826,7 +905,7 @@ function AgendaContent() {
                         <div className="grid grid-cols-7 gap-1">
                             {/* Headers */}
                             {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map(d => (
-                                <div key={d} className="p-2 text-center text-xs font-medium text-slate-500">{d}</div>
+                                <div key={d} className="p-2 text-center text-xs font-medium text-slate-500 dark:text-slate-400">{d}</div>
                             ))}
 
                             {/* Empty cells for days before the 1st of the month */}
@@ -843,8 +922,8 @@ function AgendaContent() {
                                 const isToday = date.hasSame(DateTime.now(), 'day');
 
                                 return (
-                                    <div key={i} className={`rounded-lg p-2 min-h-[80px] text-xs border ${isToday ? "bg-[#76D7B6]/5 border-[#76D7B6]" : "border-transparent hover:bg-slate-50"}`}>
-                                        <span className={`font-medium ${isToday ? "text-[#76D7B6] font-bold" : "text-slate-600"}`}>{dayNum}</span>
+                                    <div key={i} className={`rounded-lg p-2 min-h-[80px] text-xs border ${isToday ? "bg-accent/5 border-accent" : "border-transparent hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900 dark:hover:bg-slate-900"}`}>
+                                        <span className={`font-medium ${isToday ? "text-accent font-bold" : "text-slate-600 dark:text-slate-400"}`}>{dayNum}</span>
                                         <div className="mt-1 space-y-0.5">
                                             {/* Bloqueos */}
                                             {filteredBloqueos.filter(b => {
@@ -861,7 +940,7 @@ function AgendaContent() {
                                                         setSelectedBloqueo(b);
                                                         setIsBloqueoModalOpen(true);
                                                     }}
-                                                    className="rounded px-1.5 py-0.5 text-[10px] truncate bg-slate-100 text-slate-500 border-l-2 border-slate-300 cursor-pointer hover:bg-slate-200 transition-colors"
+                                                    className="rounded px-1.5 py-0.5 text-[10px] truncate bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-l-2 border-slate-300 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                                                 >
                                                     {b.descripcion || 'Bloqueado'}
                                                 </div>
@@ -998,7 +1077,7 @@ function AgendaContent() {
                                     onBlur={() => setTimeout(() => setObraOpen(false), 150)}
                                 />
                                 {obraOpen && obraSearch.length > 0 && !newAppointment.atencion_particular && (
-                                    <div className="absolute z-50 mt-1 w-full max-h-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
+                                    <div className="absolute z-50 mt-1 w-full max-h-52 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-lg">
                                         {obrasSociales
                                             .filter(o => o.nombre.toLowerCase().includes(obraSearch.toLowerCase()))
                                             .slice(0, 8)
@@ -1006,7 +1085,7 @@ function AgendaContent() {
                                                 <button
                                                     key={o.id}
                                                     type="button"
-                                                    className="flex w-full items-center justify-between px-3 py-2 text-sm hover:bg-slate-50 text-left"
+                                                    className="flex w-full items-center justify-between px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900 text-left"
                                                     onMouseDown={() => {
                                                         setNewAppointment({ ...newAppointment, obrasocial_id: o.id });
                                                         setObraSearch("");
@@ -1039,7 +1118,7 @@ function AgendaContent() {
                                 <label className="flex items-center gap-2 mt-2 cursor-pointer select-none">
                                     <input
                                         type="checkbox"
-                                        className="rounded border-slate-300 h-3.5 w-3.5 accent-[#76D7B6]"
+                                        className="rounded border-slate-300 h-3.5 w-3.5 accent-accent"
                                         checked={newAppointment.atencion_particular}
                                         onChange={(e) => {
                                             const checked = e.target.checked;
@@ -1047,7 +1126,7 @@ function AgendaContent() {
                                             if (checked) setObraSearch("");
                                         }}
                                     />
-                                    <span className="text-xs text-slate-500">Atención particular</span>
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">Atención particular</span>
                                 </label>
                             </div>
                         </div>
@@ -1057,7 +1136,7 @@ function AgendaContent() {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
                         <Button
-                            className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 font-bold"
+                            className="bg-accent hover:bg-accent/90 text-slate-900 dark:text-white font-bold"
                             onClick={handleCreateAppointment}
                             disabled={isCreating}
                         >
@@ -1086,28 +1165,28 @@ function AgendaContent() {
                         <div className="space-y-4 py-2">
                             {/* ... (Existing Details) ... */}
                             <div className="grid grid-cols-3 items-start gap-2 text-sm">
-                                <span className="font-semibold text-slate-500">Fecha:</span>
+                                <span className="font-semibold text-slate-500 dark:text-slate-400">Fecha:</span>
                                 <span className="col-span-2">{selectedAppointment.date} a las {selectedAppointment.time}hs</span>
                             </div>
                             <div className="grid grid-cols-3 items-start gap-2 text-sm">
-                                <span className="font-semibold text-slate-500">Profesional:</span>
+                                <span className="font-semibold text-slate-500 dark:text-slate-400">Profesional:</span>
                                 <span className="col-span-2">{selectedAppointment.professional}</span>
                             </div>
                             <div className="grid grid-cols-3 items-start gap-2 text-sm">
-                                <span className="font-semibold text-slate-500">Motivo:</span>
+                                <span className="font-semibold text-slate-500 dark:text-slate-400">Motivo:</span>
                                 <span className="col-span-2">{selectedAppointment.reason}</span>
                             </div>
                             <div className="grid grid-cols-3 items-start gap-2 text-sm">
-                                <span className="font-semibold text-slate-500">Duración:</span>
+                                <span className="font-semibold text-slate-500 dark:text-slate-400">Duración:</span>
                                 <span className="col-span-2">{selectedAppointment.duration} min</span>
                             </div>
                             <div className="grid grid-cols-3 items-start gap-2 text-sm">
-                                <span className="font-semibold text-slate-500">Origen:</span>
+                                <span className="font-semibold text-slate-500 dark:text-slate-400">Origen:</span>
                                 <span className="col-span-2 capitalize">{selectedAppointment.source || "Manual"}</span>
                             </div>
                             {selectedAppointment.obra_social && (
                                 <div className="grid grid-cols-3 items-start gap-2 text-sm">
-                                    <span className="font-semibold text-slate-500">Obra Social:</span>
+                                    <span className="font-semibold text-slate-500 dark:text-slate-400">Obra Social:</span>
                                     <span className="col-span-2">{selectedAppointment.obra_social}</span>
                                 </div>
                             )}
@@ -1162,22 +1241,22 @@ function AgendaContent() {
                     {selectedBloqueo && (
                         <div className="space-y-4 py-4">
                             <div className="grid grid-cols-3 items-start gap-2 text-sm">
-                                <span className="font-semibold text-slate-500">Título:</span>
+                                <span className="font-semibold text-slate-500 dark:text-slate-400">Título:</span>
                                 <span className="col-span-2 font-bold">{selectedBloqueo.descripcion}</span>
                             </div>
                             <div className="grid grid-cols-3 items-start gap-2 text-sm">
-                                <span className="font-semibold text-slate-500">Inicio:</span>
+                                <span className="font-semibold text-slate-500 dark:text-slate-400">Inicio:</span>
                                 <span className="col-span-2">
                                     {DateTime.fromISO(selectedBloqueo.bloqueo_desde).toFormat("dd/MM/yyyy HH:mm")}hs
                                 </span>
                             </div>
                             <div className="grid grid-cols-3 items-start gap-2 text-sm">
-                                <span className="font-semibold text-slate-500">Fin:</span>
+                                <span className="font-semibold text-slate-500 dark:text-slate-400">Fin:</span>
                                 <span className="col-span-2">
                                     {DateTime.fromISO(selectedBloqueo.bloqueo_hasta).toFormat("dd/MM/yyyy HH:mm")}hs
                                 </span>
                             </div>
-                            <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 text-xs text-slate-500 italic">
+                            <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 italic">
                                 Sincronizado para proteger tu disponibilidad. Para editar este evento, hazlo directamente en tu Google Calendar.
                             </div>
                         </div>
@@ -1210,10 +1289,10 @@ function AgendaContent() {
                     {importStep === "select" && (
                         <div className="grid grid-cols-2 gap-4 py-4">
                             {[
-                                { id: "google", label: "Google Calendar", icon: Calendar, color: "text-blue-500", desc: "Sincronización directa" },
+                                { id: "google", label: "Google Calendar", icon: Calendar, color: "text-blue-500", desc: googleConnected ? "Conectado" : "Sincronización directa" },
                                 { id: "csv", label: "Excel / CSV", icon: FileSpreadsheet, color: "text-green-500", desc: "Pacientes y Turnos" },
                                 { id: "calendly", label: "Calendly", icon: Clock, color: "text-indigo-500", desc: "Importar eventos" },
-                                { id: "manual", label: "Manual", icon: Plus, color: "text-slate-500", desc: "Carga rápida" },
+                                { id: "manual", label: "Manual", icon: Plus, color: "text-slate-500 dark:text-slate-400", desc: "Carga rápida" },
                             ].map(opt => (
                                 <button
                                     key={opt.id}
@@ -1226,13 +1305,16 @@ function AgendaContent() {
                                             setImportStep("action");
                                         }
                                     }}
-                                    className="flex flex-col items-center justify-center p-6 border-2 border-slate-100 rounded-xl hover:border-[#76D7B6] hover:bg-slate-50 transition-all gap-3"
+                                    className="flex flex-col items-center justify-center p-6 border-2 border-slate-100 dark:border-slate-800 rounded-xl hover:border-accent hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900 transition-all gap-3 relative"
                                 >
                                     <opt.icon className={`h-8 w-8 ${opt.color}`} />
                                     <div className="text-center">
-                                        <p className="font-bold text-slate-700">{opt.label}</p>
-                                        <p className="text-xs text-slate-400">{opt.desc}</p>
+                                        <p className="font-bold text-slate-700 dark:text-slate-300">{opt.label}</p>
+                                        <p className={`text-xs ${opt.id === "google" && googleConnected ? "text-emerald-500 font-medium" : "text-slate-400"}`}>{opt.desc}</p>
                                     </div>
+                                    {opt.id === "google" && googleConnected && (
+                                        <span className="absolute top-2 right-2 w-2 h-2 bg-emerald-500 rounded-full" />
+                                    )}
                                 </button>
                             ))}
                         </div>
@@ -1243,17 +1325,17 @@ function AgendaContent() {
                         <div>
                             {importSource === "csv" && (
                                 <form onSubmit={handleCSVImport} className="space-y-6 py-4">
-                                    <div className="border-2 border-dashed border-slate-200 rounded-xl p-10 flex flex-col items-center justify-center space-y-4 hover:border-[#76D7B6] hover:bg-[#76D7B6]/5 transition-all group relative">
-                                        <UploadCloud className="h-10 w-10 text-slate-300 group-hover:text-[#76D7B6]" />
+                                    <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-10 flex flex-col items-center justify-center space-y-4 hover:border-accent hover:bg-accent/5 transition-all group relative">
+                                        <UploadCloud className="h-10 w-10 text-slate-300 group-hover:text-accent" />
                                         <div className="text-center space-y-1">
-                                            <p className="font-bold text-slate-700">Click para subir CSV</p>
+                                            <p className="font-bold text-slate-700 dark:text-slate-300">Click para subir CSV</p>
                                             <p className="text-xs text-slate-400">Columnas: nombre, dni, fecha, hora...</p>
                                         </div>
                                         <Input id="file" name="file" type="file" accept=".csv" required className="absolute inset-0 opacity-0 cursor-pointer" />
                                     </div>
                                     <div className="flex justify-end gap-2">
                                         <Button type="button" variant="ghost" onClick={() => setImportStep("select")}>Volver</Button>
-                                        <Button type="submit" className="bg-[#76D7B6] text-slate-900 font-bold" disabled={isImporting}>
+                                        <Button type="submit" className="bg-accent text-slate-900 dark:text-white font-bold" disabled={isImporting}>
                                             {isImporting ? <Loader2 className="animate-spin" /> : "Importar CSV"}
                                         </Button>
                                     </div>
@@ -1262,18 +1344,49 @@ function AgendaContent() {
 
                             {importSource === "google" && (
                                 <div className="py-8 text-center space-y-6">
-                                    <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto">
-                                        <Calendar className="h-8 w-8 text-blue-500" />
+                                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto ${googleConnected ? "bg-emerald-50" : "bg-blue-50"}`}>
+                                        <Calendar className={`h-8 w-8 ${googleConnected ? "text-emerald-500" : "text-blue-500"}`} />
                                     </div>
-                                    <p className="text-slate-500 max-w-sm mx-auto">
-                                        Serás redirigido a Google para autorizar el acceso a tu calendario. Importaremos los eventos de los próximos 30 días.
-                                    </p>
-                                    <div className="flex justify-center gap-2">
-                                        <Button type="button" variant="ghost" onClick={() => setImportStep("select")}>Volver</Button>
-                                        <Button onClick={handleGoogleConnect} className="bg-blue-600 hover:bg-blue-700 text-white font-bold gap-2">
-                                            {isImporting ? <Loader2 className="animate-spin" /> : "Conectar Google"}
-                                        </Button>
-                                    </div>
+                                    {googleConnected ? (
+                                        <>
+                                            <div className="space-y-1">
+                                                <p className="font-semibold text-slate-700 dark:text-slate-300">Google Calendar conectado</p>
+                                                <p className="text-slate-400 text-sm max-w-sm mx-auto">
+                                                    Podés sincronizar para traer los últimos eventos, o desconectar para desvincular tu cuenta.
+                                                </p>
+                                            </div>
+                                            <div className="flex justify-center gap-2">
+                                                <Button type="button" variant="ghost" onClick={() => setImportStep("select")}>Volver</Button>
+                                                <Button
+                                                    onClick={handleGoogleDisconnect}
+                                                    disabled={isImporting}
+                                                    variant="outline"
+                                                    className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 font-bold gap-2"
+                                                >
+                                                    {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Desconectar"}
+                                                </Button>
+                                                <Button
+                                                    onClick={handleGoogleResync}
+                                                    disabled={isImporting}
+                                                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold gap-2"
+                                                >
+                                                    {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sincronizar ahora"}
+                                                </Button>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+                                                Serás redirigido a Google para autorizar el acceso a tu calendario. Importaremos los eventos de los próximos 30 días.
+                                            </p>
+                                            <div className="flex justify-center gap-2">
+                                                <Button type="button" variant="ghost" onClick={() => setImportStep("select")}>Volver</Button>
+                                                <Button onClick={handleGoogleConnect} disabled={isImporting} className="bg-blue-600 hover:bg-blue-700 text-white font-bold gap-2">
+                                                    {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Conectar Google"}
+                                                </Button>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             )}
 
@@ -1304,7 +1417,7 @@ export default function AgendaPage() {
     return (
         <Suspense fallback={
             <div className="h-[80vh] flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-[#76D7B6]" />
+                <Loader2 className="h-8 w-8 animate-spin text-accent" />
             </div>
         }>
             <AgendaContent />

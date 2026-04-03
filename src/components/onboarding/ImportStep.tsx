@@ -74,13 +74,13 @@ export default function ImportStep({ onNext, onBack }: ImportStepProps) {
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                         <div
                             onClick={() => fileInputRef.current?.click()}
-                            className="border-2 border-dashed border-slate-200 rounded-[2rem] p-12 flex flex-col items-center justify-center space-y-4 cursor-pointer hover:border-[#76D7B6] hover:bg-[#76D7B6]/5 transition-all group"
+                            className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-[2rem] p-12 flex flex-col items-center justify-center space-y-4 cursor-pointer hover:border-accent hover:bg-accent/5 transition-all group"
                         >
-                            <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-[#76D7B6]/10 group-hover:text-[#76D7B6] transition-all">
+                            <div className="w-16 h-16 bg-slate-50 dark:bg-slate-900 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-accent/10 group-hover:text-accent transition-all">
                                 <UploadCloud size={32} />
                             </div>
                             <div className="text-center">
-                                <p className="font-bold text-slate-700">Haz clic para subir o arrastra tu archivo</p>
+                                <p className="font-bold text-slate-700 dark:text-slate-300">Haz clic para subir o arrastra tu archivo</p>
                                 <p className="text-sm text-slate-400">Soporta Excel (.xlsx) y CSV</p>
                             </div>
                             <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept=".csv,.xlsx" />
@@ -91,10 +91,10 @@ export default function ImportStep({ onNext, onBack }: ImportStepProps) {
             case "calendly":
                 return (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-center py-12 space-y-6">
-                        <div className="w-20 h-20 bg-slate-50 rounded-full mx-auto flex items-center justify-center text-slate-400">
+                        <div className="w-20 h-20 bg-slate-50 dark:bg-slate-900 rounded-full mx-auto flex items-center justify-center text-slate-400">
                             {importType === "google" ? <CalendarIcon size={40} /> : <CheckCircle2 size={40} />}
                         </div>
-                        <p className="text-slate-500 font-medium max-w-xs mx-auto">
+                        <p className="text-slate-500 dark:text-slate-400 font-medium max-w-xs mx-auto">
                             Conecta tu cuenta para sincronizar automáticamente todos tus turnos y pacientes existentes.
                         </p>
                         <Button onClick={() => handleIntegration(importType)} className="bg-slate-900 text-white rounded-xl h-12 px-8 font-bold">
@@ -136,13 +136,13 @@ export default function ImportStep({ onNext, onBack }: ImportStepProps) {
                             <button
                                 key={opt.id}
                                 onClick={() => setImportType(opt.id as any)}
-                                className="p-6 rounded-[2rem] border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-[#76D7B6]/30 hover:shadow-xl hover:shadow-[#76D7B6]/5 transition-all text-left flex items-start gap-4 group"
+                                className="p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 hover:bg-white dark:bg-slate-950 hover:border-accent/30 hover:shadow-xl hover:shadow-accent/5 transition-all text-left flex items-start gap-4 group"
                             >
-                                <div className="w-12 h-12 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 flex items-center justify-center group-hover:scale-110 transition-transform">
                                     {opt.icon}
                                 </div>
                                 <div>
-                                    <p className="font-bold text-slate-900">{opt.title}</p>
+                                    <p className="font-bold text-slate-900 dark:text-white">{opt.title}</p>
                                     <p className="text-xs text-slate-400 font-medium">Click para configurar</p>
                                 </div>
                             </button>
@@ -156,8 +156,8 @@ export default function ImportStep({ onNext, onBack }: ImportStepProps) {
         <div className="h-full flex flex-col p-8 overflow-y-auto custom-scrollbar">
             <div className="flex justify-between items-start mb-8">
                 <div className="space-y-2">
-                    <h2 className="text-3xl font-black text-slate-900">Importar Datos</h2>
-                    <p className="text-slate-500 font-medium">Trae tu información actual a Livio en segundos.</p>
+                    <h2 className="text-3xl font-black text-slate-900 dark:text-white">Importar Datos</h2>
+                    <p className="text-slate-500 dark:text-slate-400 font-medium">Trae tu información actual a Livio en segundos.</p>
                 </div>
                 {importType && (
                     <Button variant="ghost" size="icon" onClick={() => setImportType(null)} className="rounded-full">
@@ -202,7 +202,7 @@ export default function ImportStep({ onNext, onBack }: ImportStepProps) {
                     <Button variant="ghost" className="h-12 px-6 rounded-xl font-bold text-slate-400" onClick={onNext}>
                         Omitir
                     </Button>
-                    <Button onClick={onNext} className="h-12 px-10 rounded-xl bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 font-black shadow-lg shadow-[#76D7B6]/20">
+                    <Button onClick={onNext} className="h-12 px-10 rounded-xl bg-accent hover:bg-accent/90 text-slate-900 dark:text-white font-black shadow-lg shadow-accent/20">
                         Continuar <ChevronRight className="ml-2" />
                     </Button>
                 </div>

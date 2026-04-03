@@ -42,7 +42,7 @@ interface OdontogramProps {
 }
 
 const STATUS_CONFIG: Record<ToothStatus, { fill: string; stroke: string; label: string; textColor: string }> = {
-    sano: { fill: "#E2F7F1", stroke: "#76D7B6", label: "Sano", textColor: "text-[#76D7B6]" },
+    sano: { fill: "#E2F7F1", stroke: "#76D7B6", label: "Sano", textColor: "text-accent" },
     caries: { fill: "#FFE2E2", stroke: "#FF6B6B", label: "Caries", textColor: "text-[#FF6B6B]" },
     obturacion: { fill: "#E2F0FF", stroke: "#4DABF7", label: "Obturación", textColor: "text-[#4DABF7]" },
     corona: { fill: "#FFF4E2", stroke: "#FFD43B", label: "Corona", textColor: "text-[#FAB005]" },
@@ -206,7 +206,7 @@ export function Odontogram({ initialState = {}, onStateChange, readOnly = false,
                                 x={toothWidth / 2}
                                 y={isUpper ? -12 : 58}
                                 textAnchor="middle"
-                                className={`text-[10px] font-bold transition-colors pointer-events-none ${selectedTooth === id ? "fill-[#76D7B6]" : "fill-slate-400 dark:fill-slate-500 font-mono"
+                                className={`text-[10px] font-bold transition-colors pointer-events-none ${selectedTooth === id ? "fill-accent" : "fill-slate-400 dark:fill-slate-500 font-mono"
                                     }`}
                             >
                                 {id}
@@ -214,12 +214,12 @@ export function Odontogram({ initialState = {}, onStateChange, readOnly = false,
                         </g>
                     </g>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="text-[11px] py-1.5 px-3 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-xl rounded-lg">
+                <TooltipContent side="top" className="text-[11px] py-1.5 px-3 bg-white dark:bg-slate-950 dark:bg-slate-900 border-slate-200 dark:border-slate-700 dark:border-slate-800 shadow-xl rounded-lg">
                     <div className="flex flex-col gap-0.5">
                         <span className="font-bold text-slate-900 dark:text-white">Diente {id} - {config.label}</span>
-                        {data?.notes && <span className="text-[10px] text-slate-500 italic max-w-[150px] truncate">"{data.notes}"</span>}
+                        {data?.notes && <span className="text-[10px] text-slate-500 dark:text-slate-400 italic max-w-[150px] truncate">"{data.notes}"</span>}
                         {data?.professionalId && (
-                            <span className="text-[9px] text-[#76D7B6] font-medium flex items-center gap-1 mt-0.5 border-t pt-0.5">
+                            <span className="text-[9px] text-accent font-medium flex items-center gap-1 mt-0.5 border-t pt-0.5">
                                 <User className="h-2.5 w-2.5" /> {data.professionalId === currentProfessionalId ? "Tú" : data.professionalId}
                             </span>
                         )}
@@ -244,11 +244,11 @@ export function Odontogram({ initialState = {}, onStateChange, readOnly = false,
 
     return (
         <TooltipProvider>
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 dark:bg-slate-950 dark:border-slate-800">
+            <div className="bg-white dark:bg-slate-950 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 dark:bg-slate-950 dark:border-slate-800">
                 {/* Header Controls */}
                 <div className="px-6 py-4 flex flex-col md:flex-row items-center justify-between border-b gap-4">
                     <div className="flex flex-wrap items-center gap-4">
-                        <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-lg">
+                        <div className="flex bg-slate-100 dark:bg-slate-800 dark:bg-slate-900 p-1 rounded-lg">
                             <Button
                                 variant={view === "adult" ? "secondary" : "ghost"}
                                 size="sm"
@@ -298,7 +298,7 @@ export function Odontogram({ initialState = {}, onStateChange, readOnly = false,
                 </div>
 
                 {/* Legend */}
-                <div className="px-6 py-2 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50 border-b overflow-x-auto gap-4">
+                <div className="px-6 py-2 flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900/50 border-b overflow-x-auto gap-4">
                     <div className="flex gap-4 min-w-max">
                         {Object.entries(STATUS_CONFIG).slice(0, 4).map(([key, cfg]) => (
                             <div key={key} className="flex items-center gap-1.5 text-[10px] text-slate-600 dark:text-slate-400">
@@ -311,7 +311,7 @@ export function Odontogram({ initialState = {}, onStateChange, readOnly = false,
                     <Button
                         variant="ghost"
                         size="sm"
-                        className="text-[10px] h-6 px-2 text-[#76D7B6]"
+                        className="text-[10px] h-6 px-2 text-accent"
                         onClick={() => setIsLegendExpandOpen(true)}
                     >
                         Ver más estados
@@ -325,7 +325,7 @@ export function Odontogram({ initialState = {}, onStateChange, readOnly = false,
                             {/* Jaw Backdrop Labels (Moved further away for breathing room) */}
                             <text x="325" y="25" textAnchor="middle" className="text-[12px] font-black fill-slate-200 dark:fill-slate-800/50 uppercase tracking-[0.4em] pointer-events-none">SUPERIOR</text>
                             <text x="325" y="265" textAnchor="middle" className="text-[12px] font-black fill-slate-200 dark:fill-slate-800/50 uppercase tracking-[0.4em] pointer-events-none">INFERIOR</text>
-                            <line x1="325" y1="40" x2="325" y2="240" stroke="currentColor" className="text-slate-200 dark:text-slate-800" strokeWidth={1} strokeDasharray="4 4" />
+                            <line x1="325" y1="40" x2="325" y2="240" stroke="currentColor" className="text-slate-200 dark:text-slate-800 dark:text-slate-100" strokeWidth={1} strokeDasharray="4 4" />
 
                             {view === "adult" ? (
                                 <g transform="translate(10, 50)">
@@ -383,7 +383,7 @@ export function Odontogram({ initialState = {}, onStateChange, readOnly = false,
                                     <button
                                         key={key}
                                         onClick={() => setEditStatus(key as ToothStatus)}
-                                        className={`px-1 py-1.5 rounded-lg border text-[9px] font-bold transition-all flex flex-col items-center gap-1 ${editStatus === key ? "ring-2 ring-[#76D7B6] bg-slate-50" : "hover:bg-slate-50 border-slate-200"}`}
+                                        className={`px-1 py-1.5 rounded-lg border text-[9px] font-bold transition-all flex flex-col items-center gap-1 ${editStatus === key ? "ring-2 ring-accent bg-slate-50 dark:bg-slate-900" : "hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900 border-slate-200 dark:border-slate-700"}`}
                                         style={{ borderColor: editStatus === key ? "#76D7B6" : undefined }}
                                     >
                                         <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cfg.fill, border: `1.5px solid ${cfg.stroke}` }}></div>
@@ -403,7 +403,7 @@ export function Odontogram({ initialState = {}, onStateChange, readOnly = false,
                         </div>
                         <DialogFooter>
                             <Button variant="outline" size="sm" onClick={() => setIsEditModalOpen(false)}>Cancelar</Button>
-                            <Button size="sm" className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 font-bold" onClick={saveToothState}>Guardar</Button>
+                            <Button size="sm" className="bg-accent hover:bg-accent/90 text-slate-900 dark:text-white font-bold" onClick={saveToothState}>Guardar</Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
@@ -413,11 +413,11 @@ export function Odontogram({ initialState = {}, onStateChange, readOnly = false,
                         <DialogHeader><DialogTitle>Estados Clínicos</DialogTitle></DialogHeader>
                         <div className="grid grid-cols-2 gap-3 py-4">
                             {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-                                <div key={key} className="flex items-center gap-3 p-2 rounded-lg border border-slate-100">
+                                <div key={key} className="flex items-center gap-3 p-2 rounded-lg border border-slate-100 dark:border-slate-800">
                                     <div className="w-4 h-4 rounded-full" style={{ backgroundColor: cfg.fill, border: `2px solid ${cfg.stroke}` }}></div>
                                     <div className="flex flex-col">
-                                        <span className="text-xs font-bold text-slate-900">{cfg.label}</span>
-                                        <span className="text-[9px] text-slate-500 uppercase">Activo</span>
+                                        <span className="text-xs font-bold text-slate-900 dark:text-white">{cfg.label}</span>
+                                        <span className="text-[9px] text-slate-500 dark:text-slate-400 uppercase">Activo</span>
                                     </div>
                                 </div>
                             ))}

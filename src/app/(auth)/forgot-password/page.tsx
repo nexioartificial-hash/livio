@@ -32,15 +32,15 @@ export default function ForgotPasswordPage() {
     };
 
     return (
-        <div className="flex h-screen flex-col items-center justify-center bg-slate-50 px-4">
-            <div className="w-full max-w-sm bg-white rounded-2xl shadow-lg border border-slate-200 px-8 py-8">
+        <div className="flex h-screen flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 px-4">
+            <div className="w-full max-w-sm bg-white dark:bg-slate-950 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 px-8 py-8">
                 {sent ? (
                     <div className="flex flex-col items-center text-center space-y-4">
-                        <div className="h-12 w-12 rounded-full bg-[#76D7B6]/20 flex items-center justify-center">
-                            <Mail className="h-6 w-6 text-[#76D7B6]" />
+                        <div className="h-12 w-12 rounded-full bg-accent/20 flex items-center justify-center">
+                            <Mail className="h-6 w-6 text-accent" />
                         </div>
-                        <h2 className="text-xl font-bold text-slate-900">Revisá tu email</h2>
-                        <p className="text-sm text-slate-500">
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Revisá tu email</h2>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
                             Si el email está registrado, recibirás instrucciones para restablecer tu contraseña.
                         </p>
                         <Link href="/login">
@@ -60,10 +60,10 @@ export default function ForgotPasswordPage() {
                                 height={40}
                                 className="mb-4"
                             />
-                            <h2 className="text-xl font-bold tracking-tight text-slate-900">
+                            <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
                                 ¿Olvidaste tu contraseña?
                             </h2>
-                            <p className="mt-1 text-sm text-slate-500">
+                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                                 Ingresá tu email y te enviaremos instrucciones
                             </p>
                         </div>
@@ -89,7 +89,7 @@ export default function ForgotPasswordPage() {
                         </form>
 
                         <div className="text-center mt-4">
-                            <Link href="/login" className="text-sm text-slate-500 hover:text-slate-700">
+                            <Link href="/login" className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300">
                                 <ArrowLeft className="inline h-3 w-3 mr-1" />
                                 Volver al login
                             </Link>

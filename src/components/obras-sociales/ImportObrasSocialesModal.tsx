@@ -133,37 +133,37 @@ export default function ImportObrasSocialesModal({ isOpen, onClose, clinicId, on
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto p-6 relative animate-in fade-in zoom-in duration-200">
+            <div className="bg-white dark:bg-slate-950 rounded-2xl shadow-2xl w-full max-w-md mx-auto p-6 relative animate-in fade-in zoom-in duration-200">
                 <button
                     onClick={onClose}
-                    className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 transition-colors"
+                    className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:text-slate-400 transition-colors"
                 >
                     <X className="h-5 w-5" />
                 </button>
 
-                <h3 className="text-base font-bold text-slate-900 mb-2 flex items-center gap-2">
-                    <Upload className="h-5 w-5 text-[#76D7B6]" /> Importar Obras Sociales
+                <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                    <Upload className="h-5 w-5 text-accent" /> Importar Obras Sociales
                 </h3>
-                <p className="text-xs text-slate-500 mb-6">Sube un archivo Excel o CSV con los datos de tus prepagas.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">Sube un archivo Excel o CSV con los datos de tus prepagas.</p>
 
                 <div className="space-y-6">
                     <div
                         {...getRootProps()}
                         className={cn(
                             "border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center gap-3 transition-all cursor-pointer",
-                            isDragActive ? "border-[#76D7B6] bg-[#76D7B6]/5" : "border-slate-200 hover:border-[#76D7B6]/50 hover:bg-slate-50",
-                            file && "border-solid border-[#76D7B6] bg-[#76D7B6]/5"
+                            isDragActive ? "border-accent bg-accent/5" : "border-slate-200 dark:border-slate-700 hover:border-accent/50 hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900",
+                            file && "border-solid border-accent bg-accent/5"
                         )}
                     >
                         <input {...getInputProps()} />
                         {file ? (
                             <>
-                                <div className="h-12 w-12 rounded-full bg-[#76D7B6]/20 flex items-center justify-center">
-                                    <CheckCircle2 className="h-6 w-6 text-[#76D7B6]" />
+                                <div className="h-12 w-12 rounded-full bg-accent/20 flex items-center justify-center">
+                                    <CheckCircle2 className="h-6 w-6 text-accent" />
                                 </div>
                                 <div className="text-center">
-                                    <p className="text-sm font-bold text-slate-900">{file.name}</p>
-                                    <p className="text-[10px] text-slate-500">{(file.size / 1024).toFixed(1)} KB</p>
+                                    <p className="text-sm font-bold text-slate-900 dark:text-white">{file.name}</p>
+                                    <p className="text-[10px] text-slate-500 dark:text-slate-400">{(file.size / 1024).toFixed(1)} KB</p>
                                 </div>
                                 <Button variant="ghost" size="sm" className="text-xs text-red-500 hover:text-red-600 h-7" onClick={(e) => { e.stopPropagation(); setFile(null); setPreview([]); }}>
                                     Quitar archivo
@@ -171,11 +171,11 @@ export default function ImportObrasSocialesModal({ isOpen, onClose, clinicId, on
                             </>
                         ) : (
                             <>
-                                <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                                <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
                                     <Upload className="h-6 w-6" />
                                 </div>
                                 <div className="text-center">
-                                    <p className="text-sm font-medium text-slate-600">Arrastra tu archivo aquí</p>
+                                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Arrastra tu archivo aquí</p>
                                     <p className="text-[10px] text-slate-400 mt-1">Soporta .xlsx, .xls o .csv</p>
                                 </div>
                             </>
@@ -187,17 +187,17 @@ export default function ImportObrasSocialesModal({ isOpen, onClose, clinicId, on
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Vista previa (5 filas)</p>
                             <div className="border rounded-lg overflow-hidden">
                                 <table className="w-full text-[10px]">
-                                    <thead className="bg-slate-50 border-b">
+                                    <thead className="bg-slate-50 dark:bg-slate-900 border-b">
                                         <tr>
-                                            <th className="px-2 py-1.5 text-left font-medium text-slate-500">Nombre</th>
-                                            <th className="px-2 py-1.5 text-left font-medium text-slate-500">Código</th>
+                                            <th className="px-2 py-1.5 text-left font-medium text-slate-500 dark:text-slate-400">Nombre</th>
+                                            <th className="px-2 py-1.5 text-left font-medium text-slate-500 dark:text-slate-400">Código</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y">
                                         {preview.map((row, i) => (
                                             <tr key={i}>
-                                                <td className="px-2 py-1.5 text-slate-700 font-medium truncate max-w-[150px]">{row.nombre || row.Nombre || "-"}</td>
-                                                <td className="px-2 py-1.5 text-slate-500 font-mono italic">{row.codigo || row.Codigo || row.RNA || "-"}</td>
+                                                <td className="px-2 py-1.5 text-slate-700 dark:text-slate-300 font-medium truncate max-w-[150px]">{row.nombre || row.Nombre || "-"}</td>
+                                                <td className="px-2 py-1.5 text-slate-500 dark:text-slate-400 font-mono italic">{row.codigo || row.Codigo || row.RNA || "-"}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -218,7 +218,7 @@ export default function ImportObrasSocialesModal({ isOpen, onClose, clinicId, on
 
                     <div className="flex flex-col gap-2">
                         <Button
-                            className="w-full bg-[#76D7B6] text-slate-900 hover:bg-[#65cba8] font-bold gap-2"
+                            className="w-full bg-accent text-slate-900 dark:text-white hover:bg-accent/90 font-bold gap-2"
                             onClick={handleImport}
                             disabled={!file || importing}
                         >
@@ -232,7 +232,7 @@ export default function ImportObrasSocialesModal({ isOpen, onClose, clinicId, on
                         </Button>
                         <Button
                             variant="ghost"
-                            className="w-full text-slate-500 hover:text-slate-700 text-xs gap-2"
+                            className="w-full text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300 text-xs gap-2"
                             onClick={downloadTemplate}
                         >
                             <FileDown className="h-4 w-4" /> Descargar Plantilla

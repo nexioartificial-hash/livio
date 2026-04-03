@@ -49,15 +49,15 @@ export function MiniCalendar({ horarios }: { horarios: Horarios }) {
                                     className={cn(
                                         "h-5 w-5 rounded-md flex items-center justify-center text-[10px] font-bold transition-all",
                                         active
-                                            ? "bg-[#76D7B6] text-white shadow-sm"
-                                            : "bg-slate-100 text-slate-300"
+                                            ? "bg-accent text-white shadow-sm"
+                                            : "bg-slate-100 dark:bg-slate-800 text-slate-300"
                                     )}
                                 >
                                     {day.label}
                                 </div>
                             </TooltipTrigger>
                             <TooltipContent side="top" className="p-2 text-[11px]">
-                                <p className="font-bold mb-1 uppercase text-[#76D7B6]">
+                                <p className="font-bold mb-1 uppercase text-accent">
                                     {day.id}
                                 </p>
                                 {active ? (

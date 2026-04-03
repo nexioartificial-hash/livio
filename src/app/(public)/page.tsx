@@ -9,7 +9,6 @@ import Pricing from "@/components/landing/Pricing";
 import Trust from "@/components/landing/Trust";
 import Footer from "@/components/landing/Footer";
 import HeroBackground from "@/components/landing/HeroBackground";
-import Image from "next/image";
 
 export default function LandingPage() {
     return (

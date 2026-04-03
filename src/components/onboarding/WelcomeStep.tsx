@@ -80,7 +80,7 @@ export default function WelcomeStep({ onNext }: WelcomeStepProps) {
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.2 }}
-                    className="text-4xl font-bold text-slate-800 tracking-tight leading-tight flex flex-row items-center justify-center gap-0.5 whitespace-nowrap"
+                    className="text-4xl font-bold text-slate-800 dark:text-slate-100 tracking-tight leading-tight flex flex-row items-center justify-center gap-0.5 whitespace-nowrap"
                 >
                     <span>¡Bienvenido a</span>
                     <div className="relative w-28 h-10 self-center translate-y-[2px]">
@@ -98,7 +98,7 @@ export default function WelcomeStep({ onNext }: WelcomeStepProps) {
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.3 }}
-                    className="text-slate-500 text-lg font-medium px-4 text-center max-w-lg"
+                    className="text-slate-500 dark:text-slate-400 text-lg font-medium px-4 text-center max-w-lg"
                 >
                     Configuramos tu clínica en minutos paso a paso.
                     <br />
@@ -121,7 +121,7 @@ export default function WelcomeStep({ onNext }: WelcomeStepProps) {
                 <Button
                     variant="ghost"
                     onClick={handleSkip}
-                    className="h-12 px-8 rounded-xl text-slate-400 font-medium text-sm hover:bg-slate-50 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2"
+                    className="h-12 px-8 rounded-xl text-slate-400 font-medium text-sm hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2"
                 >
                     Saltar y configurar después
                 </Button>

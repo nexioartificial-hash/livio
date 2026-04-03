@@ -140,7 +140,7 @@ export function MemberEditModal({ member, sucursales, open, onOpenChange, onSucc
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-xl p-0 overflow-hidden border-none shadow-2xl rounded-3xl">
-                <div className="bg-[#76D7B6] p-6 text-white">
+                <div className="bg-accent p-6 text-white">
                     <DialogHeader>
                         <DialogTitle className="text-2xl font-bold flex items-center gap-3">
                             <User className="h-6 w-6" />
@@ -152,36 +152,36 @@ export function MemberEditModal({ member, sucursales, open, onOpenChange, onSucc
                 <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label className="text-xs font-bold text-slate-500 uppercase">Nombre Completo</Label>
+                            <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Nombre Completo</Label>
                             <Input 
                                 {...register("full_name")}
-                                className="bg-slate-50 border-slate-100 rounded-xl focus:ring-[#76D7B6]/20"
+                                className="bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 rounded-xl focus:ring-accent/20"
                             />
                             {errors.full_name && <p className="text-[10px] text-red-500">{errors.full_name.message}</p>}
                         </div>
 
                         <div className="space-y-2">
-                            <Label className="text-xs font-bold text-slate-500 uppercase">Matrícula Nacional</Label>
+                            <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Matrícula Nacional</Label>
                             <div className="relative">
                                 <Stethoscope className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                                 <Input 
                                     {...register("matricula_nacional")}
                                     placeholder="MN 123456"
-                                    className="pl-9 bg-slate-50 border-slate-100 rounded-xl focus:ring-[#76D7B6]/20"
+                                    className="pl-9 bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 rounded-xl focus:ring-accent/20"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <Label className="text-xs font-bold text-slate-500 uppercase">Especialidad</Label>
+                            <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Especialidad</Label>
                             <Select 
                                 value={watch("specialty")}
                                 onValueChange={(val) => setValue("specialty", val)}
                             >
-                                <SelectTrigger className="bg-slate-50 border-slate-100 rounded-xl focus:ring-[#76D7B6]/20">
+                                <SelectTrigger className="bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 rounded-xl focus:ring-accent/20">
                                     <SelectValue placeholder="Selecciona especialidad" />
                                 </SelectTrigger>
-                                <SelectContent className="rounded-xl border-slate-100">
+                                <SelectContent className="rounded-xl border-slate-100 dark:border-slate-800">
                                     <SelectItem value="Odontología General">Odontología General</SelectItem>
                                     <SelectItem value="Ortodoncia">Ortodoncia</SelectItem>
                                     <SelectItem value="Endodoncia">Endodoncia</SelectItem>
@@ -193,15 +193,15 @@ export function MemberEditModal({ member, sucursales, open, onOpenChange, onSucc
                         </div>
 
                         <div className="space-y-2">
-                            <Label className="text-xs font-bold text-slate-500 uppercase">Estado</Label>
+                            <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Estado</Label>
                             <Select 
                                 value={watch("activo") ? "true" : "false"}
                                 onValueChange={(val) => setValue("activo", val === "true")}
                             >
-                                <SelectTrigger className="bg-slate-50 border-slate-100 rounded-xl focus:ring-[#76D7B6]/20">
+                                <SelectTrigger className="bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 rounded-xl focus:ring-accent/20">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="rounded-xl border-slate-100">
+                                <SelectContent className="rounded-xl border-slate-100 dark:border-slate-800">
                                     <SelectItem value="true">Activo</SelectItem>
                                     <SelectItem value="false">Inactivo (Solo dueño)</SelectItem>
                                 </SelectContent>
@@ -210,10 +210,10 @@ export function MemberEditModal({ member, sucursales, open, onOpenChange, onSucc
                     </div>
 
                     <div className="space-y-3">
-                        <Label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
+                        <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase flex items-center gap-2">
                             <MapPin className="h-3 w-3" /> Asignación de Sedes
                         </Label>
-                        <div className="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                        <div className="flex flex-wrap gap-2 p-3 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
                             {sucursales.map((suc) => (
                                 <Badge 
                                     key={suc.id}
@@ -221,8 +221,8 @@ export function MemberEditModal({ member, sucursales, open, onOpenChange, onSucc
                                     className={cn(
                                         "cursor-pointer transition-all text-[11px] py-1.5 px-3 rounded-xl",
                                         selectedSucursales.includes(suc.id) 
-                                            ? "bg-[#76D7B6] text-white border-none shadow-sm" 
-                                            : "bg-white text-slate-500 border-slate-200 hover:border-[#76D7B6] hover:text-[#76D7B6]"
+                                            ? "bg-accent text-white border-none shadow-sm" 
+                                            : "bg-white dark:bg-slate-950 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-accent hover:text-accent"
                                     )}
                                     onClick={() => toggleSucursal(suc.id)}
                                 >
@@ -294,7 +294,7 @@ export function MemberEditModal({ member, sucursales, open, onOpenChange, onSucc
                         <Button 
                             type="submit" 
                             disabled={loading}
-                            className="bg-[#76D7B6] hover:bg-[#65c5a4] text-white rounded-xl gap-2 min-w-[120px]"
+                            className="bg-accent hover:bg-[#65c5a4] text-white rounded-xl gap-2 min-w-[120px]"
                         >
                             {loading ? <Clock className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                             Guardar Cambios

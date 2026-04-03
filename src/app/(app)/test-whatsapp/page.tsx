@@ -56,22 +56,22 @@ export default function TestWhatsApp() {
 
     return (
         <div className="container mx-auto py-12 px-4 max-w-2xl">
-            <Card className="border-slate-200 shadow-xl overflow-hidden rounded-[2rem]">
-                <CardHeader className="bg-slate-50 border-b border-slate-100 p-8">
+            <Card className="border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden rounded-[2rem]">
+                <CardHeader className="bg-slate-50 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 p-8">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-3 bg-green-100 text-green-600 rounded-2xl">
                             <MessageSquare className="h-6 w-6" />
                         </div>
-                        <CardTitle className="text-2xl font-black text-slate-900">WhatsApp Test</CardTitle>
+                        <CardTitle className="text-2xl font-black text-slate-900 dark:text-white">WhatsApp Test</CardTitle>
                     </div>
-                    <CardDescription className="text-slate-500 font-medium whitespace-pre-wrap">
+                    <CardDescription className="text-slate-500 dark:text-slate-400 font-medium whitespace-pre-wrap">
                         Utilidad para probar el envío de notificaciones vía WhatsApp Business API.
-                        Phone ID: <code className="bg-slate-200 px-1.5 py-0.5 rounded text-slate-700">935474726325053</code>
+                        Phone ID: <code className="bg-slate-200 px-1.5 py-0.5 rounded text-slate-700 dark:text-slate-300">935474726325053</code>
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="p-8 space-y-6">
                     <div className="space-y-2">
-                        <Label htmlFor="to" className="text-slate-600 font-bold ml-1 flex items-center gap-2">
+                        <Label htmlFor="to" className="text-slate-600 dark:text-slate-400 font-bold ml-1 flex items-center gap-2">
                             <Phone className="h-4 w-4" /> Número Destinatario
                         </Label>
                         <Input
@@ -79,7 +79,7 @@ export default function TestWhatsApp() {
                             value={to}
                             onChange={(e) => setTo(e.target.value)}
                             placeholder="+541150634710 (Default if empty)"
-                            className="h-12 rounded-xl bg-white focus:ring-green-500"
+                            className="h-12 rounded-xl bg-white dark:bg-slate-950 focus:ring-green-500"
                         />
                         <p className="text-[10px] text-slate-400 font-medium ml-1">
                             Debe incluir código de país (ej: +549...).
@@ -87,24 +87,24 @@ export default function TestWhatsApp() {
                     </div>
 
                     <Tabs value={type} onValueChange={(v) => setType(v as any)} className="w-full">
-                        <TabsList className="grid w-full grid-cols-2 rounded-xl h-12 p-1 bg-slate-100">
-                            <TabsTrigger value="text" className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-green-600">
+                        <TabsList className="grid w-full grid-cols-2 rounded-xl h-12 p-1 bg-slate-100 dark:bg-slate-800">
+                            <TabsTrigger value="text" className="rounded-lg font-bold data-[state=active]:bg-white dark:bg-slate-950 data-[state=active]:text-green-600">
                                 Texto Libre
                             </TabsTrigger>
-                            <TabsTrigger value="template" className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-blue-600">
+                            <TabsTrigger value="template" className="rounded-lg font-bold data-[state=active]:bg-white dark:bg-slate-950 data-[state=active]:text-blue-600">
                                 Plantilla (Hello World)
                             </TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="text" className="mt-4 space-y-2">
-                            <Label htmlFor="body" className="text-slate-600 font-bold ml-1">Mensaje de Notificación</Label>
+                            <Label htmlFor="body" className="text-slate-600 dark:text-slate-400 font-bold ml-1">Mensaje de Notificación</Label>
                             <Textarea
                                 id="body"
                                 value={body}
                                 onChange={(e) => setBody(e.target.value)}
                                 placeholder="Tu mensaje aquí..."
                                 rows={4}
-                                className="rounded-xl bg-white resize-none focus:ring-green-500"
+                                className="rounded-xl bg-white dark:bg-slate-950 resize-none focus:ring-green-500"
                             />
                         </TabsContent>
 

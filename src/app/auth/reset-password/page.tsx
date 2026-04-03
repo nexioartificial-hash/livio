@@ -71,29 +71,29 @@ export default function ResetPasswordPage() {
 
     if (!sessionReady) {
         return (
-            <div className="flex h-screen items-center justify-center bg-slate-50">
+            <div className="flex h-screen items-center justify-center bg-slate-50 dark:bg-slate-900">
                 <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
             </div>
         );
     }
 
     return (
-        <div className="flex h-screen flex-col items-center justify-center bg-slate-50 px-4">
-            <div className="w-full max-w-sm bg-white rounded-2xl shadow-lg border border-slate-200 px-8 py-8">
+        <div className="flex h-screen flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 px-4">
+            <div className="w-full max-w-sm bg-white dark:bg-slate-950 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 px-8 py-8">
                 {success ? (
                     <div className="flex flex-col items-center text-center space-y-4">
-                        <CheckCircle className="h-12 w-12 text-[#76D7B6]" />
-                        <h2 className="text-xl font-bold text-slate-900">Contraseña actualizada</h2>
-                        <p className="text-sm text-slate-500">Redirigiendo al dashboard...</p>
+                        <CheckCircle className="h-12 w-12 text-accent" />
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Contraseña actualizada</h2>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Redirigiendo al dashboard...</p>
                     </div>
                 ) : (
                     <>
                         <div className="flex flex-col items-center text-center mb-6">
                             <Image src="/logo-transparent.png" alt="Livio" width={100} height={40} className="mb-4" />
-                            <h2 className="text-xl font-bold tracking-tight text-slate-900">
+                            <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
                                 Nueva contraseña
                             </h2>
-                            <p className="mt-1 text-sm text-slate-500">
+                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                                 Elegí una contraseña segura para tu cuenta
                             </p>
                         </div>
@@ -113,7 +113,7 @@ export default function ResetPasswordPage() {
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 transition-colors focus:outline-none"
                                     >
                                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                     </button>
@@ -163,7 +163,7 @@ export default function ResetPasswordPage() {
                         </form>
 
                         <div className="text-center mt-4">
-                            <Link href="/login" className="text-sm text-slate-500 hover:text-slate-700">
+                            <Link href="/login" className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300">
                                 Volver al login
                             </Link>
                         </div>

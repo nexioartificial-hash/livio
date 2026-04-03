@@ -211,23 +211,23 @@ export default function ClinicalHistoryPage() {
         <div className="space-y-6">
             {isLoading && (
                 <div className="fixed top-0 left-0 w-full h-1 z-[100]">
-                    <div className="h-full bg-[#76D7B6] animate-pulse"></div>
+                    <div className="h-full bg-accent animate-pulse"></div>
                 </div>
             )}
             {/* ─── Patient Header ─── */}
-            <div className="rounded-xl bg-white p-5 shadow-sm border border-slate-100">
+            <div className="rounded-xl bg-white dark:bg-slate-950 p-5 shadow-sm border border-slate-100 dark:border-slate-800">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex items-center gap-4">
-                        <Avatar className="h-14 w-14 border-2 border-[#76D7B6]">
-                            <AvatarFallback className="bg-[#76D7B6]/10 text-[#76D7B6] text-lg font-bold">{patient?.initials ?? "?"}</AvatarFallback>
+                        <Avatar className="h-14 w-14 border-2 border-accent">
+                            <AvatarFallback className="bg-accent/10 text-accent text-lg font-bold">{patient?.initials ?? "?"}</AvatarFallback>
                         </Avatar>
                         <div>
                             <div className="flex items-center gap-2 flex-wrap">
-                                <h1 className="text-xl font-bold text-slate-900">{patient?.name}</h1>
+                                <h1 className="text-xl font-bold text-slate-900 dark:text-white">{patient?.name}</h1>
 
                                 <Badge className="bg-green-100 text-green-700 text-[10px]">{patient?.status}</Badge>
                             </div>
-                            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500 mt-1">
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400 mt-1">
                                 <span>{patient?.age} años · {patient?.gender}</span>
                                 <span>·</span>
                                 <span className="flex items-center gap-0.5"><Shield className="h-3 w-3" /> {patient?.dni}</span>
@@ -240,7 +240,7 @@ export default function ClinicalHistoryPage() {
                                 <Badge variant="secondary" className="text-[10px]">{patient?.obraSocial}</Badge>
                                 <Badge variant="outline" className="text-[10px] border-red-200 text-red-500"><AlertCircle className="h-2.5 w-2.5 mr-0.5" /> {patient?.allergies}</Badge>
                                 <Badge variant="outline" className="text-[10px] border-purple-200 text-purple-500"><Heart className="h-2.5 w-2.5 mr-0.5" /> {patient?.bloodType}</Badge>
-                                <span className="text-[10px] text-[#76D7B6] font-medium flex items-center gap-0.5"><Calendar className="h-3 w-3" /> Próximo turno: {patient?.nextAppointment}</span>
+                                <span className="text-[10px] text-accent font-medium flex items-center gap-0.5"><Calendar className="h-3 w-3" /> Próximo turno: {patient?.nextAppointment}</span>
                             </div>
                         </div>
                     </div>
@@ -269,7 +269,7 @@ export default function ClinicalHistoryPage() {
                     {/* TAB: History */}
                     <TabsContent value="history" className="space-y-3">
                         <div className="flex items-center justify-between">
-                            <h3 className="font-semibold text-slate-700 text-sm">Historial de Consultas</h3>
+                            <h3 className="font-semibold text-slate-700 dark:text-slate-300 text-sm">Historial de Consultas</h3>
                             <Button variant="outline" size="sm" className="gap-1 text-xs"><Plus className="h-3 w-3" /> Nueva Entrada</Button>
                         </div>
                         {mockHistory.map(entry => (
@@ -283,7 +283,7 @@ export default function ClinicalHistoryPage() {
                                                     {new Date(entry.date).toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" })}
                                                 </span>
                                             </div>
-                                            <p className="text-sm text-slate-700 leading-relaxed">{entry.notes}</p>
+                                            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{entry.notes}</p>
                                             <p className="text-xs text-slate-400">Profesional: {entry.professional}</p>
                                         </div>
                                         <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 mt-1" />
@@ -371,7 +371,7 @@ export default function ClinicalHistoryPage() {
                     {/* TAB: Treatment Plan */}
                     <TabsContent value="treatment" className="space-y-3">
                         <div className="flex items-center justify-between">
-                            <h3 className="font-semibold text-slate-700 text-sm">Plan de Tratamiento</h3>
+                            <h3 className="font-semibold text-slate-700 dark:text-slate-300 text-sm">Plan de Tratamiento</h3>
                             <Button variant="outline" size="sm" className="gap-1 text-xs"><Plus className="h-3 w-3" /> Agregar</Button>
                         </div>
                         {mockTreatments.map(t => (
@@ -380,7 +380,7 @@ export default function ClinicalHistoryPage() {
                                     <div className="flex items-center justify-between">
                                         <div className="space-y-1">
                                             <div className="flex items-center gap-2">
-                                                <span className="font-medium text-sm text-slate-900">Pieza {t.piece}: {t.treatment}</span>
+                                                <span className="font-medium text-sm text-slate-900 dark:text-white">Pieza {t.piece}: {t.treatment}</span>
                                                 <Badge className={`text-[10px] ${t.status === "completado" ? "bg-green-100 text-green-700" :
                                                     t.status === "en_curso" ? "bg-blue-100 text-blue-700" :
                                                         "bg-yellow-100 text-yellow-700"
@@ -388,17 +388,17 @@ export default function ClinicalHistoryPage() {
                                                     {t.status === "en_curso" ? "En Curso" : t.status === "completado" ? "✓ Completado" : "Pendiente"}
                                                 </Badge>
                                             </div>
-                                            <div className="flex items-center gap-3 text-xs text-slate-500">
+                                            <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
                                                 <span>Sesiones: {t.sessions}/{t.totalSessions}</span>
                                                 <span>·</span>
                                                 <span>{t.professional}</span>
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <p className="font-bold text-sm text-slate-900">${t.cost.toLocaleString()}</p>
+                                            <p className="font-bold text-sm text-slate-900 dark:text-white">${t.cost.toLocaleString()}</p>
                                             {t.status === "en_curso" && (
-                                                <div className="w-20 h-1.5 bg-slate-100 rounded-full mt-1.5">
-                                                    <div className="h-full bg-[#76D7B6] rounded-full transition-all" style={{ width: `${(t.sessions / t.totalSessions) * 100}%` }}></div>
+                                                <div className="w-20 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full mt-1.5">
+                                                    <div className="h-full bg-accent rounded-full transition-all" style={{ width: `${(t.sessions / t.totalSessions) * 100}%` }}></div>
                                                 </div>
                                             )}
                                         </div>
@@ -406,14 +406,14 @@ export default function ClinicalHistoryPage() {
                                 </CardContent>
                             </Card>
                         ))}
-                        <Card className="border-dashed bg-slate-50/50">
+                        <Card className="border-dashed bg-slate-50 dark:bg-slate-900/50">
                             <CardContent className="p-4 flex items-center justify-between">
                                 <div>
-                                    <p className="text-xs text-slate-500">Total Presupuesto</p>
-                                    <p className="text-lg font-bold text-slate-900">${totalBudget.toLocaleString()}</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">Total Presupuesto</p>
+                                    <p className="text-lg font-bold text-slate-900 dark:text-white">${totalBudget.toLocaleString()}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-xs text-slate-500">Completado</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">Completado</p>
                                     <p className="text-lg font-bold text-green-600">${completedBudget.toLocaleString()}</p>
                                 </div>
                             </CardContent>
@@ -423,7 +423,7 @@ export default function ClinicalHistoryPage() {
                     {/* TAB: Evolution */}
                     <TabsContent value="evolution" className="space-y-3">
                         <div className="flex items-center justify-between">
-                            <h3 className="font-semibold text-slate-700 text-sm">Evolución Clínica</h3>
+                            <h3 className="font-semibold text-slate-700 dark:text-slate-300 text-sm">Evolución Clínica</h3>
                             <Button variant="outline" size="sm" className="gap-1 text-xs"><Plus className="h-3 w-3" /> Nueva Evolución</Button>
                         </div>
                         {mockEvolutions.map((evo, i) => (
@@ -434,13 +434,13 @@ export default function ClinicalHistoryPage() {
                                 )}
                                 <CardContent className="p-4 pl-14 relative">
                                     {/* Timeline dot */}
-                                    <div className="absolute left-4 top-5 w-5 h-5 rounded-full bg-[#76D7B6]/20 border-2 border-[#76D7B6] flex items-center justify-center">
-                                        <div className="w-2 h-2 rounded-full bg-[#76D7B6]"></div>
+                                    <div className="absolute left-4 top-5 w-5 h-5 rounded-full bg-accent/20 border-2 border-accent flex items-center justify-center">
+                                        <div className="w-2 h-2 rounded-full bg-accent"></div>
                                     </div>
                                     <div className="space-y-1.5">
                                         <div className="flex items-center justify-between gap-2">
                                             <div className="flex items-center gap-2">
-                                                <span className="text-xs font-medium text-slate-700">{new Date(evo.date).toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" })}</span>
+                                                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{new Date(evo.date).toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" })}</span>
                                                 <span className="text-xs text-slate-400">·</span>
                                                 <span className="text-xs text-slate-400">{evo.professional}</span>
                                             </div>
@@ -448,7 +448,7 @@ export default function ClinicalHistoryPage() {
                                                 <Badge className="bg-green-100 text-green-700 text-[10px] gap-0.5"><Lock className="h-2.5 w-2.5" /> Firmado</Badge>
                                             )}
                                         </div>
-                                        <p className="text-sm text-slate-700 leading-relaxed">{evo.description}</p>
+                                        <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{evo.description}</p>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -470,18 +470,18 @@ export default function ClinicalHistoryPage() {
                             {mockFindings.map(f => (
                                 <div key={f.id} className={`p-2.5 rounded-lg border text-xs ${f.severity === "alta" ? "bg-red-50 border-red-100" :
                                     f.severity === "media" ? "bg-yellow-50 border-yellow-100" :
-                                        "bg-slate-50 border-slate-100"
+                                        "bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800"
                                     }`}>
                                     <div className="flex items-center justify-between mb-1">
-                                        <span className="font-bold text-slate-900">Pieza #{f.tooth}</span>
+                                        <span className="font-bold text-slate-900 dark:text-white">Pieza #{f.tooth}</span>
                                         <Badge variant="outline" className={`text-[9px] ${f.severity === "alta" ? "border-red-300 text-red-600" :
                                             f.severity === "media" ? "border-yellow-300 text-yellow-700" :
-                                                "border-slate-300 text-slate-500"
+                                                "border-slate-300 text-slate-500 dark:text-slate-400"
                                             }`}>
                                             {f.severity}
                                         </Badge>
                                     </div>
-                                    <p className="text-slate-600">{f.finding}</p>
+                                    <p className="text-slate-600 dark:text-slate-400">{f.finding}</p>
                                 </div>
                             ))}
                         </CardContent>
@@ -491,21 +491,21 @@ export default function ClinicalHistoryPage() {
                     <Card>
                         <CardHeader className="pb-2">
                             <CardTitle className="text-sm flex items-center gap-2">
-                                <TrendingUp className="h-4 w-4 text-[#76D7B6]" />
+                                <TrendingUp className="h-4 w-4 text-accent" />
                                 Resumen Tratamiento
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             <div className="flex justify-between text-xs">
-                                <span className="text-slate-500">Presupuesto Total</span>
-                                <span className="font-bold text-slate-900">${totalBudget.toLocaleString()}</span>
+                                <span className="text-slate-500 dark:text-slate-400">Presupuesto Total</span>
+                                <span className="font-bold text-slate-900 dark:text-white">${totalBudget.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between text-xs">
-                                <span className="text-slate-500">Completado</span>
+                                <span className="text-slate-500 dark:text-slate-400">Completado</span>
                                 <span className="font-bold text-green-600">${completedBudget.toLocaleString()}</span>
                             </div>
-                            <div className="w-full h-2 bg-slate-100 rounded-full">
-                                <div className="h-full bg-[#76D7B6] rounded-full" style={{ width: `${(completedBudget / totalBudget) * 100}%` }}></div>
+                            <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full">
+                                <div className="h-full bg-accent rounded-full" style={{ width: `${(completedBudget / totalBudget) * 100}%` }}></div>
                             </div>
                             <div className="flex justify-between text-xs text-slate-400">
                                 <span>{mockTreatments.filter(t => t.status === "completado").length} completados</span>
@@ -515,7 +515,7 @@ export default function ClinicalHistoryPage() {
                                 {mockTreatments.filter(t => t.status === "en_curso").map(t => (
                                     <div key={t.id} className="flex items-center gap-2 text-xs">
                                         <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                                        <span className="text-slate-700">Pieza {t.piece}: {t.treatment}</span>
+                                        <span className="text-slate-700 dark:text-slate-300">Pieza {t.piece}: {t.treatment}</span>
                                         <ArrowRight className="h-3 w-3 text-slate-300 ml-auto" />
                                     </div>
                                 ))}
@@ -524,16 +524,16 @@ export default function ClinicalHistoryPage() {
                     </Card>
 
                     {/* Next Steps */}
-                    <Card className="bg-[#76D7B6]/5 border-[#76D7B6]/20">
+                    <Card className="bg-accent/5 border-accent/20">
                         <CardHeader className="pb-2">
                             <CardTitle className="text-sm flex items-center gap-2">
-                                <Calendar className="h-4 w-4 text-[#76D7B6]" />
+                                <Calendar className="h-4 w-4 text-accent" />
                                 Próximo Turno
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-sm font-medium text-slate-900">{patient.nextAppointment}</p>
-                            <p className="text-xs text-slate-500 mt-1">Continuar endodoncia pieza 36 — Sesión 3/4</p>
+                            <p className="text-sm font-medium text-slate-900 dark:text-white">{patient.nextAppointment}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Continuar endodoncia pieza 36 — Sesión 3/4</p>
                             <Button size="sm" variant="outline" className="mt-3 w-full gap-1 text-xs">
                                 <Clock className="h-3 w-3" /> Reprogramar
                             </Button>
@@ -573,7 +573,7 @@ export default function ClinicalHistoryPage() {
                         <p className="text-xs text-slate-400 text-center">
                             Código enviado a +54 11 ****-8900
                         </p>
-                        <button className="text-xs text-[#76D7B6] hover:underline w-full text-center">
+                        <button className="text-xs text-accent hover:underline w-full text-center">
                             Reenviar código
                         </button>
                     </div>

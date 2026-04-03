@@ -30,8 +30,7 @@ interface ImportPatientsModalProps {
 }
 
 const TEMPLATE_HEADERS = [
-    "nombre", "apellido", "dni", "telefono", "email",
-    "obrasocial", "plan", "numeroafiliado", "fechanacimiento", "tags"
+    "nombre", "apellido", "dni", "telefono", "email", "obrasocial", "plan", "fechanacimiento", "genero"
 ];
 
 const DB_FIELDS = [
@@ -42,9 +41,7 @@ const DB_FIELDS = [
     { value: "email", label: "Email" },
     { value: "obra_social", label: "Obra Social" },
     { value: "obra_social_plan", label: "Plan / Prepaga" },
-    { value: "affiliate_number", label: "N° Afiliado" },
     { value: "birth_date", label: "Fecha Nacimiento" },
-    { value: "tags", label: "Tags / Etiquetas" },
     { value: "gender", label: "Género" },
 ].sort((a, b) => a.label.localeCompare(b.label));
 
@@ -228,11 +225,9 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
             else if (h === "dni" || h === "documento" || h === "id" || h === "doc") newMapping[header] = "dni";
             else if (h === "telefono" || h === "phone" || h === "celular" || h === "tel") newMapping[header] = "phone";
             else if (h === "email" || h === "correo" || h === "mail") newMapping[header] = "email";
-            else if (h === "obrasocial" || h === "prepaga") newMapping[header] = "obra_social";
-            else if (h === "plan" || h === "planprepaga") newMapping[header] = "obra_social_plan";
-            else if (h === "numeroafiliado" || h === "afiliado" || h === "nroafiliado") newMapping[header] = "affiliate_number";
-            else if (h.includes("nacimiento") || h.includes("birth") || h === "fecha" || h === "fechanac") newMapping[header] = "birth_date";
-            else if (h === "tags" || h === "etiquetas") newMapping[header] = "tags";
+            else if (h === "obrasocial" || h === "prepaga" || h === "obra_social") newMapping[header] = "obra_social";
+            else if (h === "plan" || h === "planprepaga" || h === "obrasocialplan") newMapping[header] = "obra_social_plan";
+            else if (h.includes("nacimiento") || h.includes("birth") || h === "fechanac" || h === "fecha") newMapping[header] = "birth_date";
             else if (h === "genero" || h === "sexo" || h === "gender") newMapping[header] = "gender";
         });
         setMapping(newMapping);
@@ -263,21 +258,9 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
         setProgress(0);
 
         try {
-            // Get clinic_id for the current user
-            const { data: profData, error: profError } = await supabase
-                .from('professional')
-                .select('clinic_id')
-                .eq('id', user.id)
-                .maybeSingle();
-
-            if (profError) {
-                console.error("Error fetching professional data:", profError);
-                throw new Error("No se pudo obtener la información de la clínica: " + JSON.stringify(profError));
-            }
-
-            const clinicId = profData?.clinic_id;
+            const clinicId = (user as any)?.clinic_id ?? null;
             if (!clinicId) {
-                console.warn("⚠️ [Import] No se encontró clínica asociada. Se procederá con clinic_id = null.");
+                throw new Error("No se encontró clínica asociada al usuario.");
             }
 
             // Transform data
@@ -371,15 +354,15 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                 <DialogHeader>
                     <div className="flex items-center justify-between mb-2">
                         <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-                            <Upload className="h-6 w-6 text-[#76D7B6]" />
+                            <Upload className="h-6 w-6 text-accent" />
                             Importar Pacientes
                         </DialogTitle>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 mr-8">
                             {[1, 2, 3].map(s => (
                                 <div
                                     key={s}
-                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${step === s ? "bg-[#76D7B6] text-slate-900" :
-                                        step > s ? "bg-[#76D7B6]/20 text-[#76D7B6]" : "bg-slate-100 text-slate-400"
+                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${step === s ? "bg-accent text-slate-900 dark:text-white" :
+                                        step > s ? "bg-accent/20 text-accent" : "bg-slate-100 dark:bg-slate-800 text-slate-400"
                                         }`}
                                 >
                                     {s}
@@ -394,27 +377,27 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="flex-1 overflow-hidden my-6 border rounded-xl p-4 bg-slate-50/50 flex flex-col">
+                <div className="flex-1 overflow-y-auto my-6 border rounded-xl p-4 bg-slate-50 dark:bg-slate-900/50 flex flex-col">
                     {step === 1 && (
                         <div className="space-y-6">
                             <div
                                 {...getRootProps()}
-                                className={`border-2 border-dashed rounded-xl p-12 text-center transition-all cursor-pointer ${isDragActive ? "border-[#76D7B6] bg-[#76D7B6]/5" : "border-slate-200 hover:border-[#76D7B6]/50 bg-white"
+                                className={`border-2 border-dashed rounded-xl p-12 text-center transition-all cursor-pointer ${isDragActive ? "border-accent bg-accent/5" : "border-slate-200 dark:border-slate-700 hover:border-accent/50 bg-white dark:bg-slate-950"
                                     }`}
                             >
                                 <input {...getInputProps()} />
                                 <div className="flex flex-col items-center gap-4">
-                                    <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
-                                        <Upload className={`h-8 w-8 ${isDragActive ? "text-[#76D7B6]" : "text-slate-400"}`} />
+                                    <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                                        <Upload className={`h-8 w-8 ${isDragActive ? "text-accent" : "text-slate-400"}`} />
                                     </div>
                                     {file ? (
                                         <div className="space-y-1">
-                                            <p className="font-bold text-slate-900">{file.name}</p>
-                                            <p className="text-xs text-slate-500">{(file.size / 1024).toFixed(1)} KB · {rawData.length} filas detectadas</p>
+                                            <p className="font-bold text-slate-900 dark:text-white">{file.name}</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">{(file.size / 1024).toFixed(1)} KB · {rawData.length} filas detectadas</p>
                                         </div>
                                     ) : (
                                         <div className="space-y-1">
-                                            <p className="font-bold text-slate-900">
+                                            <p className="font-bold text-slate-900 dark:text-white">
                                                 {isDragActive ? "Soltá el archivo acá" : "Hacé clic o arrastrá tu archivo"}
                                             </p>
                                             <p className="text-xs text-slate-400">Archivos .csv o .xlsx soportados (Max 5MB)</p>
@@ -423,7 +406,7 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                                 </div>
                             </div>
 
-                            <div className="bg-white border rounded-lg p-4 flex items-center justify-between">
+                            <div className="bg-white dark:bg-slate-950 border rounded-lg p-4 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 bg-blue-50 text-blue-600 rounded">
                                         <FileText className="h-5 w-5" />
@@ -443,27 +426,27 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                     {step === 2 && (
                         <div className="space-y-4 flex-1 flex flex-col overflow-hidden">
                             <div className="flex items-center justify-between">
-                                <h4 className="text-sm font-bold flex items-center gap-2 text-slate-700">
+                                <h4 className="text-sm font-bold flex items-center gap-2 text-slate-700 dark:text-slate-300">
                                     <Calendar className="h-4 w-4" /> Vista previa (primeros 20)
                                 </h4>
-                                <Badge variant="outline" className="text-[10px] bg-white">{rawData.length} filas totales</Badge>
+                                <Badge variant="outline" className="text-[10px] bg-white dark:bg-slate-950">{rawData.length} filas totales</Badge>
                             </div>
 
-                            <div className="rounded-lg border bg-white shadow-sm overflow-hidden flex flex-col h-[420px]">
+                            <div className="rounded-lg border bg-white dark:bg-slate-950 shadow-sm overflow-hidden flex flex-col h-[420px]">
                                 <div className="flex-1 overflow-auto relative scrollbar-thin scrollbar-thumb-slate-200">
                                     <table className="min-w-[1500px] border-separate border-spacing-0 w-full text-sm">
-                                        <thead className="sticky top-0 bg-white z-40 shadow-sm">
-                                            <tr className="bg-slate-50">
-                                                <th className="min-w-[160px] max-w-[220px] py-3 px-3 bg-slate-100/95 sticky left-0 top-0 z-50 border-r border-b backdrop-blur-md text-left align-middle font-medium">
-                                                    <span className="text-[11px] font-black uppercase text-slate-600">Representación Final</span>
+                                        <thead className="sticky top-0 bg-white dark:bg-slate-950 z-40 shadow-sm">
+                                            <tr className="bg-slate-50 dark:bg-slate-900">
+                                                <th className="min-w-[160px] max-w-[220px] py-3 px-3 bg-slate-100 dark:bg-slate-800/95 sticky left-0 top-0 z-50 border-r border-b backdrop-blur-md text-left align-middle font-medium">
+                                                    <span className="text-[11px] font-black uppercase text-slate-600 dark:text-slate-400">Representación Final</span>
                                                 </th>
                                                 {headers.map((header) => (
-                                                    <th key={header} className="min-w-[150px] max-w-[200px] py-2 px-3 border-b bg-slate-50/95 sticky top-0 z-40 text-left align-middle font-medium">
+                                                    <th key={header} className="min-w-[150px] max-w-[200px] py-2 px-3 border-b bg-slate-50 dark:bg-slate-900/95 sticky top-0 z-40 text-left align-middle font-medium">
                                                         <div className="space-y-2">
                                                             <TooltipProvider>
                                                                 <Tooltip>
                                                                     <TooltipTrigger asChild>
-                                                                        <span className="text-[11px] font-bold block truncate uppercase text-slate-500">
+                                                                        <span className="text-[11px] font-bold block truncate uppercase text-slate-500 dark:text-slate-400">
                                                                             {formatHeaderForDisplay(header)}
                                                                         </span>
                                                                     </TooltipTrigger>
@@ -476,7 +459,7 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                                                                 value={mapping[header] || "ignore"}
                                                                 onValueChange={(val) => setMapping({ ...mapping, [header]: val === "ignore" ? "" : val })}
                                                             >
-                                                                <SelectTrigger className="h-8 text-[11px] bg-white border-slate-200 shadow-sm">
+                                                                <SelectTrigger className="h-8 text-[11px] bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-700 shadow-sm">
                                                                     <SelectValue placeholder="Ignorar" />
                                                                 </SelectTrigger>
                                                                 <SelectContent className="z-[100]">
@@ -495,9 +478,9 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                                         </thead>
                                         <tbody className="divide-y relative">
                                             {rawData.slice(0, 20).map((row, i) => (
-                                                <tr key={i} className="hover:bg-slate-50/50 group transition-colors border-b">
-                                                    <td className="py-2.5 px-3 bg-slate-50/95 sticky left-0 z-30 border-r backdrop-blur-sm shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] align-middle">
-                                                        <span className="text-xs font-bold text-slate-800">{getDisplayName(row)}</span>
+                                                <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900/50 group transition-colors border-b">
+                                                    <td className="py-2.5 px-3 bg-slate-50 dark:bg-slate-900/95 sticky left-0 z-30 border-r backdrop-blur-sm shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] align-middle">
+                                                        <span className="text-xs font-bold text-slate-800 dark:text-slate-100">{getDisplayName(row)}</span>
                                                     </td>
                                                     {headers.map((h) => (
                                                         <td key={h} className="py-2.5 px-3 border-r last:border-r-0 align-middle">
@@ -512,13 +495,13 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                             </div>
 
                             <div className="flex-1 flex flex-col justify-end">
-                                <div className="flex items-center space-x-2 bg-[#76D7B6]/5 border border-[#76D7B6]/20 p-4 rounded-xl">
+                                <div className="flex items-center space-x-2 bg-accent/5 border border-accent/20 p-4 rounded-xl">
                                     <Checkbox id="overwrite" checked={overwrite} onCheckedChange={(val) => setOverwrite(!!val)} />
                                     <div>
-                                        <label htmlFor="overwrite" className="text-sm font-bold text-slate-700 block cursor-pointer">
+                                        <label htmlFor="overwrite" className="text-sm font-bold text-slate-700 dark:text-slate-300 block cursor-pointer">
                                             Sobrescribir datos existentes
                                         </label>
-                                        <p className="text-xs text-slate-500">Si el DNI ya existe, se actualizará el paciente en lugar de crear uno nuevo.</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">Si el DNI ya existe, se actualizará el paciente en lugar de crear uno nuevo.</p>
                                     </div>
                                 </div>
                             </div>
@@ -527,33 +510,33 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
 
                     {step === 3 && (
                         <div className="space-y-6 flex flex-col items-center justify-center py-8 text-center flex-1">
-                            <div className="w-24 h-24 rounded-full bg-[#76D7B6]/10 flex items-center justify-center mb-4 scale-animation">
-                                <CheckCircle2 className="h-12 w-12 text-[#76D7B6]" />
+                            <div className="w-24 h-24 rounded-full bg-accent/10 flex items-center justify-center mb-4 scale-animation">
+                                <CheckCircle2 className="h-12 w-12 text-accent" />
                             </div>
                             <div>
-                                <h3 className="text-xl font-bold text-slate-900">¿Todo listo para importar?</h3>
+                                <h3 className="text-xl font-bold text-slate-900 dark:text-white">¿Todo listo para importar?</h3>
                                 <div className="mt-4 grid grid-cols-2 gap-4 max-w-sm mx-auto">
-                                    <div className="p-3 bg-white border rounded-xl shadow-sm">
-                                        <p className="text-2xl font-black text-[#76D7B6]">{rawData.length}</p>
+                                    <div className="p-3 bg-white dark:bg-slate-950 border rounded-xl shadow-sm">
+                                        <p className="text-2xl font-black text-accent">{rawData.length}</p>
                                         <p className="text-[10px] uppercase font-bold text-slate-400">Pacientes</p>
                                     </div>
-                                    <div className="p-3 bg-white border rounded-xl shadow-sm">
-                                        <p className="text-2xl font-black text-[#76D7B6]">{Object.keys(mapping).filter(k => mapping[k]).length}</p>
+                                    <div className="p-3 bg-white dark:bg-slate-950 border rounded-xl shadow-sm">
+                                        <p className="text-2xl font-black text-accent">{Object.keys(mapping).filter(k => mapping[k]).length}</p>
                                         <p className="text-[10px] uppercase font-bold text-slate-400">Campos</p>
                                     </div>
                                 </div>
-                                <p className="text-slate-500 max-w-sm mx-auto mt-6 text-sm">
+                                <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-6 text-sm">
                                     Los campos faltantes se podrán completar manualmente desde el perfil del paciente.
                                 </p>
                             </div>
 
                             {isProcessing && (
-                                <div className="w-full max-w-sm space-y-3 mt-8">
-                                    <div className="flex justify-between text-xs font-bold text-slate-600 uppercase tracking-tighter">
+                                <div className="w-full max-w-xs mt-6 space-y-2">
+                                    <div className="flex justify-between text-xs font-semibold text-slate-600 dark:text-slate-400">
                                         <span>Procesando lote...</span>
                                         <span>{progress}%</span>
                                     </div>
-                                    <Progress value={progress} className="h-3 rounded-full bg-slate-100" />
+                                    <Progress value={progress} className="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800" />
                                 </div>
                             )}
                         </div>
@@ -574,7 +557,7 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
 
                     {step < 3 ? (
                         <Button
-                            className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 font-bold"
+                            className="bg-accent hover:bg-accent/90 text-slate-900 dark:text-white font-bold"
                             disabled={!file}
                             onClick={() => setStep(step === 1 ? 2 : 3)}
                         >
@@ -582,7 +565,7 @@ export function ImportPatientsModal({ open, onOpenChange, onSuccess }: ImportPat
                         </Button>
                     ) : (
                         <Button
-                            className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 font-bold min-w-[140px]"
+                            className="bg-accent hover:bg-accent/90 text-slate-900 dark:text-white font-bold min-w-[140px]"
                             onClick={handleImport}
                             disabled={isProcessing}
                         >

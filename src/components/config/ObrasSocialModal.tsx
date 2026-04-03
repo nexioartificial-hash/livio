@@ -31,6 +31,7 @@ import { saveObraSocial } from "@/app/actions/obras_sociales";
 import { getTratamientos } from "@/app/actions/tratamientos";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { titleCase } from "@/utils/formatters";
 
 const formSchema = z.object({
     nombre: z.string().min(2, "Mínimo 2 caracteres"),
@@ -161,14 +162,14 @@ export function ObrasSocialModal({
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[500px] rounded-3xl p-0 overflow-hidden border-none shadow-2xl max-h-[85vh] flex flex-col">
-                <DialogHeader className="px-8 pt-8 pb-4 bg-white shrink-0">
-                    <DialogTitle className="text-2xl font-bold text-slate-900">
+                <DialogHeader className="px-8 pt-8 pb-4 bg-white dark:bg-slate-950 shrink-0">
+                    <DialogTitle className="text-2xl font-bold text-slate-900 dark:text-white">
                         {obraSocial ? "Editar Obra Social" : "Nueva Obra Social"}
                     </DialogTitle>
                 </DialogHeader>
 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col overflow-hidden flex-1 bg-white">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col overflow-hidden flex-1 bg-white dark:bg-slate-950">
                         <div className="flex-1 overflow-y-auto px-8 space-y-6 pb-6">
                             <div className="grid grid-cols-1 gap-4">
                             <FormField
@@ -181,8 +182,8 @@ export function ObrasSocialModal({
                                             <Input 
                                                 placeholder="Ej: OSDE, Swiss Medical" 
                                                 {...field} 
-                                                onChange={(e) => field.onChange(capitalize(e.target.value))}
-                                                className="h-11 rounded-xl bg-slate-50 border-none focus-visible:ring-1 focus-visible:ring-[#10B981]" 
+                                                onChange={(e) => field.onChange(titleCase(e.target.value))}
+                                                className="h-11 rounded-xl bg-slate-50 dark:bg-slate-900 border-none focus-visible:ring-1 focus-visible:ring-[#10B981]" 
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -206,7 +207,7 @@ export function ObrasSocialModal({
                             </div>
                             <div className="space-y-3">
                                 {planesList.map((planObj, index) => (
-                                    <div key={index} className="flex gap-3 items-start bg-slate-50/50 p-3 rounded-xl border border-slate-100 relative group">
+                                    <div key={index} className="flex gap-3 items-start bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800 relative group">
                                         <div className="flex-1 space-y-3 relative">
                                             <div>
                                                 <Input 
@@ -214,14 +215,14 @@ export function ObrasSocialModal({
                                                     value={planObj.nombre_plan}
                                                     onChange={(e) => {
                                                         const nw = [...planesList];
-                                                        nw[index].nombre_plan = capitalize(e.target.value);
+                                                        nw[index].nombre_plan = titleCase(e.target.value);
                                                         setPlanesList(nw);
                                                     }}
-                                                    className="h-10 rounded-xl bg-white border-slate-200 text-sm focus-visible:ring-1 focus-visible:ring-[#10B981]"
+                                                    className="h-10 rounded-xl bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-sm focus-visible:ring-1 focus-visible:ring-[#10B981]"
                                                 />
                                             </div>
                                             <div className="flex items-center gap-3">
-                                                <span className="text-[10px] font-bold text-slate-500 uppercase">Cobertura</span>
+                                                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Cobertura</span>
                                                 <Slider
                                                     min={0}
                                                     max={100}
@@ -246,7 +247,7 @@ export function ObrasSocialModal({
                                                     const nw = planesList.filter((_, i) => i !== index);
                                                     setPlanesList(nw);
                                                 }}
-                                                className="h-6 w-6 mt-1 shrink-0 rounded-full flex items-center justify-center text-slate-400 hover:bg-white hover:text-red-500 hover:shadow-sm transition-all absolute -right-4 -top-4 bg-white border border-slate-100 shadow-sm opacity-0 group-hover:opacity-100"
+                                                className="h-6 w-6 mt-1 shrink-0 rounded-full flex items-center justify-center text-slate-400 hover:bg-white dark:bg-slate-950 hover:text-red-500 hover:shadow-sm transition-all absolute -right-4 -top-4 bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 shadow-sm opacity-0 group-hover:opacity-100"
                                             >
                                                 <Trash2 className="h-3.5 w-3.5" />
                                             </button>
@@ -264,7 +265,7 @@ export function ObrasSocialModal({
                                         variant="outline"
                                         role="combobox"
                                         aria-expanded={openCombo}
-                                        className="w-full justify-between h-11 rounded-xl bg-slate-50 border-none font-normal text-slate-600 hover:bg-slate-100"
+                                        className="w-full justify-between h-11 rounded-xl bg-slate-50 dark:bg-slate-900 border-none font-normal text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-800"
                                     >
                                         Seleccionar tratamientos...
                                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -291,7 +292,7 @@ export function ObrasSocialModal({
                                                         <Check
                                                             className={cn(
                                                                 "mr-2 h-4 w-4",
-                                                                tags.includes(option) ? "opacity-100 text-[#76D7B6]" : "opacity-0"
+                                                                tags.includes(option) ? "opacity-100 text-accent" : "opacity-0"
                                                             )}
                                                         />
                                                         {option}
@@ -304,7 +305,7 @@ export function ObrasSocialModal({
                             </Popover>
                             <div className="flex flex-wrap gap-1.5 pt-1">
                                 {tags.map((tag) => (
-                                    <Badge key={tag} variant="secondary" className="bg-slate-50 text-slate-600 border-none py-1 pl-2.5 pr-1.5 flex items-center gap-1 group">
+                                    <Badge key={tag} variant="secondary" className="bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-none py-1 pl-2.5 pr-1.5 flex items-center gap-1 group">
                                         <span className="text-[11px] font-medium">{tag}</span>
                                         <button 
                                             type="button" 
@@ -325,9 +326,9 @@ export function ObrasSocialModal({
                             control={form.control}
                             name="activo"
                             render={({ field }) => (
-                                <FormItem className="flex items-center justify-between p-4 rounded-2xl bg-slate-50/50 border border-slate-100">
+                                <FormItem className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
                                     <div className="space-y-0.5">
-                                        <FormLabel className="text-sm font-bold text-slate-900">Estado Activo</FormLabel>
+                                        <FormLabel className="text-sm font-bold text-slate-900 dark:text-white">Estado Activo</FormLabel>
                                         <p className="text-[10px] text-slate-400 uppercase font-bold tracking-tight">Habilitar esta OS para turnos</p>
                                     </div>
                                     <FormControl>
@@ -343,8 +344,8 @@ export function ObrasSocialModal({
 
                         </div>
 
-                        <DialogFooter className="px-8 pb-8 pt-4 border-t border-slate-50 sm:justify-between items-center shrink-0 bg-white">
-                            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="hidden sm:block text-slate-400 hover:text-slate-600 text-xs font-bold uppercase tracking-widest">
+                        <DialogFooter className="px-8 pb-8 pt-4 border-t border-slate-50 dark:border-slate-800 sm:justify-between items-center shrink-0 bg-white dark:bg-slate-950">
+                            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="hidden sm:block text-slate-400 hover:text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-widest">
                                 Cancelar
                             </Button>
                             <Button type="submit" disabled={loading} className="w-full sm:w-auto h-11 px-8 rounded-xl bg-slate-900 text-white hover:bg-slate-800 font-bold text-sm shadow-lg shadow-slate-200 gap-2">

@@ -26,7 +26,7 @@ import { treatmentSchema, TreatmentValues } from "@/lib/validators/config";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Stethoscope, Trash2, Clock, DollarSign } from "lucide-react";
-import { sentenceCase } from "@/utils/masks";
+import { sentenceCase } from "@/utils/formatters";
 import { formatCurrency, parseCurrency } from "@/utils/formatters";
 
 interface TreatmentModalProps {
@@ -131,7 +131,7 @@ export default function TreatmentModal({
 
             if (editingItem) {
                 const { data, error } = await supabase
-                    .from("tratamiento")
+                    .from("tratamientos")
                     .update(payload)
                     .eq("id", editingItem.id)
                     .select("*")
@@ -142,7 +142,7 @@ export default function TreatmentModal({
                 onSuccess(data, true);
             } else {
                 const { data, error } = await supabase
-                    .from("tratamiento")
+                    .from("tratamientos")
                     .insert(payload)
                     .select("*")
                     .single();
@@ -167,7 +167,7 @@ export default function TreatmentModal({
         setIsDeleting(true);
         try {
             const { error } = await supabase
-                .from("tratamiento")
+                .from("tratamientos")
                 .delete()
                 .eq("id", editingItem.id);
 
@@ -185,19 +185,19 @@ export default function TreatmentModal({
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-md p-0 sm:max-w-lg max-h-[90vh] overflow-hidden flex flex-col border-none shadow-2xl">
-                <DialogHeader className="p-4 border-b bg-white flex-shrink-0">
-                    <DialogTitle className="flex items-center gap-2 text-slate-800">
-                        <Stethoscope className="h-5 w-5 text-[#76D7B6]" />
+                <DialogHeader className="p-4 border-b bg-white dark:bg-slate-950 flex-shrink-0">
+                    <DialogTitle className="flex items-center gap-2 text-slate-800 dark:text-slate-100">
+                        <Stethoscope className="h-5 w-5 text-accent" />
                         {editingItem ? "Editar Tratamiento" : "Nuevo Tratamiento"}
                     </DialogTitle>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit(onSubmit as any)} className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-white">
+                <form onSubmit={handleSubmit(onSubmit as any)} className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-white dark:bg-slate-950">
                     <div className="grid gap-4">
                         {/* Compact 2x2 Grid for core fields */}
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1.5">
-                                <Label className="text-xs font-semibold text-slate-600">Nombre</Label>
+                                <Label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Nombre</Label>
                                 <Input 
                                     {...register("nombre")} 
                                     placeholder="Nombre"
@@ -211,7 +211,7 @@ export default function TreatmentModal({
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label className="text-xs font-semibold text-slate-600">Categoría</Label>
+                                <Label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Categoría</Label>
                                 <Select 
                                     value={watch("categoria")} 
                                     onValueChange={(v) => setValue("categoria", v)}
@@ -228,7 +228,7 @@ export default function TreatmentModal({
                             </div>
 
                              <div className="space-y-1.5">
-                                <Label className="text-xs font-semibold text-slate-600">Código NOMS</Label>
+                                <Label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Código NOMS</Label>
                                 <Input 
                                     {...register("noms")} 
                                     placeholder="Código"
@@ -238,7 +238,7 @@ export default function TreatmentModal({
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label className="text-xs font-semibold text-slate-600">Duración (min)</Label>
+                                <Label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Duración (min)</Label>
                                 <div className="relative">
                                     <Clock className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
                                     <Input 
@@ -250,12 +250,12 @@ export default function TreatmentModal({
                             </div>
                         </div>
 
-                        <div className="h-px bg-slate-100 my-1" />
+                        <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
 
                         {/* Color and Preview Row */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
                             <div className="space-y-2">
-                                <Label className="text-xs font-semibold text-slate-600">Color Identificador</Label>
+                                <Label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Color Identificador</Label>
                                 <div className="flex flex-wrap gap-1.5">
                                     {PRESET_COLORS.slice(0, 8).map(color => (
                                         <button
@@ -266,7 +266,7 @@ export default function TreatmentModal({
                                             onClick={() => setValue("color", color)}
                                         />
                                     ))}
-                                    <div className="relative w-6 h-6 rounded-full overflow-hidden border border-slate-200">
+                                    <div className="relative w-6 h-6 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
                                         <input 
                                             type="color" 
                                             className="absolute inset-0 w-[200%] h-[200%] -translate-x-[25%] -translate-y-[25%] cursor-pointer"
@@ -277,12 +277,12 @@ export default function TreatmentModal({
                                 </div>
                             </div>
                             
-                            <div className="p-2 rounded-lg border border-dashed border-slate-200 bg-slate-50/50 flex items-center justify-between">
+                            <div className="p-2 rounded-lg border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900/50 flex items-center justify-between">
                                 <div className="flex items-center gap-2 overflow-hidden">
                                     <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: watchedColor }} />
-                                    <span className="text-[11px] font-bold text-slate-700 truncate">{watchedDuration}min | ${Number(watchedPrice).toLocaleString()}</span>
+                                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 truncate">{watchedDuration}min | ${Number(watchedPrice).toLocaleString()}</span>
                                 </div>
-                                <Badge className="text-[9px] h-4 px-1 bg-slate-200 text-slate-600 border-none">
+                                <Badge className="text-[9px] h-4 px-1 bg-slate-200 text-slate-600 dark:text-slate-400 border-none">
                                     {watch("noms") || "NOMS"}
                                 </Badge>
                             </div>
@@ -291,7 +291,7 @@ export default function TreatmentModal({
                         {/* Price and Status */}
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1.5">
-                                <Label className="text-xs font-semibold text-slate-600">Precio Base ($)</Label>
+                                <Label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Precio Base ($)</Label>
                                 <div className="relative">
                                     <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
                                     <Input 
@@ -305,8 +305,8 @@ export default function TreatmentModal({
                                     />
                                 </div>
                             </div>
-                            <div className="flex items-center justify-between px-3 h-9 bg-slate-50 rounded-md border border-slate-100 self-end">
-                                <Label className="text-xs font-medium text-slate-600">Activo</Label>
+                            <div className="flex items-center justify-between px-3 h-9 bg-slate-50 dark:bg-slate-900 rounded-md border border-slate-100 dark:border-slate-800 self-end">
+                                <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">Activo</Label>
                                 <Switch 
                                     className="scale-75"
                                     checked={watch("activo")}
@@ -316,7 +316,7 @@ export default function TreatmentModal({
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label className="text-xs font-semibold text-slate-600">Notas / Descripción</Label>
+                            <Label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Notas / Descripción</Label>
                             <textarea 
                                 {...register("descripcion")} 
                                 placeholder="Notas internas para recepcionista..."
@@ -331,7 +331,7 @@ export default function TreatmentModal({
                     </div>
                 </form>
 
-                <DialogFooter className="p-4 border-t bg-slate-50/50 flex-shrink-0 gap-2">
+                <DialogFooter className="p-4 border-t bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900/50 flex-shrink-0 gap-2">
                     {editingItem && (
                         <Button
                             type="button"
@@ -353,7 +353,7 @@ export default function TreatmentModal({
                         size="sm"
                         disabled={isSaving || !isValid}
                         onClick={handleSubmit(onSubmit as any)}
-                        className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 h-8 px-4"
+                        className="bg-accent hover:bg-accent/90 text-slate-900 dark:text-white h-8 px-4"
                     >
                         {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : (editingItem ? "Actualizar" : "Crear")}
                     </Button>

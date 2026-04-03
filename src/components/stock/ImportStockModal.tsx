@@ -138,7 +138,7 @@ export default function ImportStockModal({
             const batchSize = 50;
             for (let i = 0; i < mappedData.length; i += batchSize) {
                 const batch = mappedData.slice(i, i + batchSize);
-                const { error } = await supabase.from("stock").insert(batch);
+                const { error } = await supabase.from("inventario").insert(batch);
                 if (error) throw error;
                 setProgress(Math.round(((i + batch.length) / mappedData.length) * 100));
             }
@@ -201,22 +201,22 @@ export default function ImportStockModal({
                             {...getRootProps()} 
                             className={cn(
                                 "border-2 border-dashed rounded-2xl p-10 flex flex-col items-center justify-center gap-3 transition-all cursor-pointer",
-                                isDragActive ? "border-[#76D7B6] bg-[#76D7B6]/5" : "border-slate-200 hover:border-[#76D7B6]/50"
+                                isDragActive ? "border-accent bg-accent/5" : "border-slate-200 dark:border-slate-700 hover:border-accent/50"
                             )}
                         >
                             <input {...getInputProps()} />
-                            <div className="h-16 w-16 rounded-full bg-slate-50 flex items-center justify-center">
+                            <div className="h-16 w-16 rounded-full bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
                                 <Upload className="h-8 w-8 text-slate-400" />
                             </div>
                             <div className="text-center">
-                                <p className="text-sm font-bold text-slate-900">Click para subir o arrastra un archivo</p>
-                                <p className="text-xs text-slate-500">Excel (.xlsx, .xls) o CSV soportados</p>
+                                <p className="text-sm font-bold text-slate-900 dark:text-white">Click para subir o arrastra un archivo</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">Excel (.xlsx, .xls) o CSV soportados</p>
                             </div>
                             <Button 
                                 type="button" 
                                 variant="outline" 
                                 size="sm" 
-                                className="mt-2 text-[#76D7B6] border-[#76D7B6]"
+                                className="mt-2 text-accent border-accent"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     downloadTemplate();
@@ -227,14 +227,14 @@ export default function ImportStockModal({
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
+                            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
                                 <div className="flex items-center gap-3">
-                                    <div className="h-10 w-10 bg-white rounded-lg border border-slate-200 flex items-center justify-center text-green-600">
+                                    <div className="h-10 w-10 bg-white dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-green-600">
                                         <FileSpreadsheet className="h-5 w-5" />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-bold text-slate-900 truncate max-w-[200px]">{file.name}</p>
-                                        <p className="text-[10px] text-slate-500">{(file.size / 1024).toFixed(1)} KB</p>
+                                        <p className="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[200px]">{file.name}</p>
+                                        <p className="text-[10px] text-slate-500 dark:text-slate-400">{(file.size / 1024).toFixed(1)} KB</p>
                                     </div>
                                 </div>
                                 <Button 
@@ -252,10 +252,10 @@ export default function ImportStockModal({
                                     <p className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Vista previa de datos</p>
                                     <div className="border rounded-lg overflow-hidden">
                                         <table className="w-full text-[10px] border-collapse">
-                                            <thead className="bg-slate-50 border-b">
+                                            <thead className="bg-slate-50 dark:bg-slate-900 border-b">
                                                 <tr>
                                                     {Object.keys(previewData[0]).slice(0, 4).map(key => (
-                                                        <th key={key} className="p-2 text-left font-bold text-slate-600 truncate max-w-[80px]">{key}</th>
+                                                        <th key={key} className="p-2 text-left font-bold text-slate-600 dark:text-slate-400 truncate max-w-[80px]">{key}</th>
                                                     ))}
                                                 </tr>
                                             </thead>
@@ -263,7 +263,7 @@ export default function ImportStockModal({
                                                 {previewData.map((row, i) => (
                                                     <tr key={i} className="border-b last:border-none">
                                                         {Object.values(row).slice(0, 4).map((val: any, j) => (
-                                                            <td key={j} className="p-2 text-slate-500 truncate max-w-[80px]">{val}</td>
+                                                            <td key={j} className="p-2 text-slate-500 dark:text-slate-400 truncate max-w-[80px]">{val}</td>
                                                         ))}
                                                     </tr>
                                                 ))}
@@ -275,13 +275,13 @@ export default function ImportStockModal({
 
                             {isImporting && (
                                 <div className="space-y-2">
-                                    <div className="flex justify-between text-xs font-bold text-slate-600">
+                                    <div className="flex justify-between text-xs font-bold text-slate-600 dark:text-slate-400">
                                         <span>Procesando...</span>
                                         <span>{progress}%</span>
                                     </div>
-                                    <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                    <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
                                         <div 
-                                            className="bg-[#76D7B6] h-full transition-all duration-300" 
+                                            className="bg-accent h-full transition-all duration-300" 
                                             style={{ width: `${progress}%` }}
                                         />
                                     </div>
@@ -298,7 +298,7 @@ export default function ImportStockModal({
                     <Button 
                         onClick={handleImport} 
                         disabled={!file || isImporting}
-                        className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 font-bold min-w-[120px]"
+                        className="bg-accent hover:bg-accent/90 text-slate-900 dark:text-white font-bold min-w-[120px]"
                     >
                         {isImporting ? (
                             <>

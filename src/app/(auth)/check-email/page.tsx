@@ -45,33 +45,33 @@ function CheckEmailContent() {
     };
 
     return (
-        <div className="flex h-screen items-center justify-center bg-slate-50 px-4">
-            <div className="w-full max-w-sm bg-white rounded-2xl shadow-lg border border-slate-200 px-8 py-10 text-center">
+        <div className="flex h-screen items-center justify-center bg-slate-50 dark:bg-slate-900 px-4">
+            <div className="w-full max-w-sm bg-white dark:bg-slate-950 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 px-8 py-10 text-center">
                 <Image src="/logo-transparent.png" alt="Livio" width={100} height={40} className="mx-auto mb-6" />
 
-                <div className="h-16 w-16 rounded-full bg-[#76D7B6]/10 flex items-center justify-center mx-auto mb-4">
-                    <Mail className="h-8 w-8 text-[#76D7B6]" />
+                <div className="h-16 w-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
+                    <Mail className="h-8 w-8 text-accent" />
                 </div>
 
-                <h2 className="text-xl font-bold text-slate-900">¡Revisá tu email!</h2>
-                <p className="mt-3 text-sm text-slate-500">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">¡Revisá tu email!</h2>
+                <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
                     Enviamos un link de verificación a:
                 </p>
-                <p className="mt-1 text-sm font-semibold text-slate-900">{maskedEmail}</p>
-                <p className="mt-3 text-sm text-slate-500">
+                <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">{maskedEmail}</p>
+                <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
                     Hacé click en el link del email para activar tu cuenta.
                 </p>
 
                 {providerUrl && (
                     <a href={providerUrl} target="_blank" rel="noopener noreferrer">
-                        <Button className="w-full mt-5 bg-[#76D7B6] hover:bg-[#65cba8] text-white font-bold">
+                        <Button className="w-full mt-5 bg-accent hover:bg-accent/90 text-white font-bold">
                             <ExternalLink className="mr-2 h-4 w-4" />
                             Abrir mi email
                         </Button>
                     </a>
                 )}
 
-                <div className="mt-6 pt-5 border-t border-slate-100">
+                <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800">
                     <p className="text-xs text-slate-400 mb-3">¿No encontrás el email?</p>
                     <ul className="text-xs text-slate-400 text-left space-y-1 mb-4 list-disc list-inside">
                         <li>Revisá la carpeta de spam o correo no deseado</li>
@@ -79,9 +79,9 @@ function CheckEmailContent() {
                     </ul>
 
                     {resendCount >= 3 ? (
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
                             Si seguís sin recibirlo, contactanos a{" "}
-                            <a href="mailto:soporte@liviodental.com" className="text-[#76D7B6] underline">
+                            <a href="mailto:soporte@liviodental.com" className="text-accent underline">
                                 soporte@liviodental.com
                             </a>
                         </p>
@@ -107,7 +107,7 @@ function CheckEmailContent() {
                 <p className="mt-5 text-[11px] text-slate-400">
                     El link expira en 24 horas.
                 </p>
-                <Link href="/login" className="block mt-2 text-xs text-slate-500 hover:text-slate-700">
+                <Link href="/login" className="block mt-2 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300">
                     ← Volver al login
                 </Link>
             </div>
@@ -118,7 +118,7 @@ function CheckEmailContent() {
 export default function CheckEmailPage() {
     return (
         <Suspense fallback={
-            <div className="flex h-screen items-center justify-center bg-slate-50">
+            <div className="flex h-screen items-center justify-center bg-slate-50 dark:bg-slate-900">
                 <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
             </div>
         }>

@@ -98,8 +98,8 @@ export default async function WhatsAppSuccessPage() {
                     <CheckCircle2 className="h-6 w-6 text-emerald-600" />
                 </div>
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">¡WhatsApp conectado!</h1>
-                    <p className="text-slate-500 text-sm">Tu número está activo y listo para usar en Livio.</p>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">¡WhatsApp conectado!</h1>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm">Tu número está activo y listo para usar en Livio.</p>
                 </div>
             </div>
 
@@ -107,11 +107,11 @@ export default async function WhatsAppSuccessPage() {
             <Card className="border-emerald-200 bg-emerald-50/40">
                 <CardContent className="p-4 flex items-center justify-between gap-4">
                     <div>
-                        <p className="text-xs text-slate-500 mb-0.5">Número verificado</p>
-                        <p className="font-bold text-slate-900 text-xl tracking-wide">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">Número verificado</p>
+                        <p className="font-bold text-slate-900 dark:text-white text-xl tracking-wide">
                             {connection.display_number}
                         </p>
-                        <p className="text-sm text-slate-600">{connection.verified_name}</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">{connection.verified_name}</p>
                         <p className="text-xs text-slate-400 mt-1">WABA ID: {connection.waba_id}</p>
                     </div>
                     <Badge className="bg-emerald-100 text-emerald-700 border-0 shrink-0">Activo</Badge>
@@ -122,14 +122,14 @@ export default async function WhatsAppSuccessPage() {
             <Card>
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                        <QrCode className="h-4 w-4 text-slate-600" />
+                        <QrCode className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                         Código QR — Vincular dispositivo
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="flex gap-6 items-start">
                         {/* QR image */}
-                        <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex items-center justify-center w-40 h-40 shrink-0">
+                        <div className="bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-3 flex items-center justify-center w-40 h-40 shrink-0">
                             {qr.qr_image_url ? (
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img
@@ -154,11 +154,11 @@ export default async function WhatsAppSuccessPage() {
 
                         {/* Instructions */}
                         <div className="space-y-3 flex-1 min-w-0">
-                            <p className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                            <p className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                                 <Smartphone className="h-4 w-4 text-slate-400" />
                                 Cómo escanear
                             </p>
-                            <ol className="text-xs text-slate-600 space-y-1.5 list-decimal list-inside">
+                            <ol className="text-xs text-slate-600 dark:text-slate-400 space-y-1.5 list-decimal list-inside">
                                 <li>Abrí <strong>WhatsApp Business</strong> en tu celular</li>
                                 <li>Tocá los tres puntos <strong>⋮</strong> → <strong>Dispositivos vinculados</strong></li>
                                 <li>Tocá <strong>Vincular un dispositivo</strong></li>

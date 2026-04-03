@@ -246,7 +246,17 @@ export default function RegisterPage() {
             });
 
             if (authError) {
-                toast.error("Error al registrar. Verificá los datos e intentá de nuevo.");
+                console.error("[Register] Supabase authError:", authError.message, authError);
+                const msg = authError.message?.toLowerCase() || "";
+                if (msg.includes("already registered") || msg.includes("already been registered")) {
+                    toast.error("Este email ya está registrado. Intentá iniciar sesión.");
+                } else if (msg.includes("rate limit") || msg.includes("too many")) {
+                    toast.error("Demasiados intentos. Esperá unos minutos e intentá de nuevo.");
+                } else if (msg.includes("password")) {
+                    toast.error("La contraseña no cumple los requisitos de seguridad.");
+                } else {
+                    toast.error(`Error al registrar: ${authError.message}`);
+                }
                 setLoading(false);
                 return;
             }
@@ -291,7 +301,7 @@ export default function RegisterPage() {
             />
             <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/60" />
 
-            <div className="relative z-10 w-full max-w-md space-y-6 bg-white/95 backdrop-blur-sm p-8 rounded-2xl shadow-[0_25px_80px_rgba(0,0,0,0.25),0_8px_20px_rgba(0,0,0,0.1)] border border-white/50">
+            <div className="relative z-10 w-full max-w-md space-y-6 bg-white dark:bg-slate-950/95 backdrop-blur-sm p-8 rounded-2xl shadow-[0_25px_80px_rgba(0,0,0,0.25),0_8px_20px_rgba(0,0,0,0.1)] border border-white/50">
                 <div className="flex flex-col items-center text-center">
                     <Image
                         src="/logo-transparent.png"
@@ -300,16 +310,16 @@ export default function RegisterPage() {
                         height={40}
                         className="mb-6 opacity-80"
                     />
-                    <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+                    <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                         {step === 1 ? "Datos de la Clínica" : "Tu Perfil Profesional"}
                     </h2>
-                    <p className="mt-2 text-sm text-slate-500">
+                    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                         Comienza tu prueba gratuita de 30 días
                     </p>
 
                     <div className="flex items-center gap-2 mt-4">
-                        <div className={`h-2 w-8 rounded-full ${step >= 1 ? "bg-[#76D7B6]" : "bg-slate-200"}`}></div>
-                        <div className={`h-2 w-8 rounded-full ${step >= 2 ? "bg-[#76D7B6]" : "bg-slate-200"}`}></div>
+                        <div className={`h-2 w-8 rounded-full ${step >= 1 ? "bg-accent" : "bg-slate-200"}`}></div>
+                        <div className={`h-2 w-8 rounded-full ${step >= 2 ? "bg-accent" : "bg-slate-200"}`}></div>
                     </div>
                 </div>
 
@@ -409,7 +419,7 @@ export default function RegisterPage() {
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
                                         aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-400 transition-colors focus:outline-none"
                                     >
                                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                     </button>
@@ -488,15 +498,15 @@ export default function RegisterPage() {
                                 )}
                             </div>
 
-                            <div className="p-4 bg-[#76D7B6]/10 rounded-lg text-sm text-slate-600 mt-4">
-                                <p className="font-semibold text-[#76D7B6] mb-1">✨ Plan Trial</p>
+                            <div className="p-4 bg-accent/10 rounded-lg text-sm text-slate-600 dark:text-slate-400 mt-4">
+                                <p className="font-semibold text-accent mb-1">✨ Plan Trial</p>
                                 <p>Tendrás acceso total a todas las funciones premium por 30 días. Sin cargos automáticos.</p>
                             </div>
 
                             <button
                                 type="button"
                                 onClick={() => setStep(1)}
-                                className="text-sm text-slate-500 hover:text-slate-700 underline w-full text-center"
+                                className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300 underline w-full text-center"
                             >
                                 ← Volver al paso anterior
                             </button>
@@ -505,7 +515,7 @@ export default function RegisterPage() {
 
                     <Button
                         type="submit"
-                        className="w-full bg-[#76D7B6] hover:bg-[#65cba8] text-white font-bold"
+                        className="w-full bg-accent hover:bg-accent/90 text-white font-bold"
                         disabled={loading || (step === 1 && !isStep1Valid) || (step === 2 && !isStep2Valid)}
                         aria-disabled={loading || (step === 1 && !isStep1Valid) || (step === 2 && !isStep2Valid)}
                     >
@@ -515,8 +525,8 @@ export default function RegisterPage() {
                 </form>
 
                 <div className="text-center text-sm">
-                    <span className="text-slate-500">¿Ya tienes cuenta? </span>
-                    <Link href="/login" className="font-semibold text-slate-900 hover:underline">
+                    <span className="text-slate-500 dark:text-slate-400">¿Ya tienes cuenta? </span>
+                    <Link href="/login" className="font-semibold text-slate-900 dark:text-white hover:underline">
                         Iniciar Sesión
                     </Link>
                 </div>

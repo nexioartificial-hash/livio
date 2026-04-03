@@ -116,14 +116,14 @@ export default function StaffStep({ onNext, onBack }: StaffStepProps) {
     return (
         <div className="h-full flex flex-col p-8 overflow-y-auto custom-scrollbar">
             <div className="space-y-2 mb-8">
-                <h2 className="text-3xl font-black text-slate-900">Tu Equipo Médico</h2>
-                <p className="text-slate-500 font-medium">Configura los profesionales que trabajarán en la clínica.</p>
+                <h2 className="text-3xl font-black text-slate-900 dark:text-white">Tu Equipo Médico</h2>
+                <p className="text-slate-500 dark:text-slate-400 font-medium">Configura los profesionales que trabajarán en la clínica.</p>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
                 <div className="flex justify-between items-center">
                     <div>
-                        <h3 className="text-xl font-bold text-slate-900">Profesionales ({fields.length})</h3>
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-white">Profesionales ({fields.length})</h3>
                     </div>
                     <Button
                         type="button"
@@ -141,7 +141,7 @@ export default function StaffStep({ onNext, onBack }: StaffStepProps) {
                             key={field.id}
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="p-6 rounded-[2rem] bg-white border border-slate-100 shadow-sm space-y-4 relative"
+                            className="p-6 rounded-[2rem] bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4 relative"
                         >
                             {index > 0 && (
                                 <button
@@ -155,7 +155,7 @@ export default function StaffStep({ onNext, onBack }: StaffStepProps) {
 
                             <div className="flex gap-6">
                                 <div className="flex-shrink-0">
-                                    <div className="w-20 h-20 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400 group cursor-pointer hover:border-[#76D7B6] hover:text-[#76D7B6] transition-all">
+                                    <div className="w-20 h-20 rounded-2xl bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center text-slate-400 group cursor-pointer hover:border-accent hover:text-accent transition-all">
                                         <Camera size={24} />
                                         <span className="text-[10px] font-bold mt-1">FOTO</span>
                                     </div>
@@ -193,7 +193,7 @@ export default function StaffStep({ onNext, onBack }: StaffStepProps) {
                     <Button type="button" variant="ghost" onClick={onBack} className="h-12 px-6 rounded-xl font-bold text-slate-400">
                         <ChevronLeft className="mr-2" /> Volver
                     </Button>
-                    <Button type="submit" disabled={loading} className="h-12 px-10 rounded-xl bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 font-black shadow-lg shadow-[#76D7B6]/20">
+                    <Button type="submit" disabled={loading} className="h-12 px-10 rounded-xl bg-accent hover:bg-accent/90 text-slate-900 dark:text-white font-black shadow-lg shadow-accent/20">
                         {loading ? "Guardando..." : "Continuar"} <ChevronRight className="ml-2" />
                     </Button>
                 </div>

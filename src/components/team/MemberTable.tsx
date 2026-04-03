@@ -143,7 +143,7 @@ export function MemberTable({ data, sucursales, onRefresh }: MemberTableProps) {
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 text-slate-400 hover:text-[#76D7B6] hover:bg-[#76D7B6]/10 rounded-xl transition-all"
+                    className="h-9 w-9 text-slate-400 hover:text-accent hover:bg-accent/10 rounded-xl transition-all"
                     title="Configurar Perfil"
                     onClick={(e) => { e.stopPropagation(); handleEdit(member); }}
                 >
@@ -167,7 +167,7 @@ export function MemberTable({ data, sucursales, onRefresh }: MemberTableProps) {
 
     const emptyState = (
         <div className="flex flex-col items-center gap-3 text-slate-400 py-16">
-            <div className="h-16 w-16 bg-slate-50 rounded-3xl flex items-center justify-center">
+            <div className="h-16 w-16 bg-slate-50 dark:bg-slate-900 rounded-3xl flex items-center justify-center">
                 <UserPlus className="h-8 w-8 stroke-1" />
             </div>
             <p className="text-sm font-medium">No se encontraron miembros con esos filtros</p>
@@ -177,19 +177,19 @@ export function MemberTable({ data, sucursales, onRefresh }: MemberTableProps) {
     return (
         <div className="space-y-4">
             {/* Toolbar */}
-            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between bg-white dark:bg-slate-950 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
                 <div className="relative flex-1 min-w-0">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                     <Input
                         placeholder="Buscar por nombre, email o matrícula..."
-                        className="pl-9 h-10 border-slate-100 bg-slate-50/50 focus:bg-white rounded-xl w-full"
+                        className="pl-9 h-10 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 focus:bg-white dark:bg-slate-950 rounded-xl w-full"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                     <select
-                        className="h-10 px-3 rounded-xl border border-slate-100 bg-slate-50/50 text-xs font-bold text-slate-600 focus:outline-none appearance-none cursor-pointer"
+                        className="h-10 px-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-xs font-bold text-slate-600 dark:text-slate-400 focus:outline-none appearance-none cursor-pointer"
                         value={roleFilter}
                         onChange={(e) => setRoleFilter(e.target.value)}
                     >
@@ -199,7 +199,7 @@ export function MemberTable({ data, sucursales, onRefresh }: MemberTableProps) {
                         <option value="receptionist">Recepcionistas</option>
                     </select>
                     <select
-                        className="h-10 px-3 rounded-xl border border-slate-100 bg-slate-50/50 text-xs font-bold text-slate-600 focus:outline-none appearance-none cursor-pointer"
+                        className="h-10 px-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-xs font-bold text-slate-600 dark:text-slate-400 focus:outline-none appearance-none cursor-pointer"
                         value={branchFilter}
                         onChange={(e) => setBranchFilter(e.target.value)}
                     >
@@ -213,7 +213,7 @@ export function MemberTable({ data, sucursales, onRefresh }: MemberTableProps) {
                         size="sm"
                         className={cn(
                             "h-10 rounded-xl text-xs font-bold gap-1.5 px-3 shrink-0",
-                            statusFilter !== "all" ? "bg-[#76D7B6]/10 text-[#76D7B6] border border-[#76D7B6]/20" : "text-slate-500 hover:bg-slate-50"
+                            statusFilter !== "all" ? "bg-accent/10 text-accent border border-accent/20" : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900"
                         )}
                         onClick={() => {
                             if (statusFilter === "all") setStatusFilter("activo");
@@ -228,7 +228,7 @@ export function MemberTable({ data, sucursales, onRefresh }: MemberTableProps) {
             </div>
 
             {/* === DESKTOP TABLE (md+) === */}
-            <div className="hidden md:block rounded-3xl border border-slate-100 overflow-hidden shadow-sm bg-white">
+            <div className="hidden md:block rounded-3xl border border-slate-100 dark:border-slate-800 overflow-hidden shadow-sm bg-white dark:bg-slate-950">
                 {/* Fixed-layout table prevents overflow */}
                 <table className="w-full table-fixed">
                     <colgroup>
@@ -239,7 +239,7 @@ export function MemberTable({ data, sucursales, onRefresh }: MemberTableProps) {
                         <col style={{ width: "12%" }} />
                     </colgroup>
                     <thead>
-                        <tr className="bg-slate-50/50 border-b border-slate-100">
+                        <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
                             <th className="text-left text-[11px] font-extrabold text-slate-400 uppercase tracking-widest py-4 pl-6 pr-3">Miembro</th>
                             <th className="text-left text-[11px] font-extrabold text-slate-400 uppercase tracking-widest py-4 px-3">Info Profesional</th>
                             <th className="text-center text-[11px] font-extrabold text-slate-400 uppercase tracking-widest py-4 px-3">Horarios</th>
@@ -260,20 +260,20 @@ export function MemberTable({ data, sucursales, onRefresh }: MemberTableProps) {
                                         initial={{ opacity: 0, y: 6 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0 }}
-                                        className="border-b border-slate-50 hover:bg-[#76D7B6]/[0.025] transition-colors group"
+                                        className="border-b border-slate-50 hover:bg-accent/[0.025] transition-colors group"
                                     >
                                         {/* Miembro */}
                                         <td className="py-4 pl-6 pr-3">
                                             <div className="flex items-center gap-3 min-w-0">
-                                                <Avatar className="h-10 w-10 ring-2 ring-white shadow-sm border border-slate-100 shrink-0">
+                                                <Avatar className="h-10 w-10 ring-2 ring-white shadow-sm border border-slate-100 dark:border-slate-800 shrink-0">
                                                     <AvatarImage src={member.foto_url} />
-                                                    <AvatarFallback className="bg-[#76D7B6]/10 text-[#76D7B6] font-extrabold text-[11px] uppercase">
+                                                    <AvatarFallback className="bg-accent/10 text-accent font-extrabold text-[11px] uppercase">
                                                         {(member.full_name || "M").split(" ").map((n: string) => n[0]).join("").substring(0, 2)}
                                                     </AvatarFallback>
                                                 </Avatar>
                                                 <div className="min-w-0 flex-1">
                                                     <div className="flex items-center gap-2 min-w-0">
-                                                        <p className="font-extrabold text-[14px] text-slate-900 leading-none truncate">{member.full_name}</p>
+                                                        <p className="font-extrabold text-[14px] text-slate-900 dark:text-white leading-none truncate">{member.full_name}</p>
                                                         {getRoleBadge(member.role)}
                                                     </div>
                                                     <p className="text-[11px] text-slate-400 font-medium truncate mt-1">{member.email}</p>
@@ -289,7 +289,7 @@ export function MemberTable({ data, sucursales, onRefresh }: MemberTableProps) {
                                         <td className="py-4 px-3">
                                             <div className="space-y-1 min-w-0">
                                                 {member.matricula_nacional && (
-                                                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-600 truncate">
+                                                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-600 dark:text-slate-400 truncate">
                                                         <Stethoscope className="h-3 w-3 text-slate-300 shrink-0" />
                                                         <span className="truncate">MN: {member.matricula_nacional}</span>
                                                     </div>
@@ -301,13 +301,13 @@ export function MemberTable({ data, sucursales, onRefresh }: MemberTableProps) {
                                                     {(member.sucursales || []).slice(0, 2).map((sid: string) => {
                                                         const s = sucursales.find(suc => suc.id === sid);
                                                         return s ? (
-                                                            <Badge key={sid} variant="secondary" className="bg-slate-100/50 text-slate-500 border-none text-[9px] h-4 font-bold px-1.5 rounded-md shrink-0">
+                                                            <Badge key={sid} variant="secondary" className="bg-slate-100 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-none text-[9px] h-4 font-bold px-1.5 rounded-md shrink-0">
                                                                 <MapPin className="h-2 w-2 mr-0.5" />{s.name}
                                                             </Badge>
                                                         ) : null;
                                                     })}
                                                     {(member.sucursales || []).length > 2 && (
-                                                        <Badge variant="secondary" className="bg-slate-100/50 text-slate-400 border-none text-[9px] h-4 font-bold px-1.5 rounded-md shrink-0">
+                                                        <Badge variant="secondary" className="bg-slate-100 dark:bg-slate-800/50 text-slate-400 border-none text-[9px] h-4 font-bold px-1.5 rounded-md shrink-0">
                                                             +{member.sucursales.length - 2}
                                                         </Badge>
                                                     )}
@@ -322,7 +322,7 @@ export function MemberTable({ data, sucursales, onRefresh }: MemberTableProps) {
                                         </td>
                                         {/* Producción */}
                                         <td className="py-4 px-3">
-                                            <p className="font-extrabold text-[14px] text-slate-800 truncate">$ 450.000</p>
+                                            <p className="font-extrabold text-[14px] text-slate-800 dark:text-slate-100 truncate">$ 450.000</p>
                                             <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight truncate">Este mes</p>
                                         </td>
                                         {/* Acciones */}
@@ -341,7 +341,7 @@ export function MemberTable({ data, sucursales, onRefresh }: MemberTableProps) {
             <div className="md:hidden space-y-3">
                 <AnimatePresence mode="popLayout">
                     {filteredData.length === 0 ? (
-                        <div className="rounded-3xl border border-slate-100 bg-white">{emptyState}</div>
+                        <div className="rounded-3xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950">{emptyState}</div>
                     ) : (
                         filteredData.map((member) => (
                             <motion.div
@@ -349,19 +349,19 @@ export function MemberTable({ data, sucursales, onRefresh }: MemberTableProps) {
                                 initial={{ opacity: 0, y: 8 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0 }}
-                                className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4"
+                                className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-4"
                             >
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="flex items-center gap-3 min-w-0">
-                                        <Avatar className="h-11 w-11 ring-2 ring-white shadow-sm border border-slate-100 shrink-0">
+                                        <Avatar className="h-11 w-11 ring-2 ring-white shadow-sm border border-slate-100 dark:border-slate-800 shrink-0">
                                             <AvatarImage src={member.foto_url} />
-                                            <AvatarFallback className="bg-[#76D7B6]/10 text-[#76D7B6] font-extrabold text-[12px] uppercase">
+                                            <AvatarFallback className="bg-accent/10 text-accent font-extrabold text-[12px] uppercase">
                                                 {(member.full_name || "M").split(" ").map((n: string) => n[0]).join("").substring(0, 2)}
                                             </AvatarFallback>
                                         </Avatar>
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <p className="font-extrabold text-[15px] text-slate-900 truncate">{member.full_name}</p>
+                                                <p className="font-extrabold text-[15px] text-slate-900 dark:text-white truncate">{member.full_name}</p>
                                                 {getRoleBadge(member.role)}
                                             </div>
                                             <p className="text-[12px] text-slate-400 truncate">{member.email}</p>
@@ -384,14 +384,14 @@ export function MemberTable({ data, sucursales, onRefresh }: MemberTableProps) {
                                             </span>
                                         )}
                                         {member.matricula_nacional && (
-                                            <span className="text-[10px] font-bold text-slate-500 bg-slate-50 px-2 py-1 rounded-lg flex items-center gap-1">
+                                            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 px-2 py-1 rounded-lg flex items-center gap-1">
                                                 <Stethoscope className="h-3 w-3" /> MN: {member.matricula_nacional}
                                             </span>
                                         )}
                                         {(member.sucursales || []).slice(0, 3).map((sid: string) => {
                                             const s = sucursales.find(suc => suc.id === sid);
                                             return s ? (
-                                                <Badge key={sid} variant="secondary" className="bg-slate-100/50 text-slate-500 border-none text-[9px] font-bold px-2 rounded-lg">
+                                                <Badge key={sid} variant="secondary" className="bg-slate-100 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-none text-[9px] font-bold px-2 rounded-lg">
                                                     <MapPin className="h-2.5 w-2.5 mr-1" />{s.name}
                                                 </Badge>
                                             ) : null;

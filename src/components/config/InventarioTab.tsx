@@ -164,7 +164,7 @@ export function InventarioTab({ clinicId }: InventarioTabProps) {
 
     return (
         <div className="space-y-6">
-            <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-950 via-indigo-900 to-[#76D7B6]/20 border border-indigo-800 shadow-xl overflow-hidden relative">
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-950 via-indigo-900 to-accent/20 border border-indigo-800 shadow-xl overflow-hidden relative">
                 <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
                     <Package className="h-32 w-32 text-indigo-200" />
                 </div>
@@ -173,7 +173,7 @@ export function InventarioTab({ clinicId }: InventarioTabProps) {
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                                <Package className="h-6 w-6 text-[#76D7B6]" />
+                                <Package className="h-6 w-6 text-accent" />
                                 Inventario
                             </h2>
                             <p className="text-indigo-200 mt-1 max-w-xl text-sm leading-relaxed">
@@ -193,7 +193,7 @@ export function InventarioTab({ clinicId }: InventarioTabProps) {
                             )}
                             <Button 
                                 onClick={() => { setEditingItem(null); setModalOpen(true); }}
-                                className="bg-[#76D7B6] text-indigo-950 hover:bg-[#5fc0a0] font-bold shadow-lg h-10 px-6 rounded-full"
+                                className="bg-accent text-indigo-950 hover:bg-[#5fc0a0] font-bold shadow-lg h-10 px-6 rounded-full"
                             >
                                 <Plus className="h-4 w-4 mr-2" />
                                 {items.length === 0 ? "Agregar mi Primer Producto" : "Nuevo Producto"}
@@ -202,21 +202,21 @@ export function InventarioTab({ clinicId }: InventarioTabProps) {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-                        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                        <div className="bg-white dark:bg-slate-950/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
                             <div className="flex items-center gap-2 text-indigo-200 mb-1">
                                 <Package className="h-4 w-4" />
                                 <span className="text-xs font-semibold uppercase tracking-wider">Productos Registrados</span>
                             </div>
                             <p className="text-2xl font-bold text-white">{items.length}</p>
                         </div>
-                        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                        <div className="bg-white dark:bg-slate-950/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
                             <div className="flex items-center gap-2 text-indigo-200 mb-1">
                                 <TrendingDown className="h-4 w-4" />
                                 <span className="text-xs font-semibold uppercase tracking-wider">Valor Monetario Estimado</span>
                             </div>
                             <p className="text-2xl font-bold text-white">${totalValor.toLocaleString('es-AR')}</p>
                         </div>
-                        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 flex items-center justify-between">
+                        <div className="bg-white dark:bg-slate-950/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 flex items-center justify-between">
                             <div>
                                 <div className="flex items-center gap-2 text-indigo-200 mb-1">
                                     <AlertTriangle className="h-4 w-4" />
@@ -244,7 +244,7 @@ export function InventarioTab({ clinicId }: InventarioTabProps) {
             </div>
 
             {/* Content Section */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            <div className="bg-white dark:bg-slate-950 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
                 <div className="flex flex-col sm:flex-row gap-4 mb-6">
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
@@ -252,12 +252,12 @@ export function InventarioTab({ clinicId }: InventarioTabProps) {
                             placeholder="Buscar insumos por nombre..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-9 bg-slate-50 border-slate-200"
+                            className="pl-9 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700"
                         />
                     </div>
                     <div className="flex items-center gap-4">
                         <Select value={categoriaFilter} onValueChange={setCategoriaFilter}>
-                            <SelectTrigger className="w-[180px] bg-slate-50 border-slate-200">
+                            <SelectTrigger className="w-[180px] bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700">
                                 <SelectValue placeholder="Categoría" />
                             </SelectTrigger>
                             <SelectContent>
@@ -267,28 +267,28 @@ export function InventarioTab({ clinicId }: InventarioTabProps) {
                             </SelectContent>
                         </Select>
                         
-                        <div className="flex items-center space-x-2 border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 cursor-pointer transition-colors hover:bg-slate-100" onClick={() => setStockBajoOnly(!stockBajoOnly)}>
+                        <div className="flex items-center space-x-2 border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg px-3 py-2 cursor-pointer transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-800" onClick={() => setStockBajoOnly(!stockBajoOnly)}>
                             <Switch id="stock-bajo" checked={stockBajoOnly} onCheckedChange={setStockBajoOnly} />
-                            <Label htmlFor="stock-bajo" className="text-sm font-medium text-slate-700 cursor-pointer whitespace-nowrap">Solo Stock Bajo</Label>
+                            <Label htmlFor="stock-bajo" className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer whitespace-nowrap">Solo Stock Bajo</Label>
                         </div>
 
-                        <div className="flex items-center space-x-2 border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 cursor-pointer transition-colors hover:bg-slate-100" onClick={() => setVencimientoProximoOnly(!vencimientoProximoOnly)}>
+                        <div className="flex items-center space-x-2 border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg px-3 py-2 cursor-pointer transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-800" onClick={() => setVencimientoProximoOnly(!vencimientoProximoOnly)}>
                             <Switch id="vencimiento-proximo" checked={vencimientoProximoOnly} onCheckedChange={setVencimientoProximoOnly} />
-                            <Label htmlFor="vencimiento-proximo" className="text-sm font-medium text-slate-700 cursor-pointer whitespace-nowrap">Solo Vencimiento Próximo</Label>
+                            <Label htmlFor="vencimiento-proximo" className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer whitespace-nowrap">Solo Vencimiento Próximo</Label>
                         </div>
                     </div>
                 </div>
 
-                <div className="rounded-xl border border-slate-100 overflow-hidden">
+                <div className="rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
                     <Table>
-                        <TableHeader className="bg-slate-50">
+                        <TableHeader className="bg-slate-50 dark:bg-slate-900">
                             <TableRow>
-                                <TableHead className="font-semibold text-slate-900">Producto</TableHead>
-                                <TableHead className="font-semibold text-slate-900">Categoría</TableHead>
-                                <TableHead className="font-semibold text-slate-900 w-[200px]">Disponibilidad</TableHead>
-                                <TableHead className="font-semibold text-slate-900 hidden md:table-cell">Ubicación</TableHead>
-                                <TableHead className="font-semibold text-slate-900 hidden lg:table-cell">Vencimiento</TableHead>
-                                <TableHead className="font-semibold text-slate-900 text-right">Valor Unit</TableHead>
+                                <TableHead className="font-semibold text-slate-900 dark:text-white">Producto</TableHead>
+                                <TableHead className="font-semibold text-slate-900 dark:text-white">Categoría</TableHead>
+                                <TableHead className="font-semibold text-slate-900 dark:text-white w-[200px]">Disponibilidad</TableHead>
+                                <TableHead className="font-semibold text-slate-900 dark:text-white hidden md:table-cell">Ubicación</TableHead>
+                                <TableHead className="font-semibold text-slate-900 dark:text-white hidden lg:table-cell">Vencimiento</TableHead>
+                                <TableHead className="font-semibold text-slate-900 dark:text-white text-right">Valor Unit</TableHead>
                                 <TableHead className="w-[50px]"></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -296,8 +296,8 @@ export function InventarioTab({ clinicId }: InventarioTabProps) {
                             {loading ? (
                                 <TableRow>
                                     <TableCell colSpan={7} className="h-48 text-center">
-                                        <div className="flex flex-col items-center justify-center text-slate-500 gap-2">
-                                            <div className="h-6 w-6 rounded-full border-2 border-[#76D7B6] border-t-transparent animate-spin" />
+                                        <div className="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 gap-2">
+                                            <div className="h-6 w-6 rounded-full border-2 border-accent border-t-transparent animate-spin" />
                                             <p className="text-sm">Cargando inventario...</p>
                                         </div>
                                     </TableCell>
@@ -305,13 +305,13 @@ export function InventarioTab({ clinicId }: InventarioTabProps) {
                             ) : filteredItems.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={7} className="h-48 text-center">
-                                        <div className="flex flex-col items-center justify-center text-slate-500 gap-2">
+                                        <div className="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 gap-2">
                                             <Package className="h-8 w-8 text-slate-300" />
                                             <p className="text-sm font-medium">No se encontraron productos</p>
                                             {searchTerm || stockBajoOnly || vencimientoProximoOnly || categoriaFilter !== "Todas" ? (
                                                 <p className="text-xs text-slate-400">Probá limpiando los filtros</p>
                                             ) : (
-                                                <Button variant="link" onClick={() => { setEditingItem(null); setModalOpen(true); }} className="text-[#76D7B6]">
+                                                <Button variant="link" onClick={() => { setEditingItem(null); setModalOpen(true); }} className="text-accent">
                                                     Añadir tu primer insumo
                                                 </Button>
                                             )}
@@ -336,19 +336,19 @@ export function InventarioTab({ clinicId }: InventarioTabProps) {
                                         } else if (diasDiff <= 30) {
                                             vencimientoBadge = <Badge className="bg-orange-100 text-orange-700 border-none font-bold">En {diasDiff} días</Badge>;
                                         } else {
-                                            vencimientoBadge = <span className="text-sm text-slate-500">{format(vDate, 'MMM yyyy', { locale: es })}</span>;
+                                            vencimientoBadge = <span className="text-sm text-slate-500 dark:text-slate-400">{format(vDate, 'MMM yyyy', { locale: es })}</span>;
                                         }
                                     } else {
                                         vencimientoBadge = <span className="text-sm text-slate-300 italic">Sin fecha</span>;
                                     }
 
                                     return (
-                                        <TableRow key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                                        <TableRow key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900/50 dark:hover:bg-slate-900/50 transition-colors">
                                             <TableCell>
-                                                <p className="font-bold text-slate-900">{item.producto}</p>
+                                                <p className="font-bold text-slate-900 dark:text-white">{item.producto}</p>
                                             </TableCell>
                                             <TableCell>
-                                                <Badge variant="outline" className="bg-slate-100 text-slate-600 border-none">
+                                                <Badge variant="outline" className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-none">
                                                     {item.categoria}
                                                 </Badge>
                                             </TableCell>
@@ -362,13 +362,13 @@ export function InventarioTab({ clinicId }: InventarioTabProps) {
                                                     </div>
                                                     <Progress 
                                                         value={stockPercentage} 
-                                                        className="h-1.5 bg-slate-100" 
+                                                        className="h-1.5 bg-slate-100 dark:bg-slate-800" 
                                                         indicatorClassName={progressColor} 
                                                     />
                                                 </div>
                                             </TableCell>
                                             <TableCell className="hidden md:table-cell">
-                                                <p className="text-sm text-slate-600">{item.ubicacion || "-"}</p>
+                                                <p className="text-sm text-slate-600 dark:text-slate-400">{item.ubicacion || "-"}</p>
                                             </TableCell>
                                             <TableCell className="hidden lg:table-cell">
                                                 <div className="flex items-center gap-2">
@@ -377,7 +377,7 @@ export function InventarioTab({ clinicId }: InventarioTabProps) {
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <p className="font-medium text-slate-700">${item.precio_unit.toLocaleString('es-AR')}</p>
+                                                <p className="font-medium text-slate-700 dark:text-slate-300">${item.precio_unit.toLocaleString('es-AR')}</p>
                                             </TableCell>
                                             <TableCell>
                                                 <DropdownMenu>

@@ -57,7 +57,7 @@ export function TreatmentCombobox({
         setLoading(true);
         try {
             const { data, error } = await supabase
-                .from("tratamiento")
+                .from("tratamientos")
                 .select("id, nombre, categoria, duracion, color, precio")
                 .eq("clinic_id", clinicId)
                 .eq("activo", true)
@@ -84,7 +84,7 @@ export function TreatmentCombobox({
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className="w-full justify-between font-normal text-slate-900 border-slate-200 hover:border-[#76D7B6] transition-colors"
+                    className="w-full justify-between font-normal text-slate-900 dark:text-white border-slate-200 dark:border-slate-700 hover:border-accent transition-colors"
                 >
                     <div className="flex items-center gap-2 truncate">
                         {selectedTreatment ? (
@@ -94,7 +94,7 @@ export function TreatmentCombobox({
                                     style={{ backgroundColor: selectedTreatment.color }} 
                                 />
                                 <span className="truncate font-medium">{selectedTreatment.nombre}</span>
-                                <Badge variant="outline" className="text-[10px] py-0 h-4 bg-slate-50">
+                                <Badge variant="outline" className="text-[10px] py-0 h-4 bg-slate-50 dark:bg-slate-900">
                                     {selectedTreatment.categoria}
                                 </Badge>
                             </>
@@ -110,7 +110,7 @@ export function TreatmentCombobox({
                     <div className="flex items-center border-b px-3">
                         <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                         <input
-                            className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-slate-500 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-slate-500 dark:text-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
                             placeholder="Buscar tratamiento..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
@@ -141,7 +141,7 @@ export function TreatmentCombobox({
                                                 style={{ backgroundColor: treatment.color }} 
                                             />
                                             <div className="flex flex-col">
-                                                <span className="font-semibold text-slate-800">{treatment.nombre}</span>
+                                                <span className="font-semibold text-slate-800 dark:text-slate-100">{treatment.nombre}</span>
                                                 <div className="flex items-center gap-2 text-[10px] text-slate-400">
                                                     <span>{treatment.categoria}</span>
                                                     <span>•</span>
@@ -151,7 +151,7 @@ export function TreatmentCombobox({
                                         </div>
                                         <Check
                                             className={cn(
-                                                "h-4 w-4 text-[#76D7B6]",
+                                                "h-4 w-4 text-accent",
                                                 value === treatment.id ? "opacity-100" : "opacity-0"
                                             )}
                                         />
@@ -159,8 +159,8 @@ export function TreatmentCombobox({
                                 ))}
                         </CommandGroup>
                     </CommandList>
-                    <div className="p-2 border-t bg-slate-50/50 flex justify-center">
-                        {loading && <Loader2 className="h-4 w-4 animate-spin text-[#76D7B6]" />}
+                    <div className="p-2 border-t bg-slate-50 dark:bg-slate-900/50 flex justify-center">
+                        {loading && <Loader2 className="h-4 w-4 animate-spin text-accent" />}
                     </div>
                 </Command>
             </PopoverContent>

@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { titleCase, sentenceCase } from "@/utils/masks";
+import { titleCase, sentenceCase } from "@/utils/formatters";
 import { sedeSchema, type SedeValues } from "@/lib/validators/config";
 import { Switch } from "@/components/ui/switch";
 
@@ -185,30 +185,30 @@ export default function SedeModal({ isOpen, onClose, editingSede, clinicId, onSu
 
     if (!isOpen) return null;    return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 relative overflow-hidden">
+            <div className="bg-white dark:bg-slate-950 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 relative overflow-hidden">
                 <button
                     onClick={onClose}
-                    className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 transition-colors z-20"
+                    className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:text-slate-400 transition-colors z-20"
                 >
                     <X className="h-5 w-5" />
                 </button>
 
                 <div className="flex items-center gap-3 mb-6 relative z-10">
-                    <div className="h-10 w-10 bg-[#76D7B6]/10 rounded-xl flex items-center justify-center">
-                        <MapPin className="h-5 w-5 text-[#76D7B6]" />
+                    <div className="h-10 w-10 bg-accent/10 rounded-xl flex items-center justify-center">
+                        <MapPin className="h-5 w-5 text-accent" />
                     </div>
                     <div>
-                        <h3 className="text-lg font-bold text-slate-900 leading-none">
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-none">
                             {editingSede ? "Editar Sede" : "Nueva Sede"}
                         </h3>
-                        <p className="text-sm text-slate-500 mt-1">Completa los datos de tu sucursal</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Completa los datos de tu sucursal</p>
                     </div>
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 relative z-10">
                     <div className="space-y-3">
                         <div>
-                            <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Nombre de la Sede</Label>
+                            <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Nombre de la Sede</Label>
                             <Controller
                                 name="name"
                                 control={control}
@@ -226,7 +226,7 @@ export default function SedeModal({ isOpen, onClose, editingSede, clinicId, onSu
 
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Dirección</Label>
+                                <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Dirección</Label>
                                 <Controller
                                     name="address"
                                     control={control}
@@ -241,7 +241,7 @@ export default function SedeModal({ isOpen, onClose, editingSede, clinicId, onSu
                                 />
                             </div>
                             <div>
-                                <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Localidad</Label>
+                                <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Localidad</Label>
                                 <Controller
                                     name="location"
                                     control={control}
@@ -258,7 +258,7 @@ export default function SedeModal({ isOpen, onClose, editingSede, clinicId, onSu
                         </div>
 
                         <div>
-                            <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Aclaraciones</Label>
+                            <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Aclaraciones</Label>
                             <Controller
                                 name="aclaraciones"
                                 control={control}
@@ -277,7 +277,7 @@ export default function SedeModal({ isOpen, onClose, editingSede, clinicId, onSu
 
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Teléfono (+54)</Label>
+                                <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Teléfono (+54)</Label>
                                 <Controller
                                     name="phone"
                                     control={control}
@@ -292,7 +292,7 @@ export default function SedeModal({ isOpen, onClose, editingSede, clinicId, onSu
                                 />
                             </div>
                             <div>
-                                <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Email</Label>
+                                <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Email</Label>
                                 <Controller
                                     name="email"
                                     control={control}
@@ -310,12 +310,12 @@ export default function SedeModal({ isOpen, onClose, editingSede, clinicId, onSu
 
                         <div>
                             <div className="flex items-center justify-between mb-1.5">
-                                <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Enlace de Google Maps</Label>
+                                <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Enlace de Google Maps</Label>
                                 <a
                                     href={watch("google_maps_url")}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-[10px] text-[#76D7B6] font-bold hover:underline flex items-center gap-1"
+                                    className="text-[10px] text-accent font-bold hover:underline flex items-center gap-1"
                                 >
                                     Abrir Mapa <ExternalLink className="h-3 w-3" />
                                 </a>
@@ -328,7 +328,7 @@ export default function SedeModal({ isOpen, onClose, editingSede, clinicId, onSu
                                         <div className="space-y-1">
                                             <Input
                                                 {...field}
-                                                className="text-xs h-9 bg-slate-50 italic truncate"
+                                                className="text-xs h-9 bg-slate-50 dark:bg-slate-900 italic truncate"
                                                 placeholder="Generado automáticamente o carga manual"
                                                 onChange={(e) => {
                                                     setIsManualUrl(true);
@@ -350,9 +350,9 @@ export default function SedeModal({ isOpen, onClose, editingSede, clinicId, onSu
                                                 type="checkbox"
                                                 checked={field.value}
                                                 onChange={field.onChange}
-                                                className="rounded border-slate-300 text-[#76D7B6] focus:ring-[#76D7B6] h-4 w-4"
+                                                className="rounded border-slate-300 text-accent focus:ring-accent h-4 w-4"
                                             />
-                                            <span className="text-xs text-slate-500 font-medium group-hover:text-slate-700 transition-colors">
+                                            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium group-hover:text-slate-700 dark:text-slate-300 transition-colors">
                                                 Confirmo que la ubicación coincide con el link de Google Maps
                                             </span>
                                         </label>
@@ -386,7 +386,7 @@ export default function SedeModal({ isOpen, onClose, editingSede, clinicId, onSu
                         </Button>
                         <Button
                             type="submit"
-                            className="flex-1 bg-[#76D7B6] text-slate-900 hover:bg-[#65cba8] h-10 font-medium"
+                            className="flex-1 bg-accent text-slate-900 dark:text-white hover:bg-accent/90 h-10 font-medium"
                             disabled={saving || !isValid}
                         >
                             {saving ? "Guardando..." : (editingSede ? "Actualizar" : "Guardar Sede")}

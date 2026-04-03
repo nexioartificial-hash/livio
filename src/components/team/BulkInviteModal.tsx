@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { inviteTeamMember } from "@/app/actions/team";
-import { titleCase } from "@/utils/masks";
+import { titleCase } from "@/utils/formatters";
 
 interface BulkInviteModalProps {
     open: boolean;
@@ -120,7 +120,7 @@ export function BulkInviteModal({ open, onOpenChange, onSuccess }: BulkInviteMod
                 <div className="bg-slate-900 p-6 text-white">
                     <DialogHeader>
                         <DialogTitle className="text-2xl font-bold flex items-center gap-3">
-                            <Send className="h-6 w-6 text-[#76D7B6]" />
+                            <Send className="h-6 w-6 text-accent" />
                             Invitación Masiva
                         </DialogTitle>
                     </DialogHeader>
@@ -135,27 +135,27 @@ export function BulkInviteModal({ open, onOpenChange, onSuccess }: BulkInviteMod
                             {...getRootProps()} 
                             className={`
                                 border-2 border-dashed rounded-3xl p-10 flex flex-col items-center justify-center gap-4 transition-all
-                                ${isDragActive ? "border-[#76D7B6] bg-[#76D7B6]/5" : "border-slate-200 hover:border-slate-300 bg-slate-50"}
+                                ${isDragActive ? "border-accent bg-accent/5" : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-slate-50 dark:bg-slate-900"}
                             `}
                         >
                             <input {...getInputProps()} />
-                            <div className="h-16 w-16 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center">
-                                <Upload className="h-8 w-8 text-[#76D7B6]" />
+                            <div className="h-16 w-16 bg-white dark:bg-slate-950 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-center">
+                                <Upload className="h-8 w-8 text-accent" />
                             </div>
                             <div className="text-center">
-                                <p className="font-bold text-slate-700">Arrastra tu archivo CSV aquí</p>
+                                <p className="font-bold text-slate-700 dark:text-slate-300">Arrastra tu archivo CSV aquí</p>
                                 <p className="text-xs text-slate-400 mt-1">O haz clic para seleccionar manualmente</p>
                             </div>
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
                                 <div className="flex items-center gap-3">
-                                    <div className="h-10 w-10 bg-white rounded-xl shadow-xs flex items-center justify-center">
-                                        <FileText className="h-5 w-5 text-[#76D7B6]" />
+                                    <div className="h-10 w-10 bg-white dark:bg-slate-950 rounded-xl shadow-xs flex items-center justify-center">
+                                        <FileText className="h-5 w-5 text-accent" />
                                     </div>
                                     <div>
-                                        <p className="font-bold text-sm text-slate-700 truncate max-w-[200px]">{file.name}</p>
+                                        <p className="font-bold text-sm text-slate-700 dark:text-slate-300 truncate max-w-[200px]">{file.name}</p>
                                         <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">{parsedData.length} contactos encontrados</p>
                                     </div>
                                 </div>
@@ -171,17 +171,17 @@ export function BulkInviteModal({ open, onOpenChange, onSuccess }: BulkInviteMod
 
                             {sending && (
                                 <div className="space-y-2">
-                                    <div className="flex justify-between text-xs font-bold text-slate-500 uppercase">
+                                    <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">
                                         <span>Procesando...</span>
                                         <span>{progress}%</span>
                                     </div>
-                                    <Progress value={progress} className="h-2 bg-slate-100 [&>div]:bg-[#76D7B6] rounded-full" />
+                                    <Progress value={progress} className="h-2 bg-slate-100 dark:bg-slate-800 [&>div]:bg-accent rounded-full" />
                                 </div>
                             )}
 
-                            <div className="max-h-[200px] overflow-y-auto rounded-xl border border-slate-100">
+                            <div className="max-h-[200px] overflow-y-auto rounded-xl border border-slate-100 dark:border-slate-800">
                                 <table className="w-full text-left text-xs">
-                                    <thead className="bg-slate-50 text-slate-400 font-bold uppercase sticky top-0">
+                                    <thead className="bg-slate-50 dark:bg-slate-900 text-slate-400 font-bold uppercase sticky top-0">
                                         <tr>
                                             <th className="p-2 pl-4">Email</th>
                                             <th className="p-2">Rol ESP</th>
@@ -190,14 +190,14 @@ export function BulkInviteModal({ open, onOpenChange, onSuccess }: BulkInviteMod
                                     <tbody className="divide-y divide-slate-50">
                                         {parsedData.slice(0, 5).map((row, i) => (
                                             <tr key={i}>
-                                                <td className="p-2 pl-4 text-slate-600 truncate">{row.email || row.Email}</td>
+                                                <td className="p-2 pl-4 text-slate-600 dark:text-slate-400 truncate">{row.email || row.Email}</td>
                                                 <td className="p-2 text-slate-400 italic">{row.role || row.Role || "profesional"}</td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
                                 {parsedData.length > 5 && (
-                                    <div className="p-2 text-center text-[10px] text-slate-400 bg-slate-50/50">
+                                    <div className="p-2 text-center text-[10px] text-slate-400 bg-slate-50 dark:bg-slate-900/50">
                                         y {parsedData.length - 5} más...
                                     </div>
                                 )}
@@ -228,7 +228,7 @@ export function BulkInviteModal({ open, onOpenChange, onSuccess }: BulkInviteMod
                     <Button 
                         onClick={handleInvite}
                         disabled={!file || sending}
-                        className="bg-[#76D7B6] hover:bg-[#65c5a4] text-white rounded-xl gap-2 min-w-[150px] shadow-lg shadow-[#76D7B6]/20"
+                        className="bg-accent hover:bg-[#65c5a4] text-white rounded-xl gap-2 min-w-[150px] shadow-lg shadow-accent/20"
                     >
                         {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                         Enviar Invitaciones

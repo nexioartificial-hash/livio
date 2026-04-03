@@ -75,17 +75,17 @@ export function DashboardClient({
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
                         <div>
-                            <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
+                            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2">
                                 Buenos días, {userName} <span className="text-xl">👋</span>
                             </h1>
-                            <p className="text-slate-400 font-medium text-xs mt-0.5">
+                            <p className="text-slate-400 dark:text-slate-500 dark:text-slate-400 font-medium text-xs mt-0.5">
                                 Última actualización: {DateTime.now().toFormat('hh:mm a')}
                             </p>
                         </div>
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 rounded-full text-slate-400 hover:text-[#76D7B6] hover:bg-slate-50 transition-all active:rotate-180 duration-500"
+                            className="h-8 w-8 rounded-full text-slate-400 hover:text-accent hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900 dark:hover:bg-slate-900 transition-all active:rotate-180 duration-500"
                             onClick={() => window.location.reload()}
                         >
                             <Activity className="h-4 w-4" />

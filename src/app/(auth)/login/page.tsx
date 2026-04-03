@@ -131,7 +131,7 @@ export default function LoginPage() {
                         className="brightness-0 invert mb-8"
                     />
                     <h1 className="text-4xl font-bold text-white leading-tight drop-shadow-lg">
-                        Gestión dental<br />potenciada con <span className="text-[#76D7B6]">IA</span>.
+                        Gestión dental<br />potenciada con <span className="text-accent">IA</span>.
                     </h1>
                     <p className="text-white/85 text-lg max-w-xs mt-4 drop-shadow-md mx-auto">
                         Automatiza tu agenda, historia clínica y comunicación con pacientes.
@@ -141,12 +141,12 @@ export default function LoginPage() {
                             <p className="text-2xl font-bold text-white">+500</p>
                             <p className="text-white/70 text-xs">Profesionales</p>
                         </div>
-                        <div className="h-8 w-px bg-white/30" />
+                        <div className="h-8 w-px bg-white dark:bg-slate-950/30" />
                         <div className="text-center">
                             <p className="text-2xl font-bold text-white">30 días</p>
                             <p className="text-white/70 text-xs">Prueba gratis</p>
                         </div>
-                        <div className="h-8 w-px bg-white/30" />
+                        <div className="h-8 w-px bg-white dark:bg-slate-950/30" />
                         <div className="text-center">
                             <p className="text-2xl font-bold text-white">24/7</p>
                             <p className="text-white/70 text-xs">Soporte</p>
@@ -156,8 +156,8 @@ export default function LoginPage() {
             </div>
 
             {/* Right side — login form */}
-            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center bg-slate-50 px-6">
-                <div className="w-full max-w-sm space-y-4 bg-white rounded-2xl shadow-[0_25px_80px_rgba(0,0,0,0.25),0_8px_20px_rgba(0,0,0,0.1)] border border-slate-100 px-8 py-8">
+            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 px-6">
+                <div className="w-full max-w-sm space-y-4 bg-white dark:bg-slate-950 rounded-2xl shadow-[0_25px_80px_rgba(0,0,0,0.25),0_8px_20px_rgba(0,0,0,0.1)] border border-slate-100 dark:border-slate-800 px-8 py-8">
                     <div className="flex flex-col items-center text-center">
                         <Image
                             src="/logo-transparent.png"
@@ -166,10 +166,10 @@ export default function LoginPage() {
                             height={45}
                             className="mb-3"
                         />
-                        <h2 className="text-xl font-bold tracking-tight text-slate-900">
+                        <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
                             Bienvenido a Livio
                         </h2>
-                        <p className="mt-1 text-sm text-slate-500">
+                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                             Ingresa a tu cuenta para gestionar tu clínica
                         </p>
                     </div>
@@ -191,7 +191,7 @@ export default function LoginPage() {
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
                                 <Label htmlFor="password">Contraseña</Label>
-                                <Link href="/forgot-password" className="text-xs text-[#76D7B6] hover:underline">
+                                <Link href="/forgot-password" className="text-xs text-accent hover:underline">
                                     ¿Olvidaste tu contraseña?
                                 </Link>
                             </div>
@@ -207,7 +207,7 @@ export default function LoginPage() {
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 transition-colors focus:outline-none"
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
@@ -218,11 +218,11 @@ export default function LoginPage() {
                             <input
                                 type="checkbox"
                                 id="remember"
-                                className="h-4 w-4 rounded border-slate-300 text-[#76D7B6] focus:ring-[#76D7B6]"
+                                className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent"
                                 checked={rememberMe}
                                 onChange={(e) => setRememberMe(e.target.checked)}
                             />
-                            <Label htmlFor="remember" className="text-sm font-normal text-slate-600 cursor-pointer">
+                            <Label htmlFor="remember" className="text-sm font-normal text-slate-600 dark:text-slate-400 cursor-pointer">
                                 Mantener sesión iniciada
                             </Label>
                         </div>
@@ -235,10 +235,10 @@ export default function LoginPage() {
 
                     <div className="relative">
                         <div className="absolute inset-0 flex items-center">
-                            <span className="w-full border-t border-slate-200" />
+                            <span className="w-full border-t border-slate-200 dark:border-slate-700" />
                         </div>
                         <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-white px-2 text-slate-500">O continuar con</span>
+                            <span className="bg-white dark:bg-slate-950 px-2 text-slate-500 dark:text-slate-400">O continuar con</span>
                         </div>
                     </div>
 
@@ -250,8 +250,8 @@ export default function LoginPage() {
                     </Button>
 
                     <div className="text-center text-sm">
-                        <span className="text-slate-500">¿No tienes cuenta? </span>
-                        <Link href="/register" className="font-semibold text-[#76D7B6] hover:underline">
+                        <span className="text-slate-500 dark:text-slate-400">¿No tienes cuenta? </span>
+                        <Link href="/register" className="font-semibold text-accent hover:underline">
                             Comenzar Prueba Gratis
                         </Link>
                     </div>

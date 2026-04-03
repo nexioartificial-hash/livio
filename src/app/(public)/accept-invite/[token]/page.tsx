@@ -154,14 +154,14 @@ export default function AcceptInvitePage() {
             case "profesional":
                 return { icon: <Stethoscope className="h-5 w-5" />, label: "Profesional Odontólogo", color: "bg-emerald-100 text-emerald-700" };
             default:
-                return { icon: null, label: role, color: "bg-slate-100 text-slate-700" };
+                return { icon: null, label: role, color: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300" };
         }
     };
 
     // ─── Loading ─────────────────────────────────────────────
     if (loading) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-slate-50">
+            <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-900">
                 <Loader2 className="h-8 w-8 animate-spin text-[#10B981]" />
             </div>
         );
@@ -170,7 +170,7 @@ export default function AcceptInvitePage() {
     // ─── Error / Invalid Token ───────────────────────────────
     if (error || !invite) {
         return (
-            <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-4">
+            <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 p-4">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -179,8 +179,8 @@ export default function AcceptInvitePage() {
                     <div className="mx-auto h-16 w-16 rounded-2xl bg-red-100 flex items-center justify-center">
                         <XCircle className="h-8 w-8 text-red-500" />
                     </div>
-                    <h1 className="text-2xl font-bold text-slate-900">Invitación inválida</h1>
-                    <p className="text-slate-500">
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Invitación inválida</h1>
+                    <p className="text-slate-500 dark:text-slate-400">
                         {error || "Esta invitación no existe, ya fue aceptada, o expiró."}
                     </p>
                     <Button
@@ -198,14 +198,14 @@ export default function AcceptInvitePage() {
 
     // ─── Signup Form ─────────────────────────────────────────
     return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-4">
+        <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 p-4">
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4 }}
                 className="w-full max-w-md space-y-6"
             >
-                <div className="bg-white/80 backdrop-blur-2xl p-8 rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.15)] border border-slate-200/60">
+                <div className="bg-white dark:bg-slate-950/80 backdrop-blur-2xl p-8 rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.15)] border border-slate-200 dark:border-slate-700/60">
                     {/* Header */}
                     <div className="flex flex-col items-center text-center mb-6">
                         <Image
@@ -215,11 +215,11 @@ export default function AcceptInvitePage() {
                             height={32}
                             className="mb-4 opacity-80"
                         />
-                        <h2 className="text-2xl font-bold text-slate-900">
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                             ¡Te invitaron a Livio!
                         </h2>
-                        <p className="mt-1 text-sm text-slate-500">
-                            <strong className="text-slate-700">{invite.inviter_name}</strong> te invitó al equipo
+                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                            <strong className="text-slate-700 dark:text-slate-300">{invite.inviter_name}</strong> te invitó al equipo
                         </p>
                         {/* Role Badge */}
                         <div className={`mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl ${roleInfo.color}`}>
@@ -231,18 +231,18 @@ export default function AcceptInvitePage() {
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
-                            <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                            <Label className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                                 Email
                             </Label>
                             <Input
                                 value={invite.email}
                                 disabled
-                                className="h-11 rounded-xl bg-slate-100 cursor-not-allowed"
+                                className="h-11 rounded-xl bg-slate-100 dark:bg-slate-800 cursor-not-allowed"
                             />
                         </div>
 
                         <div className="space-y-2">
-                            <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                            <Label className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                                 Nombre Completo <span className="text-red-400">*</span>
                             </Label>
                             <Input
@@ -250,12 +250,12 @@ export default function AcceptInvitePage() {
                                 required
                                 value={formData.fullName}
                                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                                className="h-11 rounded-xl bg-slate-50 border-slate-200"
+                                className="h-11 rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700"
                             />
                         </div>
 
                         <div className="space-y-2">
-                            <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                            <Label className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                                 Contraseña <span className="text-red-400">*</span>
                             </Label>
                             <div className="relative">
@@ -265,12 +265,12 @@ export default function AcceptInvitePage() {
                                     minLength={6}
                                     value={formData.password}
                                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                    className="h-11 rounded-xl bg-slate-50 border-slate-200 pr-10"
+                                    className="h-11 rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 pr-10"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-400"
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
@@ -278,7 +278,7 @@ export default function AcceptInvitePage() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                            <Label className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                                 Confirmar Contraseña <span className="text-red-400">*</span>
                             </Label>
                             <div className="relative">
@@ -288,7 +288,7 @@ export default function AcceptInvitePage() {
                                     minLength={6}
                                     value={formData.confirmPassword}
                                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                                    className="h-11 rounded-xl bg-slate-50 border-slate-200 pr-10"
+                                    className="h-11 rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 pr-10"
                                 />
                             </div>
                         </div>
@@ -300,14 +300,14 @@ export default function AcceptInvitePage() {
                                 animate={{ opacity: 1, height: "auto" }}
                                 className="space-y-2"
                             >
-                                <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                                <Label className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                                     Matrícula Nacional (MN)
                                 </Label>
                                 <Input
                                     placeholder="Ej: 123456"
                                     value={formData.license}
                                     onChange={(e) => setFormData({ ...formData, license: e.target.value })}
-                                    className="h-11 rounded-xl bg-slate-50 border-slate-200"
+                                    className="h-11 rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700"
                                 />
                             </motion.div>
                         )}

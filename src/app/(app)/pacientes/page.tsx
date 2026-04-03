@@ -336,12 +336,12 @@ export default function PacientesPage() {
         <div className="space-y-6">
             {/* Header */}
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <h1 className="text-3xl font-bold text-slate-900">Pacientes</h1>
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Pacientes</h1>
                 <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" className="gap-2" onClick={() => setIsImportModalOpen(true)}>
                         <Upload className="h-4 w-4" /> Importar
                     </Button>
-                    <Button className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 font-bold gap-2" size="sm" onClick={() => setIsCreateModalOpen(true)}>
+                    <Button className="bg-accent hover:bg-accent/90 text-slate-900 dark:text-white font-bold gap-2" size="sm" onClick={() => setIsCreateModalOpen(true)}>
                         <Plus className="h-4 w-4" /> Nuevo Paciente
                     </Button>
                 </div>
@@ -363,7 +363,7 @@ export default function PacientesPage() {
                 <CardContent className="p-0">
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-slate-50">
+                            <TableRow className="bg-slate-50 dark:bg-slate-900">
                                 <TableHead className="w-[260px] text-center">
                                     <button className="flex items-center justify-center gap-1 text-xs font-semibold w-full" onClick={() => toggleSort("name")}>
                                         Paciente <ArrowUpDown className="h-3 w-3" />
@@ -392,31 +392,31 @@ export default function PacientesPage() {
                             {isLoading ? (
                                 <TableRow>
                                     <TableCell colSpan={6} className="text-center py-20">
-                                        <Loader2 className="h-8 w-8 animate-spin mx-auto text-[#76D7B6] mb-2" />
+                                        <Loader2 className="h-8 w-8 animate-spin mx-auto text-accent mb-2" />
                                         <p className="text-sm text-slate-400">Cargando pacientes...</p>
                                     </TableCell>
                                 </TableRow>
                             ) : patients.map(patient => (
-                                <TableRow key={patient.id} className="hover:bg-slate-50/50">
+                                <TableRow key={patient.id} className="hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900/50">
                                     <TableCell>
                                         <button className="flex items-center gap-3 text-left group" onClick={() => openDetail(patient)}>
                                             <Avatar className="h-8 w-8 shrink-0">
-                                                <AvatarFallback className="bg-[#76D7B6]/10 text-[#76D7B6] text-xs font-bold">
+                                                <AvatarFallback className="bg-accent/10 text-accent text-xs font-bold">
                                                     {patient.name[0]}{patient.lastName[0] || ""}
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div>
-                                                <p className="font-medium text-sm text-slate-900 group-hover:text-[#76D7B6] transition-colors">{patient.name} {patient.lastName}</p>
+                                                <p className="font-medium text-sm text-slate-900 dark:text-white group-hover:text-accent transition-colors">{patient.name} {patient.lastName}</p>
                                                 <p className="text-xs text-slate-400">{patient.email}</p>
                                             </div>
                                         </button>
                                     </TableCell>
-                                    <TableCell className="text-sm text-slate-600 text-center">{patient.dni}</TableCell>
-                                    <TableCell className="text-sm text-slate-600 text-center">{patient.phone}</TableCell>
+                                    <TableCell className="text-sm text-slate-600 dark:text-slate-400 text-center">{patient.dni}</TableCell>
+                                    <TableCell className="text-sm text-slate-600 dark:text-slate-400 text-center">{patient.phone}</TableCell>
                                     <TableCell className="text-center"><Badge variant="secondary" className="text-xs">{patient.obraSocial}</Badge></TableCell>
                                     <TableCell className="text-center">
                                         {patient.nextAppointment ? (
-                                            <div className="flex items-center justify-center gap-1 text-xs text-slate-600">
+                                            <div className="flex items-center justify-center gap-1 text-xs text-slate-600 dark:text-slate-400">
                                                 <Calendar className="h-3 w-3" />
                                                 {new Date(patient.nextAppointment).toLocaleDateString("es-AR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                                             </div>
@@ -426,7 +426,7 @@ export default function PacientesPage() {
                                     </TableCell>
                                     <TableCell className="text-center">
                                         <Link href={`/historia-clinica/${patient.id}`}>
-                                            <Button variant="ghost" size="sm" className="gap-1 text-xs text-[#76D7B6] hover:text-[#65cba8]">
+                                            <Button variant="ghost" size="sm" className="gap-1 text-xs text-accent hover:text-accent/90">
                                                 <FileText className="h-3.5 w-3.5" /> Historia
                                             </Button>
                                         </Link>
@@ -437,11 +437,11 @@ export default function PacientesPage() {
                                 <TableRow>
                                     <TableCell colSpan={6} className="py-20">
                                         <div className="flex flex-col items-center justify-center gap-4 w-full whitespace-normal">
-                                            <div className="w-16 h-16 rounded-full bg-[#76D7B6]/10 flex items-center justify-center">
-                                                <Users className="h-8 w-8 text-[#76D7B6]" />
+                                            <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center">
+                                                <Users className="h-8 w-8 text-accent" />
                                             </div>
                                             <div className="flex flex-col items-center">
-                                                <p className="text-base font-semibold text-slate-800 text-center">
+                                                <p className="text-base font-semibold text-slate-800 dark:text-slate-100 text-center">
                                                     {search ? "No se encontraron pacientes" : "Todavía no tenés pacientes registrados"}
                                                 </p>
                                                 <p className="text-sm text-slate-400 mt-1 max-w-xs text-center">
@@ -452,7 +452,7 @@ export default function PacientesPage() {
                                             </div>
                                             {!search && (
                                                 <Button
-                                                    className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 gap-2 mt-1"
+                                                    className="bg-accent hover:bg-accent/90 text-slate-900 dark:text-white gap-2 mt-1"
                                                     size="sm"
                                                     onClick={() => setIsCreateModalOpen(true)}
                                                 >
@@ -471,12 +471,12 @@ export default function PacientesPage() {
             {/* Pagination */}
             {totalPages > 1 && (
                 <div className="flex items-center justify-between">
-                    <p className="text-xs text-slate-500">{totalCount} pacientes encontrados</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{totalCount} pacientes encontrados</p>
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
                             <ChevronLeft className="h-4 w-4" />
                         </Button>
-                        <span className="text-sm text-slate-600">Pág. {page}/{totalPages}</span>
+                        <span className="text-sm text-slate-600 dark:text-slate-400">Pág. {page}/{totalPages}</span>
                         <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
                             <ChevronRight className="h-4 w-4" />
                         </Button>
@@ -615,7 +615,7 @@ export default function PacientesPage() {
                                     type="button"
                                     variant={form.particular ? "default" : "outline"}
                                     size="sm"
-                                    className={cn("shrink-0 text-xs", form.particular && "bg-[#76D7B6] text-slate-900 hover:bg-[#65cba8]")}
+                                    className={cn("shrink-0 text-xs", form.particular && "bg-accent text-slate-900 dark:text-white hover:bg-accent/90")}
                                     onClick={() => setForm(f => ({ ...f, particular: !f.particular, obraSocialId: "", obraSocialNombre: "" }))}
                                 >
                                     Particular
@@ -649,7 +649,7 @@ export default function PacientesPage() {
                                     className="flex-1"
                                 />
                                 {form.birthDate && calcAge(form.birthDate) !== null && (
-                                    <span className="text-sm text-slate-500 shrink-0">{calcAge(form.birthDate)} años</span>
+                                    <span className="text-sm text-slate-500 dark:text-slate-400 shrink-0">{calcAge(form.birthDate)} años</span>
                                 )}
                             </div>
                         </div>
@@ -665,8 +665,8 @@ export default function PacientesPage() {
                                         className={cn(
                                             "px-3 py-1.5 rounded-full text-xs border transition-colors",
                                             form.gender === g
-                                                ? "bg-[#76D7B6] text-slate-900 border-[#76D7B6]"
-                                                : "border-slate-200 text-slate-500 hover:border-slate-300"
+                                                ? "bg-accent text-slate-900 dark:text-white border-accent"
+                                                : "border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-300"
                                         )}
                                     >{g}</button>
                                 ))}
@@ -676,7 +676,7 @@ export default function PacientesPage() {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>Cancelar</Button>
                         <Button
-                            className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900"
+                            className="bg-accent hover:bg-accent/90 text-slate-900 dark:text-white"
                             onClick={() => {
                                 const errors = validateForm();
                                 if (Object.keys(errors).length > 0) { setFormErrors(errors); return; }
@@ -698,40 +698,40 @@ export default function PacientesPage() {
                         <DialogDescription>Revisá que los datos sean correctos antes de registrar.</DialogDescription>
                     </DialogHeader>
                     <div className="py-2 space-y-3">
-                        <div className="rounded-xl border border-slate-100 bg-slate-50 divide-y divide-slate-100">
+                        <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800">
                             <div className="flex items-center justify-between px-4 py-2.5">
-                                <span className="text-xs text-slate-500">Nombre completo</span>
-                                <span className="text-sm font-semibold text-slate-800">{form.nombre} {form.apellido}</span>
+                                <span className="text-xs text-slate-500 dark:text-slate-400">Nombre completo</span>
+                                <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">{form.nombre} {form.apellido}</span>
                             </div>
                             <div className="flex items-center justify-between px-4 py-2.5">
-                                <span className="text-xs text-slate-500">DNI</span>
-                                <span className="text-sm text-slate-800">{form.dni || "—"}</span>
+                                <span className="text-xs text-slate-500 dark:text-slate-400">DNI</span>
+                                <span className="text-sm text-slate-800 dark:text-slate-100">{form.dni || "—"}</span>
                             </div>
                             <div className="flex items-center justify-between px-4 py-2.5">
-                                <span className="text-xs text-slate-500">Teléfono</span>
-                                <span className="text-sm text-slate-800">{form.telefono === "+54 " ? "—" : form.telefono}</span>
+                                <span className="text-xs text-slate-500 dark:text-slate-400">Teléfono</span>
+                                <span className="text-sm text-slate-800 dark:text-slate-100">{form.telefono === "+54 " ? "—" : form.telefono}</span>
                             </div>
                             <div className="flex items-center justify-between px-4 py-2.5">
-                                <span className="text-xs text-slate-500">Email</span>
-                                <span className="text-sm text-slate-800">{form.email || "—"}</span>
+                                <span className="text-xs text-slate-500 dark:text-slate-400">Email</span>
+                                <span className="text-sm text-slate-800 dark:text-slate-100">{form.email || "—"}</span>
                             </div>
                             <div className="flex items-center justify-between px-4 py-2.5">
-                                <span className="text-xs text-slate-500">Obra Social</span>
-                                <span className="text-sm text-slate-800">
+                                <span className="text-xs text-slate-500 dark:text-slate-400">Obra Social</span>
+                                <span className="text-sm text-slate-800 dark:text-slate-100">
                                     {form.particular ? "Particular" : (form.obraSocialNombre || "—")}
                                     {!form.particular && form.obraSocialPlan && <span className="text-slate-400 ml-1">· {form.obraSocialPlan}</span>}
                                 </span>
                             </div>
                             {form.birthDate && (
                                 <div className="flex items-center justify-between px-4 py-2.5">
-                                    <span className="text-xs text-slate-500">Edad</span>
-                                    <span className="text-sm text-slate-800">{calcAge(form.birthDate)} años · {new Date(form.birthDate).toLocaleDateString("es-AR")}</span>
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">Edad</span>
+                                    <span className="text-sm text-slate-800 dark:text-slate-100">{calcAge(form.birthDate)} años · {new Date(form.birthDate).toLocaleDateString("es-AR")}</span>
                                 </div>
                             )}
                             {form.gender && (
                                 <div className="flex items-center justify-between px-4 py-2.5">
-                                    <span className="text-xs text-slate-500">Género</span>
-                                    <span className="text-sm text-slate-800">{form.gender}</span>
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">Género</span>
+                                    <span className="text-sm text-slate-800 dark:text-slate-100">{form.gender}</span>
                                 </div>
                             )}
                         </div>
@@ -744,7 +744,7 @@ export default function PacientesPage() {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsConfirmModalOpen(false)}>Editar datos</Button>
                         <Button
-                            className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900"
+                            className="bg-accent hover:bg-accent/90 text-slate-900 dark:text-white"
                             onClick={handleSavePatient}
                             disabled={isSaving}
                         >
@@ -761,7 +761,7 @@ export default function PacientesPage() {
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-3">
                             <Avatar className="h-9 w-9">
-                                <AvatarFallback className="bg-[#76D7B6]/10 text-[#76D7B6] font-bold text-sm">
+                                <AvatarFallback className="bg-accent/10 text-accent font-bold text-sm">
                                     {selectedPatient?.name[0]}{selectedPatient?.lastName[0] || ""}
                                 </AvatarFallback>
                             </Avatar>
@@ -772,30 +772,30 @@ export default function PacientesPage() {
                     {!isEditMode ? (
                         /* ── View mode ── */
                         <div className="py-2 space-y-3">
-                            <div className="rounded-xl border border-slate-100 bg-slate-50 divide-y divide-slate-100">
+                            <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800">
                                 <div className="flex items-center justify-between px-4 py-2.5">
-                                    <span className="text-xs text-slate-500">DNI</span>
-                                    <span className="text-sm text-slate-800">{selectedPatient?.dni}</span>
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">DNI</span>
+                                    <span className="text-sm text-slate-800 dark:text-slate-100">{selectedPatient?.dni}</span>
                                 </div>
                                 <div className="flex items-center justify-between px-4 py-2.5">
-                                    <span className="text-xs text-slate-500">Teléfono</span>
-                                    <span className="text-sm text-slate-800">{selectedPatient?.phone}</span>
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">Teléfono</span>
+                                    <span className="text-sm text-slate-800 dark:text-slate-100">{selectedPatient?.phone}</span>
                                 </div>
                                 <div className="flex items-center justify-between px-4 py-2.5">
-                                    <span className="text-xs text-slate-500">Email</span>
-                                    <span className="text-sm text-slate-800">{selectedPatient?.email}</span>
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">Email</span>
+                                    <span className="text-sm text-slate-800 dark:text-slate-100">{selectedPatient?.email}</span>
                                 </div>
                                 <div className="flex items-center justify-between px-4 py-2.5">
-                                    <span className="text-xs text-slate-500">Obra Social</span>
-                                    <span className="text-sm text-slate-800">
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">Obra Social</span>
+                                    <span className="text-sm text-slate-800 dark:text-slate-100">
                                         {selectedPatient?.obraSocial}
                                         {selectedPatient?.obraSocialPlan && <span className="text-slate-400 ml-1">· {selectedPatient.obraSocialPlan}</span>}
                                     </span>
                                 </div>
                                 {selectedPatient?.birthDate && (
                                     <div className="flex items-center justify-between px-4 py-2.5">
-                                        <span className="text-xs text-slate-500">Edad</span>
-                                        <span className="text-sm text-slate-800">
+                                        <span className="text-xs text-slate-500 dark:text-slate-400">Edad</span>
+                                        <span className="text-sm text-slate-800 dark:text-slate-100">
                                             {calcAge(selectedPatient.birthDate)} años
                                             <span className="text-slate-400 ml-1">· {new Date(selectedPatient.birthDate).toLocaleDateString("es-AR")}</span>
                                         </span>
@@ -803,8 +803,8 @@ export default function PacientesPage() {
                                 )}
                                 {selectedPatient?.gender && (
                                     <div className="flex items-center justify-between px-4 py-2.5">
-                                        <span className="text-xs text-slate-500">Género</span>
-                                        <span className="text-sm text-slate-800">{selectedPatient.gender}</span>
+                                        <span className="text-xs text-slate-500 dark:text-slate-400">Género</span>
+                                        <span className="text-sm text-slate-800 dark:text-slate-100">{selectedPatient.gender}</span>
                                     </div>
                                 )}
                             </div>
@@ -825,7 +825,7 @@ export default function PacientesPage() {
                                             <FileText className="h-3.5 w-3.5" /> Historia
                                         </Button>
                                     </Link>
-                                    <Button size="sm" className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 gap-1.5 text-xs" onClick={() => setIsEditMode(true)}>
+                                    <Button size="sm" className="bg-accent hover:bg-accent/90 text-slate-900 dark:text-white gap-1.5 text-xs" onClick={() => setIsEditMode(true)}>
                                         Editar datos
                                     </Button>
                                 </div>
@@ -894,7 +894,7 @@ export default function PacientesPage() {
                                                 </Command>
                                             </PopoverContent>
                                         </Popover>
-                                        <Button type="button" variant={editForm.particular ? "default" : "outline"} size="sm" className={cn("shrink-0 text-xs", editForm.particular && "bg-[#76D7B6] text-slate-900 hover:bg-[#65cba8]")} onClick={() => setEditForm(f => ({ ...f, particular: !f.particular, obraSocialId: "", obraSocialNombre: "" }))}>
+                                        <Button type="button" variant={editForm.particular ? "default" : "outline"} size="sm" className={cn("shrink-0 text-xs", editForm.particular && "bg-accent text-slate-900 dark:text-white hover:bg-accent/90")} onClick={() => setEditForm(f => ({ ...f, particular: !f.particular, obraSocialId: "", obraSocialNombre: "" }))}>
                                             Particular
                                         </Button>
                                     </div>
@@ -912,7 +912,7 @@ export default function PacientesPage() {
                                     <div className="col-span-3 flex items-center gap-2">
                                         <Input type="date" value={editForm.birthDate} max={new Date().toISOString().split("T")[0]} onChange={e => setEditForm(f => ({ ...f, birthDate: e.target.value }))} className="flex-1" />
                                         {editForm.birthDate && calcAge(editForm.birthDate) !== null && (
-                                            <span className="text-sm text-slate-500 shrink-0">{calcAge(editForm.birthDate)} años</span>
+                                            <span className="text-sm text-slate-500 dark:text-slate-400 shrink-0">{calcAge(editForm.birthDate)} años</span>
                                         )}
                                     </div>
                                 </div>
@@ -921,7 +921,7 @@ export default function PacientesPage() {
                                     <div className="col-span-3 flex gap-2">
                                         {["Masculino", "Femenino", "Otro"].map(g => (
                                             <button key={g} type="button" onClick={() => setEditForm(f => ({ ...f, gender: f.gender === g ? "" : g }))}
-                                                className={cn("px-3 py-1.5 rounded-full text-xs border transition-colors", editForm.gender === g ? "bg-[#76D7B6] text-slate-900 border-[#76D7B6]" : "border-slate-200 text-slate-500 hover:border-slate-300")}
+                                                className={cn("px-3 py-1.5 rounded-full text-xs border transition-colors", editForm.gender === g ? "bg-accent text-slate-900 dark:text-white border-accent" : "border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-300")}
                                             >{g}</button>
                                         ))}
                                     </div>
@@ -930,7 +930,7 @@ export default function PacientesPage() {
                             {updateError && <p className="text-xs text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{updateError}</p>}
                             <div className="flex justify-end gap-2 pt-1">
                                 <Button variant="outline" size="sm" onClick={() => { setIsEditMode(false); setUpdateError(null); }}>Cancelar</Button>
-                                <Button size="sm" className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900" onClick={handleUpdatePatient} disabled={isUpdating}>
+                                <Button size="sm" className="bg-accent hover:bg-accent/90 text-slate-900 dark:text-white" onClick={handleUpdatePatient} disabled={isUpdating}>
                                     {isUpdating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
                                     Guardar cambios
                                 </Button>

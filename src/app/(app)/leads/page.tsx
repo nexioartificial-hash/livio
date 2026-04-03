@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 
 const columns = [
     {
-        title: "Nuevo", color: "bg-slate-100", items: [
+        title: "Nuevo", color: "bg-slate-100 dark:bg-slate-800", items: [
             { name: "María López", source: "Instagram", date: "Hoy" },
             { name: "Carlos Ruiz", source: "Google Ads", date: "Ayer" },
         ]
@@ -32,8 +32,8 @@ export default function LeadsPage() {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold text-slate-900">Leads CRM</h1>
-                <button className="rounded-lg bg-[#76D7B6] px-4 py-2 text-sm font-bold text-slate-900 hover:bg-[#65cba8] transition-colors">
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Leads CRM</h1>
+                <button className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-slate-900 dark:text-white hover:bg-accent/90 transition-colors">
                     + Nuevo Lead
                 </button>
             </div>
@@ -42,16 +42,16 @@ export default function LeadsPage() {
                 {columns.map((col) => (
                     <div key={col.title} className={`rounded-xl p-4 ${col.color} min-h-[400px]`}>
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-semibold text-slate-700">{col.title}</h3>
+                            <h3 className="font-semibold text-slate-700 dark:text-slate-300">{col.title}</h3>
                             <Badge variant="secondary" className="text-xs">{col.items.length}</Badge>
                         </div>
                         <div className="space-y-3">
                             {col.items.map((item, i) => (
-                                <Card key={i} className="cursor-pointer hover:shadow-md transition-shadow bg-white">
+                                <Card key={i} className="cursor-pointer hover:shadow-md transition-shadow bg-white dark:bg-slate-950">
                                     <CardContent className="p-4">
-                                        <p className="font-medium text-slate-900 text-sm">{item.name}</p>
+                                        <p className="font-medium text-slate-900 dark:text-white text-sm">{item.name}</p>
                                         <div className="flex items-center justify-between mt-2">
-                                            <span className="text-xs text-slate-500">{item.source}</span>
+                                            <span className="text-xs text-slate-500 dark:text-slate-400">{item.source}</span>
                                             <span className="text-xs text-slate-400">{item.date}</span>
                                         </div>
                                     </CardContent>

@@ -168,13 +168,13 @@ export function TratamientosTab({ clinicId }: { clinicId: string }) {
             {/* Header / Summary */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         Tratamientos
-                        <Badge variant="secondary" className="bg-slate-100 text-slate-600 border-none font-bold">
+                        <Badge variant="secondary" className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-none font-bold">
                             {tratamientos.length} configurados
                         </Badge>
                     </h2>
-                    <p className="text-sm text-slate-500">Configura tus servicios, tiempos y precios de referencia.</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Configura tus servicios, tiempos y precios de referencia.</p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
@@ -184,15 +184,15 @@ export function TratamientosTab({ clinicId }: { clinicId: string }) {
                             placeholder="Buscar servicio..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="pl-9 h-10 rounded-xl bg-white border-slate-200"
+                            className="pl-9 h-10 rounded-xl bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-700"
                         />
                     </div>
 
                     {/* Bulk Update UI */}
-                    <div className="flex items-center gap-2 bg-slate-50 p-1.5 pl-3 rounded-2xl border border-slate-200 shadow-sm">
+                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 p-1.5 pl-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
                         <div className="flex items-center gap-1.5">
                             <TrendingUp className="h-3.5 w-3.5 text-slate-400" />
-                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">% Aumento</span>
+                            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tighter">% Aumento</span>
                         </div>
                         <div className="relative w-20">
                             <Input
@@ -200,7 +200,7 @@ export function TratamientosTab({ clinicId }: { clinicId: string }) {
                                 placeholder="0"
                                 value={bulkPercent}
                                 onChange={(e) => setBulkPercent(e.target.value)}
-                                className="h-8 pr-6 text-xs font-bold rounded-xl border-none bg-white shadow-inner focus-visible:ring-1 focus-visible:ring-[#10B981]"
+                                className="h-8 pr-6 text-xs font-bold rounded-xl border-none bg-white dark:bg-slate-950 shadow-inner focus-visible:ring-1 focus-visible:ring-[#10B981]"
                             />
                             <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">%</span>
                         </div>
@@ -232,12 +232,12 @@ export function TratamientosTab({ clinicId }: { clinicId: string }) {
                     value={categoryFilter}
                     onValueChange={setCategoryFilter}
                 >
-                    <SelectTrigger className="w-full md:w-[240px] h-10 rounded-xl bg-white border-slate-200 shadow-sm font-semibold text-slate-700">
+                    <SelectTrigger className="w-full md:w-[240px] h-10 rounded-xl bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-700 shadow-sm font-semibold text-slate-700 dark:text-slate-300">
                         <div className="flex items-center gap-2">
                             <SelectValue placeholder="Categoría" />
                         </div>
                     </SelectTrigger>
-                    <SelectContent className="rounded-xl border-slate-200 shadow-xl">
+                    <SelectContent className="rounded-xl border-slate-200 dark:border-slate-700 shadow-xl">
                         <SelectItem value="Todas" className="font-semibold py-2.5">Todas las categorías</SelectItem>
                         {CATEGORIAS.map(cat => (
                             <SelectItem 
@@ -253,10 +253,10 @@ export function TratamientosTab({ clinicId }: { clinicId: string }) {
             </div>
 
             {/* Main Table */}
-            <div className="rounded-2xl border bg-white overflow-hidden shadow-sm">
+            <div className="rounded-2xl border bg-white dark:bg-slate-950 overflow-hidden shadow-sm">
                 <Table>
                     <TableHeader>
-                        <TableRow className="bg-slate-50/50 hover:bg-slate-50/50 border-b">
+                        <TableRow className="bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900/50 border-b">
                             <TableHead className="font-bold text-[10px] text-slate-400 uppercase tracking-widest pl-6 h-12">Categoría</TableHead>
                             <TableHead 
                                 className="font-bold text-[10px] text-slate-400 uppercase tracking-widest cursor-pointer hover:text-[#10B981] transition-colors h-12"
@@ -294,23 +294,23 @@ export function TratamientosTab({ clinicId }: { clinicId: string }) {
                             </TableRow>
                         ) : filteredTratamientos.length > 0 ? (
                             filteredTratamientos.map((t) => (
-                                <TableRow key={t.id} className="group hover:bg-slate-50/50 transition-colors border-b last:border-0">
+                                <TableRow key={t.id} className="group hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900/50 transition-colors border-b last:border-0">
                                     <TableCell className="pl-6">
-                                        <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200 text-[10px] font-bold px-2 py-0.5">
+                                        <Badge variant="outline" className="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 text-[10px] font-bold px-2 py-0.5">
                                             {t.categoria}
                                         </Badge>
                                     </TableCell>
                                     <TableCell>
-                                        <p className="font-semibold text-sm text-slate-900">{t.nombre}</p>
+                                        <p className="font-semibold text-sm text-slate-900 dark:text-white">{t.nombre}</p>
                                     </TableCell>
                                     <TableCell>
-                                        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                                        <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
                                             <Clock className="h-3.5 w-3.5 text-slate-400" />
                                             {t.duracion_min} min
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <div className="flex items-center gap-0.5 font-semibold text-slate-900 text-sm">
+                                        <div className="flex items-center gap-0.5 font-semibold text-slate-900 dark:text-white text-sm">
                                             <span className="text-slate-400 font-normal mr-1">$</span>
                                             {Number(t.precio_promedio).toLocaleString('es-AR')}
                                         </div>
@@ -341,12 +341,12 @@ export function TratamientosTab({ clinicId }: { clinicId: string }) {
                             <TableRow>
                                 <TableCell colSpan={5} className="h-64 text-center">
                                     <div className="flex flex-col items-center justify-center gap-4 max-w-xs mx-auto">
-                                        <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center">
+                                        <div className="h-16 w-16 bg-slate-50 dark:bg-slate-900 rounded-full flex items-center justify-center">
                                             <Stethoscope className="h-8 w-8 text-slate-300" />
                                         </div>
                                         <div>
-                                            <p className="font-bold text-slate-900">No hay tratamientos cargados</p>
-                                            <p className="text-xs text-slate-500 leading-relaxed mt-1">
+                                            <p className="font-bold text-slate-900 dark:text-white">No hay tratamientos cargados</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-1">
                                                 Comienza cargando los servicios estándar o crea uno personalizado.
                                             </p>
                                         </div>
@@ -374,7 +374,7 @@ export function TratamientosTab({ clinicId }: { clinicId: string }) {
                             </TableRow>
                         )}
                         {/* Footer Spacer */}
-                        <TableRow className="border-none bg-slate-50/10">
+                        <TableRow className="border-none bg-slate-50 dark:bg-slate-900/10">
                              <TableCell colSpan={5} className="py-2 text-center">
                                 <p className="text-[10px] uppercase tracking-widest font-bold text-slate-300">
                                     Livio Intelligent Solutions

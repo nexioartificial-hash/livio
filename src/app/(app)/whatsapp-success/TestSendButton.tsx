@@ -57,7 +57,7 @@ export function TestSendButton({ phoneId }: { phoneId: string }) {
 
     return (
         <div className="space-y-2">
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
                 Ingresá un número con código de país, sin + ni espacios (ej: <strong>5491112345678</strong>)
             </p>
             <div className="flex gap-2">

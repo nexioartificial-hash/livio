@@ -32,8 +32,8 @@ export default async function WhatsAppConnectPage() {
     return (
         <div className="max-w-2xl mx-auto space-y-6 py-8 px-4">
             <div>
-                <h1 className="text-3xl font-bold text-slate-900">WhatsApp Business</h1>
-                <p className="text-slate-500 mt-1 text-sm">
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white">WhatsApp Business</h1>
+                <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">
                     Conectá tu número para enviar recordatorios y recibir mensajes de pacientes desde Livio.
                 </p>
             </div>
@@ -48,8 +48,8 @@ export default async function WhatsAppConnectPage() {
                                     <CheckCircle2 className="h-5 w-5 text-emerald-600" />
                                 </div>
                                 <div>
-                                    <p className="font-semibold text-slate-900">{connection.verified_name}</p>
-                                    <p className="text-sm text-slate-600">{connection.display_number}</p>
+                                    <p className="font-semibold text-slate-900 dark:text-white">{connection.verified_name}</p>
+                                    <p className="text-sm text-slate-600 dark:text-slate-400">{connection.display_number}</p>
                                     <p className="text-xs text-slate-400 mt-0.5">
                                         Conectado · WABA {connection.waba_id}
                                     </p>
@@ -108,13 +108,13 @@ export default async function WhatsAppConnectPage() {
                                         desc: "Recibí y respondé mensajes de pacientes directamente desde Livio.",
                                     },
                                 ].map(({ icon: Icon, title, desc }) => (
-                                    <div key={title} className="flex items-start gap-3 p-3 rounded-lg bg-slate-50">
+                                    <div key={title} className="flex items-start gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-900">
                                         <div className="w-8 h-8 rounded-lg bg-[#25D366]/10 flex items-center justify-center shrink-0 mt-0.5">
                                             <Icon className="h-4 w-4 text-[#25D366]" />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-medium text-slate-800">{title}</p>
-                                            <p className="text-xs text-slate-500 mt-0.5">{desc}</p>
+                                            <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{title}</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{desc}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -128,7 +128,7 @@ export default async function WhatsAppConnectPage() {
                                         href="https://www.whatsapp.com/legal/business-policy"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="underline hover:text-slate-600"
+                                        className="underline hover:text-slate-600 dark:text-slate-400"
                                     >
                                         Términos de WhatsApp Business
                                     </a>

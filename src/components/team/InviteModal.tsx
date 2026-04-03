@@ -33,7 +33,7 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "@/providers/auth-provider";
 import { inviteTeamMember } from "@/app/actions/team";
-import { titleCase } from "@/utils/masks";
+import { titleCase } from "@/utils/formatters";
 
 const inviteSchema = z.object({
     name: z.string().min(1, "El nombre es requerido"),
@@ -94,16 +94,16 @@ export default function InviteModal({ trigger, onInviteSent }: InviteModalProps)
             <DialogTrigger asChild>
                 {trigger}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border-none bg-white shadow-2xl rounded-2xl">
+            <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border-none bg-white dark:bg-slate-950 shadow-2xl rounded-2xl">
                 <div className="p-6 space-y-6">
                     <DialogHeader>
-                        <DialogTitle className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <DialogTitle className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                              <div className="h-8 w-8 rounded-lg bg-[#10B981]/10 flex items-center justify-center">
                                 <Users className="h-4 w-4 text-[#10B981]" />
                             </div>
                             Invitar Miembro
                         </DialogTitle>
-                        <DialogDescription className="text-slate-500 text-sm">
+                        <DialogDescription className="text-slate-500 dark:text-slate-400 text-sm">
                             Completa los datos para enviar el acceso.
                         </DialogDescription>
                     </DialogHeader>
@@ -120,7 +120,7 @@ export default function InviteModal({ trigger, onInviteSent }: InviteModalProps)
                                     setValue("name", formatted, { shouldValidate: true });
                                 }}
                                 placeholder="Ej: Dr. Juan Pérez"
-                                className="h-10 rounded-xl bg-slate-50 border-slate-200 focus:ring-[#10B981] focus:border-[#10B981]"
+                                className="h-10 rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:ring-[#10B981] focus:border-[#10B981]"
                             />
                             {errors.name && <p className="text-[10px] text-red-500">{errors.name.message}</p>}
                         </div>
@@ -136,7 +136,7 @@ export default function InviteModal({ trigger, onInviteSent }: InviteModalProps)
                                     setValue("email", e.target.value.toLowerCase(), { shouldValidate: true });
                                 }}
                                 placeholder="juan@clinica.com"
-                                className="h-10 rounded-xl bg-slate-50 border-slate-200"
+                                className="h-10 rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700"
                             />
                             {errors.email && <p className="text-[10px] text-red-500">{errors.email.message}</p>}
                         </div>
@@ -149,7 +149,7 @@ export default function InviteModal({ trigger, onInviteSent }: InviteModalProps)
                                 value={selectedRole}
                                 onValueChange={(val) => setValue("role", val)}
                             >
-                                <SelectTrigger className="h-10 rounded-xl bg-slate-50 border-slate-200">
+                                <SelectTrigger className="h-10 rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>

@@ -137,7 +137,7 @@ export function ProductModal({ isOpen, onClose, editingItem, clinicId, onSuccess
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden border-none shadow-2xl rounded-3xl max-h-[90vh] flex flex-col">
-                <div className="bg-[#76D7B6] p-6 text-white shrink-0">
+                <div className="bg-accent p-6 text-white shrink-0">
                     <DialogHeader>
                         <DialogTitle className="text-2xl font-bold flex items-center gap-2">
                             {editingItem ? "Editar Insumo" : "Nuevo Insumo"}
@@ -157,11 +157,11 @@ export function ProductModal({ isOpen, onClose, editingItem, clinicId, onSuccess
                                 name="producto"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-slate-700 font-bold">Nombre del Insumo / Producto</FormLabel>
+                                        <FormLabel className="text-slate-700 dark:text-slate-300 font-bold">Nombre del Insumo / Producto</FormLabel>
                                         <FormControl>
                                             <Input
                                                 placeholder="Ej. Resina 3M Filtek..."
-                                                className="border-slate-200 focus-visible:ring-[#76D7B6]"
+                                                className="border-slate-200 dark:border-slate-700 focus-visible:ring-accent"
                                                 {...field}
                                                 onChange={(e) => {
                                                     const v = e.target.value;
@@ -180,10 +180,10 @@ export function ProductModal({ isOpen, onClose, editingItem, clinicId, onSuccess
                                     name="categoria"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="text-slate-700 font-bold">Categoría</FormLabel>
+                                            <FormLabel className="text-slate-700 dark:text-slate-300 font-bold">Categoría</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                                                 <FormControl>
-                                                    <SelectTrigger className="border-slate-200 focus:ring-[#76D7B6]">
+                                                    <SelectTrigger className="border-slate-200 dark:border-slate-700 focus:ring-accent">
                                                         <SelectValue placeholder="Seleccionar..." />
                                                     </SelectTrigger>
                                                 </FormControl>
@@ -203,10 +203,10 @@ export function ProductModal({ isOpen, onClose, editingItem, clinicId, onSuccess
                                     name="ubicacion"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="text-slate-700 font-bold">Ubicación</FormLabel>
+                                            <FormLabel className="text-slate-700 dark:text-slate-300 font-bold">Ubicación</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                                                 <FormControl>
-                                                    <SelectTrigger className="border-slate-200 focus:ring-[#76D7B6]">
+                                                    <SelectTrigger className="border-slate-200 dark:border-slate-700 focus:ring-accent">
                                                         <SelectValue placeholder="Opcional..." />
                                                     </SelectTrigger>
                                                 </FormControl>
@@ -228,9 +228,9 @@ export function ProductModal({ isOpen, onClose, editingItem, clinicId, onSuccess
                                     name="stock_actual"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="text-slate-700 font-bold">Stock Actual</FormLabel>
+                                            <FormLabel className="text-slate-700 dark:text-slate-300 font-bold">Stock Actual</FormLabel>
                                             <FormControl>
-                                                <Input type="number" min="0" className="border-slate-200 focus-visible:ring-[#76D7B6]" {...field} />
+                                                <Input type="number" min="0" className="border-slate-200 dark:border-slate-700 focus-visible:ring-accent" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -242,9 +242,9 @@ export function ProductModal({ isOpen, onClose, editingItem, clinicId, onSuccess
                                     name="stock_min"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="text-slate-700 font-bold">Stock Mínimo</FormLabel>
+                                            <FormLabel className="text-slate-700 dark:text-slate-300 font-bold">Stock Mínimo</FormLabel>
                                             <FormControl>
-                                                <Input type="number" min="0" className="border-slate-200 focus-visible:ring-[#76D7B6]" {...field} />
+                                                <Input type="number" min="0" className="border-slate-200 dark:border-slate-700 focus-visible:ring-accent" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -256,14 +256,14 @@ export function ProductModal({ isOpen, onClose, editingItem, clinicId, onSuccess
                                     name="precio_unit"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="text-slate-700 font-bold">Precio Unit. (ARS)</FormLabel>
+                                            <FormLabel className="text-slate-700 dark:text-slate-300 font-bold">Precio Unit. (ARS)</FormLabel>
                                             <FormControl>
                                                 <div className="relative">
-                                                    <span className="absolute left-3 top-2 text-slate-500">$</span>
+                                                    <span className="absolute left-3 top-2 text-slate-500 dark:text-slate-400">$</span>
                                                     <Input 
                                                         type="text" 
                                                         placeholder="0"
-                                                        className="pl-6 border-slate-200 focus-visible:ring-[#76D7B6]" 
+                                                        className="pl-6 border-slate-200 dark:border-slate-700 focus-visible:ring-accent" 
                                                         value={formatCurrency(field.value)}
                                                         onChange={(e) => field.onChange(parseCurrency(e.target.value))}
                                                     />
@@ -280,14 +280,14 @@ export function ProductModal({ isOpen, onClose, editingItem, clinicId, onSuccess
                                 name="vencimiento"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col pt-2">
-                                        <FormLabel className="text-slate-700 font-bold">Fecha de Vencimiento</FormLabel>
+                                        <FormLabel className="text-slate-700 dark:text-slate-300 font-bold">Fecha de Vencimiento</FormLabel>
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
                                                     <Button
                                                         variant={"outline"}
                                                         className={cn(
-                                                            "w-full pl-3 text-left font-normal border-slate-200 hover:bg-slate-50",
+                                                            "w-full pl-3 text-left font-normal border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900 dark:hover:bg-slate-900",
                                                             !field.value && "text-muted-foreground"
                                                         )}
                                                     >
@@ -319,7 +319,7 @@ export function ProductModal({ isOpen, onClose, editingItem, clinicId, onSuccess
                                 <Button type="button" variant="ghost" onClick={onClose} disabled={isSaving}>
                                     Cancelar
                                 </Button>
-                                <Button type="submit" disabled={isSaving} className="bg-[#76D7B6] text-slate-900 hover:bg-[#65cba8]">
+                                <Button type="submit" disabled={isSaving} className="bg-accent text-slate-900 dark:text-white hover:bg-accent/90">
                                     {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                     Guardar Insumo
                                 </Button>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -31,7 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Plus, Save, Stethoscope } from "lucide-react";
 import { toast } from "sonner";
 import { saveTratamiento } from "@/app/actions/tratamientos";
-import { formatCurrency, parseCurrency } from "@/utils/formatters";
+import { formatCurrency, parseCurrency, titleCase } from "@/utils/formatters";
 
 const formSchema = z.object({
     id: z.string().optional(),
@@ -109,16 +109,16 @@ export function TratamientoModal({ clinicId, open, setOpen, initialData, onSucce
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="sm:max-w-[450px] p-0 overflow-hidden border-none bg-white shadow-2xl rounded-2xl">
+            <DialogContent className="sm:max-w-[450px] p-0 overflow-hidden border-none bg-white dark:bg-slate-950 shadow-2xl rounded-2xl">
                 <div className="p-6 space-y-6">
                     <DialogHeader>
-                        <DialogTitle className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <DialogTitle className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                              <div className="h-8 w-8 rounded-lg bg-[#10B981]/10 flex items-center justify-center">
                                 <Stethoscope className="h-4 w-4 text-[#10B981]" />
                             </div>
                             {initialData ? "Editar Tratamiento" : "Nuevo Tratamiento"}
                         </DialogTitle>
-                        <DialogDescription className="text-slate-500 text-sm">
+                        <DialogDescription className="text-slate-500 dark:text-slate-400 text-sm">
                             {(initialData 
                                 ? "Modifica los detalles del tratamiento odontológico." 
                                 : "Define un nuevo servicio para tu clínica.")}
@@ -137,7 +137,7 @@ export function TratamientoModal({ clinicId, open, setOpen, initialData, onSucce
                                         </FormLabel>
                                         <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
-                                                <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-slate-200">
+                                                <SelectTrigger className="h-11 rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700">
                                                     <SelectValue placeholder="Selecciona una categoría" />
                                                 </SelectTrigger>
                                             </FormControl>
@@ -163,10 +163,11 @@ export function TratamientoModal({ clinicId, open, setOpen, initialData, onSucce
                                             Nombre del Tratamiento
                                         </FormLabel>
                                         <FormControl>
-                                            <Input 
-                                                placeholder="Ej: Corona de Porcelana" 
-                                                className="h-11 rounded-xl bg-slate-50 border-slate-200"
-                                                {...field} 
+                                            <Input
+                                                placeholder="Ej: Corona de Porcelana"
+                                                className="h-11 rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700"
+                                                {...field}
+                                                onChange={(e) => field.onChange(titleCase(e.target.value))}
                                             />
                                         </FormControl>
                                         <FormMessage className="text-[10px]" />
@@ -187,7 +188,7 @@ export function TratamientoModal({ clinicId, open, setOpen, initialData, onSucce
                                                 <Input 
                                                     type="number"
                                                     placeholder="30" 
-                                                    className="h-11 rounded-xl bg-slate-50 border-slate-200"
+                                                    className="h-11 rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700"
                                                     {...field} 
                                                 />
                                             </FormControl>
@@ -208,7 +209,7 @@ export function TratamientoModal({ clinicId, open, setOpen, initialData, onSucce
                                                 <Input 
                                                     type="text"
                                                     placeholder="15000" 
-                                                    className="h-11 rounded-xl bg-slate-50 border-slate-200 font-medium"
+                                                    className="h-11 rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 font-medium"
                                                     value={formatCurrency(field.value)}
                                                     onChange={(e) => field.onChange(parseCurrency(e.target.value))}
                                                 />

@@ -71,7 +71,7 @@ export default function ClinicConfigForm({ sucursales = [] }: { sucursales?: any
     }, [clinic, user, form]);
 
     async function onSubmit(values: ClinicConfigValues) {
-        const clinicId = (user as any)?.clinic_id;
+        const clinicId = clinic?.id;
         if (!clinicId) {
             toast.error("No se encontró el ID de la clínica.");
             return;
@@ -116,16 +116,16 @@ export default function ClinicConfigForm({ sucursales = [] }: { sucursales?: any
     if (authLoading) {
         return (
             <div className="flex justify-center p-8">
-                <Loader2 className="h-8 w-8 animate-spin text-[#76D7B6]" />
+                <Loader2 className="h-8 w-8 animate-spin text-accent" />
             </div>
         );
     }
 
     return (
-        <Card className="border-none shadow-sm bg-white/50 backdrop-blur-sm">
+        <Card className="border-none shadow-sm bg-white dark:bg-slate-950/50 backdrop-blur-sm">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl">
-                    <Building2 className="h-5 w-5 text-[#76D7B6]" />
+                    <Building2 className="h-5 w-5 text-accent" />
                     Información General
                 </CardTitle>
                 <CardDescription>
@@ -148,7 +148,7 @@ export default function ClinicConfigForm({ sucursales = [] }: { sucursales?: any
                                                 <Building2 className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                                                 <Input
                                                     {...field}
-                                                    className="pl-9 bg-white"
+                                                    className="pl-9 bg-white dark:bg-slate-950"
                                                     onChange={(e) => {
                                                         const val = titleCase(e.target.value);
                                                         field.onChange(val);
@@ -171,7 +171,7 @@ export default function ClinicConfigForm({ sucursales = [] }: { sucursales?: any
                                         <FormControl>
                                             <Input
                                                 {...field}
-                                                className="bg-white"
+                                                className="bg-white dark:bg-slate-950"
                                                 placeholder="27-44391372-1"
                                                 maxLength={14}
                                                 onChange={(e) => {
@@ -201,7 +201,7 @@ export default function ClinicConfigForm({ sucursales = [] }: { sucursales?: any
                                                 <Input
                                                     {...field}
                                                     readOnly
-                                                    className="pl-9 bg-slate-50 cursor-not-allowed"
+                                                    className="pl-9 bg-slate-50 dark:bg-slate-900 cursor-not-allowed"
                                                 />
                                             </div>
                                         </FormControl>
@@ -219,14 +219,14 @@ export default function ClinicConfigForm({ sucursales = [] }: { sucursales?: any
                                         <FormLabel>Teléfono Consultas General</FormLabel>
                                         <FormControl>
                                             <div className="flex shadow-sm rounded-md overflow-hidden">
-                                                <span className="flex items-center px-3 bg-slate-100 border border-input border-r-0 text-slate-500 text-sm font-medium">
+                                                <span className="flex items-center px-3 bg-slate-100 dark:bg-slate-800 border border-input border-r-0 text-slate-500 dark:text-slate-400 text-sm font-medium">
                                                     +54
                                                 </span>
                                                 <div className="relative flex-1">
                                                     <Phone className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                                                     <Input
                                                         {...field}
-                                                        className="pl-9 rounded-l-none bg-white border-l-0"
+                                                        className="pl-9 rounded-l-none bg-white dark:bg-slate-950 border-l-0"
                                                         placeholder="11 2345-6789"
                                                         onChange={(e) => {
                                                             const clean = cleanValue(e.target.value);
@@ -253,7 +253,7 @@ export default function ClinicConfigForm({ sucursales = [] }: { sucursales?: any
                                                 <Mail className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                                                 <Input
                                                     {...field}
-                                                    className="pl-9 bg-white"
+                                                    className="pl-9 bg-white dark:bg-slate-950"
                                                     placeholder="contacto@miclinica.com"
                                                 />
                                             </div>
@@ -275,14 +275,14 @@ export default function ClinicConfigForm({ sucursales = [] }: { sucursales?: any
                                         });
                                         setIsHorariosModalOpen(true);
                                     }}
-                                    className="group w-full h-[68px] flex items-center gap-3 px-4 bg-gradient-to-r from-[#76D7B6]/10 to-[#76D7B6]/5 hover:from-[#76D7B6]/20 hover:to-[#76D7B6]/10 border border-[#76D7B6]/30 hover:border-[#76D7B6]/60 rounded-xl transition-all duration-200 cursor-pointer"
+                                    className="group w-full h-[68px] flex items-center gap-3 px-4 bg-gradient-to-r from-accent/10 to-accent/5 hover:from-accent/20 hover:to-accent/10 border border-accent/30 hover:border-accent/60 rounded-xl transition-all duration-200 cursor-pointer"
                                 >
-                                    <div className="h-8 w-8 bg-[#76D7B6]/20 group-hover:bg-[#76D7B6]/30 rounded-lg flex items-center justify-center shrink-0 transition-colors">
-                                        <CalendarDays className="h-4 w-4 text-[#76D7B6]" />
+                                    <div className="h-8 w-8 bg-accent/20 group-hover:bg-accent/30 rounded-lg flex items-center justify-center shrink-0 transition-colors">
+                                        <CalendarDays className="h-4 w-4 text-accent" />
                                     </div>
                                     <div className="text-left">
-                                        <p className="text-sm font-semibold text-slate-800 leading-tight">Días y Horarios</p>
-                                        <p className="text-[11px] text-slate-500 font-medium leading-tight">Configurar disponibilidad</p>
+                                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-tight">Días y Horarios</p>
+                                        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">Configurar disponibilidad</p>
                                     </div>
                                 </button>
                             </div>
@@ -292,7 +292,7 @@ export default function ClinicConfigForm({ sucursales = [] }: { sucursales?: any
                             <Button
                                 type="submit"
                                 disabled={isSaving}
-                                className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 font-medium px-8 h-11"
+                                className="bg-accent hover:bg-accent/90 text-slate-900 dark:text-white font-medium px-8 h-11"
                             >
                                 {isSaving ? (
                                     <>

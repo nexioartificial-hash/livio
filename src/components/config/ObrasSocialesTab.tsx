@@ -120,13 +120,13 @@ export function ObrasSocialesTab({ clinicId }: ObrasSocialesTabProps) {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         Obras Sociales
-                        <Badge variant="secondary" className="bg-slate-100 text-slate-600 border-none font-bold">
+                        <Badge variant="secondary" className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-none font-bold">
                             {obrasSociales.length} configuradas
                         </Badge>
                     </h2>
-                    <p className="text-sm text-slate-500">Administra tus convenios, planes y niveles de cobertura.</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Administra tus convenios, planes y niveles de cobertura.</p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
@@ -136,12 +136,12 @@ export function ObrasSocialesTab({ clinicId }: ObrasSocialesTabProps) {
                             placeholder="Buscar obra social o plan..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="pl-9 h-10 rounded-xl bg-white border-slate-200"
+                            className="pl-9 h-10 rounded-xl bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-700"
                         />
                     </div>
                     <Button 
                         variant="outline"
-                        className="h-10 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 gap-2 font-bold text-xs"
+                        className="h-10 rounded-xl border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900 dark:hover:bg-slate-900 gap-2 font-bold text-xs"
                         onClick={() => setImportModalOpen(true)}
                     >
                         <Upload className="h-4 w-4" /> Importar Excel
@@ -154,14 +154,14 @@ export function ObrasSocialesTab({ clinicId }: ObrasSocialesTabProps) {
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest mr-2">
                     <Filter className="h-3 w-3" /> Ver:
                 </div>
-                <div className="flex p-1 bg-slate-100/50 border border-slate-100 rounded-xl">
+                <div className="flex p-1 bg-slate-100 dark:bg-slate-800/50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-xl">
                     <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setFilterType("Activas")}
                         className={cn(
                             "rounded-lg px-4 h-8 text-[11px] font-bold transition-all",
-                            filterType === "Activas" ? "bg-white text-[#10B981] shadow-sm" : "text-slate-500 hover:bg-white/50"
+                            filterType === "Activas" ? "bg-white dark:bg-slate-950 text-[#10B981] shadow-sm" : "text-slate-500 dark:text-slate-400 hover:bg-white dark:bg-slate-950/50 dark:hover:bg-slate-900/50"
                         )}
                     >
                         Activas
@@ -172,7 +172,7 @@ export function ObrasSocialesTab({ clinicId }: ObrasSocialesTabProps) {
                         onClick={() => setFilterType("Todas")}
                         className={cn(
                             "rounded-lg px-4 h-8 text-[11px] font-bold transition-all",
-                            filterType === "Todas" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:bg-white/50"
+                            filterType === "Todas" ? "bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:bg-white dark:bg-slate-950/50 dark:hover:bg-slate-900/50"
                         )}
                     >
                         Todas
@@ -181,10 +181,10 @@ export function ObrasSocialesTab({ clinicId }: ObrasSocialesTabProps) {
             </div>
 
             {/* Main Content */}
-            <div className="bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
+            <div className="bg-white dark:bg-slate-950 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden">
                 <Table>
                     <TableHeader>
-                        <TableRow className="bg-slate-50/50 hover:bg-slate-50/50 border-b">
+                        <TableRow className="bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900/50 border-b">
                             <TableHead className="font-bold text-[10px] text-slate-400 uppercase tracking-widest pl-6 h-12">Nombre y Plan</TableHead>
                             <TableHead className="font-bold text-[10px] text-slate-400 uppercase tracking-widest h-12">Cobertura</TableHead>
                             <TableHead className="font-bold text-[10px] text-slate-400 uppercase tracking-widest h-12">Tratamientos Incluidos</TableHead>
@@ -217,18 +217,18 @@ export function ObrasSocialesTab({ clinicId }: ObrasSocialesTabProps) {
                                 }
 
                                 return (
-                                <TableRow key={os.id} className="group hover:bg-slate-50/50 transition-colors border-b last:border-0">
+                                <TableRow key={os.id} className="group hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900/50 transition-colors border-b last:border-0">
                                     <TableCell className="pl-6 py-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-white group-hover:shadow-sm transition-all shrink-0">
+                                            <div className="h-10 w-10 rounded-xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-400 group-hover:bg-white dark:bg-slate-950 dark:group-hover:bg-slate-950 group-hover:shadow-sm transition-all shrink-0">
                                                 <ShieldCheck className="h-5 w-5" />
                                             </div>
                                             <div className="flex flex-col gap-1">
-                                                <p className="font-semibold text-sm text-slate-900">{os.nombre}</p>
+                                                <p className="font-semibold text-sm text-slate-900 dark:text-white">{os.nombre}</p>
                                                 {planesParsed ? (
                                                     <div className="flex flex-wrap gap-1">
                                                         {planesParsed.map((p, i) => (
-                                                            <span key={i} className="text-[10px] text-slate-500 font-bold bg-slate-100 px-1.5 py-0.5 rounded-md truncate max-w-[120px]">
+                                                            <span key={i} className="text-[10px] text-slate-500 dark:text-slate-400 font-bold bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-md truncate max-w-[120px]">
                                                                 {p.nombre_plan}
                                                             </span>
                                                         ))}
@@ -265,7 +265,7 @@ export function ObrasSocialesTab({ clinicId }: ObrasSocialesTabProps) {
                                     <TableCell className="max-w-[200px]">
                                         <div className="flex flex-wrap gap-1">
                                             {os.tratamientos && os.tratamientos.map((t, idx) => (
-                                                <Badge key={idx} variant="outline" className="text-[9px] font-bold border-slate-200 bg-white text-slate-500 py-0 px-2 h-5">
+                                                <Badge key={idx} variant="outline" className="text-[9px] font-bold border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-500 dark:text-slate-400 py-0 px-2 h-5">
                                                     {t}
                                                 </Badge>
                                             ))}
@@ -286,7 +286,7 @@ export function ObrasSocialesTab({ clinicId }: ObrasSocialesTabProps) {
                                             <Button 
                                                 variant="ghost" 
                                                 size="sm" 
-                                                className="h-8 w-8 p-0 rounded-lg hover:bg-white hover:text-[#10B981] hover:shadow-sm"
+                                                className="h-8 w-8 p-0 rounded-lg hover:bg-white dark:bg-slate-950 hover:text-[#10B981] hover:shadow-sm"
                                                 onClick={() => {
                                                     setSelectedOS(os);
                                                     setModalOpen(true);
@@ -297,7 +297,7 @@ export function ObrasSocialesTab({ clinicId }: ObrasSocialesTabProps) {
                                             <Button 
                                                 variant="ghost" 
                                                 size="sm" 
-                                                className="h-8 w-8 p-0 rounded-lg hover:bg-white hover:text-red-500 hover:shadow-sm"
+                                                className="h-8 w-8 p-0 rounded-lg hover:bg-white dark:bg-slate-950 hover:text-red-500 hover:shadow-sm"
                                                 onClick={() => handleDelete(os.id)}
                                             >
                                                 <Trash2 className="h-3.5 w-3.5" />
@@ -310,11 +310,11 @@ export function ObrasSocialesTab({ clinicId }: ObrasSocialesTabProps) {
                             <TableRow>
                                 <TableCell colSpan={5} className="h-64 text-center border-none">
                                     <div className="flex flex-col items-center justify-center gap-4 py-8">
-                                        <div className="h-16 w-16 rounded-3xl bg-slate-50 flex items-center justify-center text-slate-200">
+                                        <div className="h-16 w-16 rounded-3xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-200">
                                             <ShieldCheck className="h-8 w-8" />
                                         </div>
                                         <div className="space-y-1 text-center">
-                                            <p className="text-base font-bold text-slate-900">No hay convenios</p>
+                                            <p className="text-base font-bold text-slate-900 dark:text-white">No hay convenios</p>
                                             <p className="text-sm text-slate-400 mx-auto text-center">
                                                 {search ? "No se encontraron resultados para tu búsqueda." : "Configura tus obras sociales y prepagas para integrarlas con los turnos."}
                                             </p>
@@ -322,14 +322,14 @@ export function ObrasSocialesTab({ clinicId }: ObrasSocialesTabProps) {
                                         {!search && obrasSociales.length === 0 && (
                                             <div className="flex flex-col gap-2 w-full max-w-[250px] mt-2">
                                                 <Button 
-                                                    className="w-full rounded-xl bg-[#76D7B6] text-slate-900 font-bold text-sm hover:bg-[#65cba8] gap-2"
+                                                    className="w-full rounded-xl bg-accent text-slate-900 dark:text-white font-bold text-sm hover:bg-accent/90 gap-2"
                                                     onClick={() => setImportModalOpen(true)}
                                                 >
                                                     <Upload className="h-4 w-4" /> Importar CSV o Excel
                                                 </Button>
                                                 <Button 
                                                     variant="outline" 
-                                                    className="w-full rounded-xl border-slate-200 text-slate-600 font-bold text-xs px-6 hover:bg-slate-50"
+                                                    className="w-full rounded-xl border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold text-xs px-6 hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900 dark:hover:bg-slate-900"
                                                     onClick={handleSeed}
                                                 >
                                                     Cargar 12 Estándar Argentina

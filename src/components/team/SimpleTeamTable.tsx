@@ -66,22 +66,22 @@ export function SimpleTeamTable({ members, onDelete, onUpdateRole, onInviteSent 
     };
 
     return (
-        <div className="rounded-xl border bg-white overflow-hidden shadow-sm">
+        <div className="rounded-xl border bg-white dark:bg-slate-950 overflow-hidden shadow-sm">
             <Table>
                 <TableHeader>
-                    <TableRow className="bg-slate-50/50 border-none hover:bg-slate-50/50">
-                        <TableHead className="font-bold text-slate-900 pl-6">Nombre</TableHead>
-                        <TableHead className="font-bold text-slate-900">Rol</TableHead>
-                        <TableHead className="font-bold text-slate-900">Estado</TableHead>
-                        <TableHead className="text-right font-bold text-slate-900 pr-10">Acción</TableHead>
+                    <TableRow className="bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900/50 border-none hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900/50 dark:hover:bg-slate-900/50">
+                        <TableHead className="font-bold text-slate-900 dark:text-white pl-6">Nombre</TableHead>
+                        <TableHead className="font-bold text-slate-900 dark:text-white">Rol</TableHead>
+                        <TableHead className="font-bold text-slate-900 dark:text-white">Estado</TableHead>
+                        <TableHead className="text-right font-bold text-slate-900 dark:text-white pr-10">Acción</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {members.map((member) => (
-                        <TableRow key={member.id} className="border-b border-slate-50 hover:bg-slate-50/30 transition-colors">
+                        <TableRow key={member.id} className="border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900/30 dark:hover:bg-slate-900/30 transition-colors">
                             <TableCell className="pl-6">
                                 <div>
-                                    <p className="font-bold text-sm text-slate-900 flex items-center gap-2">
+                                    <p className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
                                         {member.full_name}
                                         {member.isCurrentUser && (
                                             <span className="text-[10px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded-md border border-amber-100 font-bold uppercase tracking-tighter">
@@ -108,7 +108,7 @@ export function SimpleTeamTable({ members, onDelete, onUpdateRole, onInviteSent 
                                 ) : (
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600 dark:text-slate-400">
                                                 <MoreVertical className="h-4 w-4" />
                                             </Button>
                                         </DropdownMenuTrigger>
@@ -122,7 +122,7 @@ export function SimpleTeamTable({ members, onDelete, onUpdateRole, onInviteSent 
                                             <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => onUpdateRole(member.id, 'profesional')}>
                                                 <Stethoscope className="h-4 w-4 text-emerald-500" /> Dentista
                                             </DropdownMenuItem>
-                                            <div className="h-px bg-slate-100 my-1" />
+                                            <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
                                             <DropdownMenuItem 
                                                 className="gap-2 cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50"
                                                 onClick={() => onDelete(member.id)}
@@ -138,34 +138,32 @@ export function SimpleTeamTable({ members, onDelete, onUpdateRole, onInviteSent 
                     
                     {members.length === 1 && members[0].isCurrentUser && (
                         <TableRow className="hover:bg-transparent border-none">
-                            <TableCell colSpan={4} className="py-20 text-center">
-                                <div className="flex flex-col items-center justify-center max-w-[300px] mx-auto gap-4">
+                            <TableCell colSpan={4} className="py-20">
+                                <div className="flex flex-col items-center justify-center text-center gap-4 mx-auto">
                                     <div className="h-16 w-16 bg-emerald-50 rounded-full flex items-center justify-center animate-bounce-slow">
                                         <Users className="h-8 w-8 text-[#10B981]" />
                                     </div>
-                                    <div className="space-y-1">
-                                        <p className="font-bold text-slate-900 text-lg">Tu equipo está listo para crecer</p>
-                                        <p className="text-xs text-slate-500 leading-relaxed max-w-[250px] mx-auto">
+                                    <div>
+                                        <p className="font-bold text-slate-900 dark:text-white text-lg">Tu equipo está listo para crecer</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-[280px] mx-auto mt-1">
                                             Aún estás solo en la clínica. Invita a tus colegas o asistentes para centralizar la gestión hoy mismo.
                                         </p>
                                     </div>
-                                    <div className="pt-2">
-                                        <InviteModal 
-                                            onInviteSent={onInviteSent} 
-                                            trigger={
-                                                <Button className="bg-[#10B981] hover:bg-[#059669] text-white font-bold text-sm h-11 px-8 rounded-2xl gap-2 shadow-xl shadow-emerald-200 transition-all hover:scale-105 active:scale-95">
-                                                    <Plus className="h-4 w-4" /> Comenzar a formar equipo
-                                                </Button>
-                                            }
-                                        />
-                                    </div>
+                                    <InviteModal
+                                        onInviteSent={onInviteSent}
+                                        trigger={
+                                            <Button className="bg-[#10B981] hover:bg-[#059669] text-white font-bold text-sm h-11 px-8 rounded-2xl gap-2 shadow-xl shadow-emerald-200 transition-all hover:scale-105 active:scale-95">
+                                                <Plus className="h-4 w-4" /> Comenzar a formar equipo
+                                            </Button>
+                                        }
+                                    />
                                 </div>
                             </TableCell>
                         </TableRow>
                     )}
 
                     {/* Footer summary */}
-                    <TableRow className="border-none bg-slate-50/20">
+                    <TableRow className="border-none bg-slate-50 dark:bg-slate-900/20">
                          <TableCell colSpan={4} className="py-4 text-center">
                             <p className="text-[10px] uppercase tracking-widest font-bold text-slate-300">
                                 {members.length === 1 ? 'Solo tú en el equipo' : `${members.length} Miembros totales`}
