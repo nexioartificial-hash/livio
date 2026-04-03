@@ -172,6 +172,19 @@
   animation: drift 20s infinite ease-in-out;
 }
 
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
 /* ROOT LEVEL ANIMATIONS - Forced for HeroBackground */
 @keyframes aurora-flow-1 {
   0% {

@@ -7,8 +7,14 @@
 
 export default function HeroBackground() {
     return (
-        <div className="fixed inset-0 -z-50 overflow-hidden bg-white pointer-events-none">
+        <div className="fixed inset-0 -z-50 overflow-hidden bg-white dark:bg-slate-950 pointer-events-none">
             <style jsx>{`
+                :root {
+                    --hero-gradient: linear-gradient(125deg, #ffffff 0%, #E0ECFF 30%, #D9FBEA 50%, #ffffff 70%, #C5DDFF 100%);
+                }
+                .dark {
+                    --hero-gradient: linear-gradient(125deg, #020617 0%, #0f1729 30%, #071a12 50%, #020617 70%, #0f1729 100%);
+                }
                 @keyframes wave-flow {
                     0% {
                         background-position: 0% 50%;
@@ -30,7 +36,7 @@ export default function HeroBackground() {
             <div
                 className="absolute inset-0 opacity-60"
                 style={{
-                    background: 'linear-gradient(125deg, #ffffff 0%, #E0ECFF 30%, #D9FBEA 50%, #ffffff 70%, #C5DDFF 100%)',
+                    background: 'var(--hero-gradient, linear-gradient(125deg, #ffffff 0%, #E0ECFF 30%, #D9FBEA 50%, #ffffff 70%, #C5DDFF 100%))',
                     backgroundSize: '300% 300%',
                     animation: 'wave-flow 15s ease infinite alternate'
                 }}

@@ -26,7 +26,7 @@ export default function HowItWorks() {
     ];
 
     return (
-        <section id="how-it-works" className="container mx-auto px-4 py-12 md:py-24 bg-white/20 backdrop-blur-sm rounded-3xl my-8 border border-white/20">
+        <section id="how-it-works" className="container mx-auto px-4 py-12 md:py-24 bg-white dark:bg-slate-950/20 dark:bg-slate-950/20 backdrop-blur-sm rounded-3xl my-8 border border-white/20 dark:border-slate-800/20">
             <div className="text-center mb-16">
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl flex items-center justify-center gap-3 flex-wrap">
                     Cómo funciona <Image src="/logo-transparent.png" alt="Livio" width={180} height={60} className="h-8 sm:h-10 md:h-12 w-auto object-contain inline-block relative top-1" /> en tu día a día
@@ -48,7 +48,7 @@ export default function HowItWorks() {
                 ))}
             </div>
             {/* Dashboard Preview */}
-            <div className="mt-16 relative w-full maxim-w-5xl mx-auto rounded-xl overflow-hidden shadow-2xl border border-secondary/20">
+            <div className="mt-16 relative w-full max-w-5xl mx-auto rounded-xl overflow-hidden shadow-2xl border border-secondary/20">
                 <Image
                     src="/dashboard-mockup.png"
                     alt="Livio Dashboard Preview"

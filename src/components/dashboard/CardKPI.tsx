@@ -53,8 +53,8 @@ export function CardKPI({
             transition={{ duration: 0.35, delay, ease: "easeOut" }}
             onClick={onClick}
             className={cn(
-                "relative bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col gap-3 overflow-hidden",
-                onClick && "cursor-pointer hover:shadow-md hover:border-slate-200 transition-all duration-200 group",
+                "relative bg-gradient-to-b from-white to-slate-100 dark:from-slate-950 dark:to-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-[0_4px_20px_rgba(0,0,0,0.07)] p-5 flex flex-col gap-3 overflow-hidden",
+                onClick && "cursor-pointer hover:shadow-[0_8px_30px_rgba(0,0,0,0.11)] hover:border-slate-300 transition-all duration-200 group",
                 className
             )}
         >
@@ -66,10 +66,10 @@ export function CardKPI({
 
             <div className="flex items-start justify-between">
                 <div className="flex flex-col gap-1 flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider truncate">{title}</p>
+                    <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">{title}</p>
 
                     <div className="flex items-end gap-2 flex-wrap">
-                        <span className="text-2xl font-bold text-slate-900 leading-none">{value}</span>
+                        <span className="text-2xl font-bold text-slate-900 dark:text-white leading-none">{value}</span>
                         {trend && (
                             <span className={cn(
                                 "flex items-center gap-0.5 text-xs font-semibold mb-0.5",
@@ -85,7 +85,7 @@ export function CardKPI({
                     </div>
 
                     {subtitle && (
-                        <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>
                     )}
                 </div>
 
@@ -136,11 +136,11 @@ export function CardKPI({
             {/* Progress bar */}
             {progress && (
                 <div className="space-y-1">
-                    <div className="flex justify-between text-[10px] text-slate-400 font-medium">
+                    <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 dark:text-slate-400 font-medium">
                         <span>Progreso</span>
                         <span>{Math.round((progress.value / progress.max) * 100)}%</span>
                     </div>
-                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                         <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${Math.min((progress.value / progress.max) * 100, 100)}%` }}

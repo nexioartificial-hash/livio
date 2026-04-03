@@ -57,16 +57,16 @@ export function TurnosSemanalChart({ data = mockData, filterLabel = "Esta semana
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.2 }}
-            className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6"
+            className="bg-gradient-to-b from-white to-slate-100 dark:from-slate-950 dark:to-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-[0_4px_20px_rgba(0,0,0,0.07)] p-6"
         >
             <div className="flex items-center justify-between mb-5">
                 <div>
-                    <h3 className="text-sm font-bold text-slate-800">Turnos Semanales</h3>
-                    <p className="text-xs text-slate-400 mt-0.5">{filterLabel}</p>
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Turnos Semanales</h3>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400 mt-0.5">{filterLabel}</p>
                 </div>
-                <div className="flex items-center gap-4 text-xs text-slate-400">
+                <div className="flex items-center gap-4 text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400">
                     <span className="flex items-center gap-1.5">
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#76D7B6]" />
+                        <span className="w-2.5 h-2.5 rounded-full bg-accent" />
                         Confirmados
                     </span>
                     <span className="flex items-center gap-1.5">

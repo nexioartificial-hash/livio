@@ -96,42 +96,42 @@ export default function AnimatedCalendar() {
         <div ref={containerRef} className="space-y-6 w-full mx-auto select-none">
             {/* --- TOP BAR --- */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <h1 className="text-3xl font-bold text-slate-900">Agenda</h1>
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Agenda</h1>
                 <div className="flex items-center gap-2">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="border-slate-200 text-slate-600 font-bold gap-2 h-10 px-4 hover:bg-slate-50 transition-all shadow-sm">
+                            <Button variant="outline" className="border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold gap-2 h-10 px-4 hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900 transition-all shadow-sm">
                                 <Download className="h-4 w-4" /> Importar <ChevronDown className="h-3 w-3 opacity-50" />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-[180px] p-2 shadow-xl border-slate-100">
-                            <DropdownMenuItem className="py-2.5 cursor-pointer gap-3 font-medium text-slate-600 hover:text-blue-500 hover:bg-blue-50 transition-colors" onClick={() => window.location.href = '/config/importar?source=google'}>
+                        <DropdownMenuContent align="end" className="w-[180px] p-2 shadow-xl border-slate-100 dark:border-slate-800">
+                            <DropdownMenuItem className="py-2.5 cursor-pointer gap-3 font-medium text-slate-600 dark:text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-colors" onClick={() => window.location.href = '/config/importar?source=google'}>
                                 <CalendarIcon className="h-4 w-4 text-blue-500" /> Google Calendar
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="py-2.5 cursor-pointer gap-3 font-medium text-slate-600 hover:text-green-500 hover:bg-green-50 transition-colors" onClick={() => window.location.href = '/config/importar?source=excel'}>
+                            <DropdownMenuItem className="py-2.5 cursor-pointer gap-3 font-medium text-slate-600 dark:text-slate-400 hover:text-green-500 hover:bg-green-50 transition-colors" onClick={() => window.location.href = '/config/importar?source=excel'}>
                                 <FileSpreadsheet className="h-4 w-4 text-green-500" /> Excel / CSV
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="py-2.5 cursor-pointer gap-3 font-medium text-slate-600 hover:text-indigo-500 hover:bg-indigo-50 transition-colors" onClick={() => window.location.href = '/config/importar?source=calendly'}>
+                            <DropdownMenuItem className="py-2.5 cursor-pointer gap-3 font-medium text-slate-600 dark:text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 transition-colors" onClick={() => window.location.href = '/config/importar?source=calendly'}>
                                 <CalendarIcon className="h-4 w-4 text-indigo-500" /> Calendly
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
 
-                    <Button className="bg-[#76D7B6] hover:bg-[#65cba8] text-slate-900 font-bold gap-2 h-10 px-6 shadow-sm hover:shadow-md transition-all">
+                    <Button className="bg-accent hover:bg-accent/90 text-slate-900 dark:text-white font-bold gap-2 h-10 px-6 shadow-sm hover:shadow-md transition-all">
                         <Plus className="h-4 w-4" /> Nuevo Turno
                     </Button>
                 </div>
             </div>
 
             {/* --- CALENDAR NAVIGATION & FILTERS --- */}
-            <div className="flex flex-col lg:flex-row justify-between items-center bg-white border border-slate-100 rounded-xl p-3 gap-4 shadow-sm">
+            <div className="flex flex-col lg:flex-row justify-between items-center bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl p-3 gap-4 shadow-sm">
                 <div className="flex items-center gap-4">
-                    <select className="bg-transparent text-sm font-bold text-slate-600 outline-none cursor-pointer hover:text-slate-900 transition-colors px-2 py-1 rounded-lg">
+                    <select className="bg-transparent text-sm font-bold text-slate-600 dark:text-slate-400 outline-none cursor-pointer hover:text-slate-900 dark:text-white transition-colors px-2 py-1 rounded-lg">
                         <option>Todos los Profesionales</option>
                         <option>Dr. Juan Pérez</option>
                         <option>Dra. María López</option>
                     </select>
-                    <select className="bg-transparent text-sm font-bold text-slate-600 outline-none cursor-pointer hover:text-slate-900 transition-colors px-2 py-1 rounded-lg">
+                    <select className="bg-transparent text-sm font-bold text-slate-600 dark:text-slate-400 outline-none cursor-pointer hover:text-slate-900 dark:text-white transition-colors px-2 py-1 rounded-lg">
                         <option>Todas las Sedes</option>
                         <option>Sede Central</option>
                         <option>Sede Palermo</option>
@@ -143,7 +143,7 @@ export default function AnimatedCalendar() {
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={prevMonth}
-                        className="text-slate-300 hover:text-[#76D7B6] transition-colors p-1"
+                        className="text-slate-300 hover:text-accent transition-colors p-1"
                     >
                         <ChevronLeft className="h-6 w-6 stroke-[3px]" />
                     </motion.button>
@@ -156,7 +156,7 @@ export default function AnimatedCalendar() {
                                 animate={{ x: 0, opacity: 1 }}
                                 exit={{ x: -20, opacity: 0 }}
                                 transition={{ duration: 0.3 }}
-                                className="text-lg font-bold text-slate-900 tracking-tight"
+                                className="text-lg font-bold text-slate-900 dark:text-white tracking-tight"
                             >
                                 {MONTH_NAMES[month]} 2026
                             </motion.h2>
@@ -167,15 +167,15 @@ export default function AnimatedCalendar() {
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={nextMonth}
-                        className="text-slate-300 hover:text-[#76D7B6] transition-colors p-1"
+                        className="text-slate-300 hover:text-accent transition-colors p-1"
                     >
                         <ChevronRight className="h-6 w-6 stroke-[3px]" />
                     </motion.button>
                 </motion.div>
 
-                <div className="flex bg-slate-100 p-0.5 rounded-lg">
+                <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg">
                     {["Día", "Semana", "Mes"].map(view => (
-                        <button key={view} className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${view === "Mes" ? "bg-white shadow-sm text-slate-900" : "text-slate-400 hover:text-slate-600"}`}>
+                        <button key={view} className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${view === "Mes" ? "bg-white dark:bg-slate-950 shadow-sm text-slate-900 dark:text-white" : "text-slate-400 hover:text-slate-600 dark:text-slate-400"}`}>
                             {view}
                         </button>
                     ))}
@@ -183,9 +183,9 @@ export default function AnimatedCalendar() {
             </div>
 
             {/* --- CALENDAR GRID --- */}
-            <div className="bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden">
+            <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden">
                 {/* Days of week header */}
-                <div className="grid grid-cols-7 border-b border-slate-100 bg-slate-50/50">
+                <div className="grid grid-cols-7 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
                     {DAYS_OF_WEEK.map(day => (
                         <div key={day} className="py-3 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">{day}</div>
                     ))}
@@ -213,10 +213,10 @@ export default function AnimatedCalendar() {
                                         e.stopPropagation();
                                         setSelectedDay(day);
                                     }}
-                                    className={`relative min-h-[100px] border-r border-b border-slate-100 p-2 transition-colors cursor-pointer group flex flex-col gap-1 ${isSelected ? "bg-[#76D7B6]/5" : "hover:bg-slate-50/50"
+                                    className={`relative min-h-[100px] border-r border-b border-slate-100 dark:border-slate-800 p-2 transition-colors cursor-pointer group flex flex-col gap-1 ${isSelected ? "bg-accent/5" : "hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900/50"
                                         }`}
                                 >
-                                    <span className={`text-xs font-bold transition-all ${isSelected ? "text-[#76D7B6] font-black" : "text-slate-400 group-hover:text-slate-900"
+                                    <span className={`text-xs font-bold transition-all ${isSelected ? "text-accent font-black" : "text-slate-400 group-hover:text-slate-900 dark:text-white"
                                         }`}>
                                         {day}
                                     </span>
@@ -242,7 +242,7 @@ export default function AnimatedCalendar() {
                                                 initial={{ opacity: 0, scale: 0.9 }}
                                                 animate={{ opacity: 1, scale: 1 }}
                                                 exit={{ opacity: 0, scale: 0.9 }}
-                                                className="absolute inset-0 border-2 border-[#76D7B6] pointer-events-none z-10"
+                                                className="absolute inset-0 border-2 border-accent pointer-events-none z-10"
                                             />
                                         )}
                                     </AnimatePresence>
@@ -256,7 +256,7 @@ export default function AnimatedCalendar() {
                                                 exit={{ opacity: 0, scale: 0.8 }}
                                                 className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-slate-900 text-white text-[10px] font-bold rounded-lg whitespace-nowrap shadow-xl z-50 flex items-center gap-2"
                                             >
-                                                <div className="w-1.5 h-1.5 rounded-full bg-[#76D7B6]" />
+                                                <div className="w-1.5 h-1.5 rounded-full bg-accent" />
                                                 Evento del día {day}
                                                 <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900" />
                                             </motion.div>

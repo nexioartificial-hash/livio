@@ -4,7 +4,7 @@ import Image from "next/image";
 
 export default function ForWhom() {
     return (
-        <section className="container mx-auto px-4 py-12 md:py-24 bg-white/20 backdrop-blur-sm rounded-3xl my-8 border border-white/20">
+        <section className="container mx-auto px-4 py-12 md:py-24 bg-white dark:bg-slate-950/20 dark:bg-slate-950/20 backdrop-blur-sm rounded-3xl my-8 border border-white/20 dark:border-slate-800/20">
             <div className="text-center mb-12 space-y-4">
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl flex items-center justify-center gap-3">
                     ¿Para quién es <Image src="/logo-transparent.png" alt="Livio" width={180} height={60} className="h-8 sm:h-10 md:h-12 w-auto object-contain inline-block relative top-1" />?
@@ -15,7 +15,7 @@ export default function ForWhom() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-3">
-                <Card className="bg-white/40 hover:bg-white/60 transition-colors border-white/30">
+                <Card className="bg-white dark:bg-slate-950/40 dark:bg-slate-900/40 hover:bg-white dark:bg-slate-950/60 dark:hover:bg-slate-800/60 transition-colors border-white/30 dark:border-slate-700/30">
                     <CardHeader>
                         <CardTitle className="text-xl font-bold text-primary">Clínicas en crecimiento</CardTitle>
                     </CardHeader>
@@ -27,7 +27,7 @@ export default function ForWhom() {
                     </CardContent>
                 </Card>
 
-                <Card className="bg-white/40 hover:bg-white/60 transition-colors border-white/30">
+                <Card className="bg-white dark:bg-slate-950/40 dark:bg-slate-900/40 hover:bg-white dark:bg-slate-950/60 dark:hover:bg-slate-800/60 transition-colors border-white/30 dark:border-slate-700/30">
                     <CardHeader>
                         <CardTitle className="text-xl font-bold text-primary">Clínicas con WhatsApp caótico</CardTitle>
                     </CardHeader>
@@ -39,7 +39,7 @@ export default function ForWhom() {
                     </CardContent>
                 </Card>
 
-                <Card className="bg-white/40 hover:bg-white/60 transition-colors border-white/30">
+                <Card className="bg-white dark:bg-slate-950/40 dark:bg-slate-900/40 hover:bg-white dark:bg-slate-950/60 dark:hover:bg-slate-800/60 transition-colors border-white/30 dark:border-slate-700/30">
                     <CardHeader>
                         <CardTitle className="text-xl font-bold text-primary">Clínicas que quieren cumplir HCE</CardTitle>
                     </CardHeader>

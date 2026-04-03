@@ -43,11 +43,11 @@ export function TratamientosChart() {
             initial={{ opacity: 0, x: 16 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.4, delay: 0.3 }}
-            className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex flex-col h-full"
+            className="bg-gradient-to-b from-white to-slate-100 dark:from-slate-950 dark:to-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-[0_4px_20px_rgba(0,0,0,0.07)] p-6 flex flex-col h-full"
         >
             <div className="mb-4">
-                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-tight">Top 3 Tratamientos</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Demanda actual por volumen</p>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight">Top 3 Tratamientos</h3>
+                <p className="text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400 mt-0.5">Demanda actual por volumen</p>
             </div>
 
             <div className="flex items-center gap-6 flex-1">
@@ -79,10 +79,10 @@ export function TratamientosChart() {
                     {TRATAMIENTOS.map((t) => (
                         <div key={t.name} className="space-y-1.5">
                             <div className="flex justify-between items-center">
-                                <span className="text-xs font-bold text-slate-600 truncate">{t.name}</span>
-                                <span className="text-xs font-black text-slate-400">{t.value}%</span>
+                                <span className="text-xs font-bold text-slate-600 dark:text-slate-400 truncate">{t.name}</span>
+                                <span className="text-xs font-black text-slate-400 dark:text-slate-500 dark:text-slate-400">{t.value}%</span>
                             </div>
-                            <div className="h-2 bg-slate-50 rounded-full overflow-hidden">
+                            <div className="h-2 bg-slate-50 dark:bg-slate-900 dark:bg-slate-800 rounded-full overflow-hidden">
                                 <motion.div
                                     initial={{ width: 0 }}
                                     animate={{ width: `${t.value}%` }}

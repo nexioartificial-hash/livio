@@ -28,7 +28,7 @@ export function ExpiredTrialGuard({ children }: { children: React.ReactNode }) {
                     initial={{ opacity: 0, scale: 0.9, y: 30 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ type: "spring", damping: 20, stiffness: 100 }}
-                    className="bg-white rounded-[2rem] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.35)] w-full max-w-[360px] overflow-hidden relative flex flex-col items-center text-center pb-9"
+                    className="bg-white dark:bg-slate-950 rounded-[2rem] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.35)] w-full max-w-[360px] overflow-hidden relative flex flex-col items-center text-center pb-9"
                 >
                     {/* Progress Bar Decoration */}
                     <div className="w-full bg-gray-100 h-1.5 flex mb-6">

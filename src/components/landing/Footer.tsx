@@ -3,7 +3,7 @@ import Image from "next/image";
 
 export default function Footer() {
     return (
-        <footer className="w-full border-t border-secondary/20 py-12 bg-white/30 backdrop-blur-md">
+        <footer className="w-full border-t border-secondary/20 py-12 bg-white dark:bg-slate-950/30 backdrop-blur-md">
             <div className="container mx-auto px-4 flex flex-col items-center gap-6 md:flex-row md:justify-between text-sm text-muted-foreground">
 
                 <div className="flex items-center gap-2">
@@ -19,13 +19,13 @@ export default function Footer() {
                 </div>
 
                 <nav className="flex gap-6">
-                    <Link href="#" className="hover:underline hover:text-foreground">
+                    <Link href="/terms" className="hover:underline hover:text-foreground">
                         Términos y Condiciones
                     </Link>
                     <Link href="/privacy" className="hover:underline hover:text-foreground">
                         Política de Privacidad
                     </Link>
-                    <Link href="#" className="hover:underline hover:text-foreground">
+                    <Link href="mailto:soporte@liviodental.com" className="hover:underline hover:text-foreground">
                         Contacto
                     </Link>
                 </nav>

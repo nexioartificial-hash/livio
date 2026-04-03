@@ -17,7 +17,10 @@ import {
     MessageSquare,
     ChevronsLeft,
     ChevronsRight,
+    Moon,
+    Sun,
 } from "lucide-react";
+import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useAuth } from "@/providers/auth-provider";
@@ -79,6 +82,7 @@ export function Sidebar() {
     const pathname = usePathname();
     const { user, loading: authLoading, signOut } = useAuth();
     const { collapsed, toggle } = useSidebar();
+    const { theme, setTheme } = useTheme();
 
     const [isMounted, setIsMounted] = useState(false);
     useEffect(() => {
@@ -92,7 +96,7 @@ export function Sidebar() {
     return (
         <aside
             className={cn(
-                "hidden h-screen flex-col border-r bg-white text-slate-900 md:flex fixed left-0 top-0 z-50 overflow-hidden transition-all duration-300",
+                "hidden h-screen flex-col border-r bg-white dark:bg-slate-950 text-slate-900 dark:text-white md:flex fixed left-0 top-0 z-50 overflow-hidden transition-all duration-300",
                 collapsed ? "w-20" : "w-64"
             )}
         >
@@ -109,7 +113,7 @@ export function Sidebar() {
                     />
                     <button
                         onClick={toggle}
-                        className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                        className="rounded-md p-1.5 text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-800 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-400 transition-colors"
                         aria-label="Expandir sidebar"
                     >
                         <ChevronsRight className="h-4 w-4" />
@@ -127,7 +131,7 @@ export function Sidebar() {
                     />
                     <button
                         onClick={toggle}
-                        className="absolute right-3 rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                        className="absolute right-3 rounded-md p-1.5 text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-800 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-400 transition-colors"
                         aria-label="Minimizar sidebar"
                     >
                         <ChevronsLeft className="h-4 w-4" />
@@ -159,14 +163,14 @@ export function Sidebar() {
                                 "group flex items-center rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
                                 collapsed ? "justify-center gap-0" : "gap-3",
                                 isActive
-                                    ? "bg-[#76D7B6]/10 text-[#76D7B6]"
-                                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                                    ? "bg-accent/10 text-accent"
+                                    : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900 dark:hover:bg-slate-900 hover:text-slate-900 dark:text-white dark:hover:text-white"
                             )}
                         >
                             <item.icon
                                 className={cn(
                                     "h-6 w-6 flex-shrink-0",
-                                    isActive ? "text-[#76D7B6]" : "text-slate-400 group-hover:text-slate-500"
+                                    isActive ? "text-accent" : "text-slate-400 dark:text-slate-500 dark:text-slate-400 group-hover:text-slate-500 dark:text-slate-400"
                                 )}
                             />
                             {!collapsed && item.title}
@@ -185,28 +189,28 @@ export function Sidebar() {
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <button className={cn(
-                            "flex w-full items-center rounded-lg p-2 transition-colors hover:bg-slate-50 text-left outline-none group",
+                            "flex w-full items-center rounded-lg p-2 transition-colors hover:bg-slate-50 dark:hover:bg-slate-900 dark:bg-slate-900 dark:hover:bg-slate-900 text-left outline-none group",
                             collapsed ? "justify-center" : "gap-3"
                         )}>
-                            <Avatar className="h-9 w-9 border-2 border-transparent group-hover:border-[#76D7B6]/20 transition-all shrink-0">
+                            <Avatar className="h-9 w-9 border-2 border-transparent group-hover:border-accent/20 transition-all shrink-0">
                                 <AvatarImage src={user?.user_metadata?.avatar_url} />
-                                <AvatarFallback className="bg-[#76D7B6]/10 text-[#76D7B6] font-bold">
+                                <AvatarFallback className="bg-accent/10 text-accent font-bold">
                                     {userInitial}
                                 </AvatarFallback>
                             </Avatar>
                             {!collapsed && (
                                 <>
                                     <div className="flex-1 overflow-hidden">
-                                        <p className="text-sm font-bold text-slate-900 truncate">
+                                        <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
                                             {authLoading && !user
-                                                ? <span className="inline-block w-24 h-3 bg-slate-200 rounded animate-pulse" />
+                                                ? <span className="inline-block w-24 h-3 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
                                                 : ((user as any)?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name || "Usuario")}
                                         </p>
-                                        <p className="text-[11px] text-slate-500 truncate">
+                                        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                                             {user?.email}
                                         </p>
                                     </div>
-                                    <ChevronUp className="h-4 w-4 text-slate-400" />
+                                    <ChevronUp className="h-4 w-4 text-slate-400 dark:text-slate-500 dark:text-slate-400" />
                                 </>
                             )}
                         </button>
@@ -224,8 +228,12 @@ export function Sidebar() {
                                 <span>Configuración</span>
                             </DropdownMenuItem>
                         </Link>
+                        <DropdownMenuItem className="cursor-pointer" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+                            {theme === "dark" ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+                            <span>{theme === "dark" ? "Modo Claro" : "Modo Oscuro"}</span>
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50" onClick={() => signOut()}>
+                        <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50 dark:focus:bg-red-950" onClick={() => signOut()}>
                             <LogOut className="mr-2 h-4 w-4" />
                             <span>Cerrar Sesión</span>
                         </DropdownMenuItem>

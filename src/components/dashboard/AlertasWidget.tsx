@@ -45,7 +45,7 @@ const styles: Record<string, any> = {
     warning: { bg: "bg-red-50 border-red-100", icon: "text-red-500 bg-red-100", text: "text-red-700", sub: "text-red-500" },
     info:    { bg: "bg-blue-50 border-blue-100",   icon: "text-blue-500 bg-blue-100",   text: "text-blue-700",   sub: "text-blue-500"   },
     success: { bg: "bg-emerald-50 border-emerald-100", icon: "text-emerald-600 bg-emerald-100", text: "text-emerald-700", sub: "text-emerald-500" },
-    default: { bg: "bg-slate-50 border-slate-100", icon: "text-slate-500 bg-slate-100", text: "text-slate-700", sub: "text-slate-500" },
+    default: { bg: "bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800", icon: "text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800", text: "text-slate-700 dark:text-slate-300", sub: "text-slate-500 dark:text-slate-400" },
 };
 
 export function AlertasWidget({ alertas, onDismiss, onAdd }: AlertasWidgetProps) {
@@ -78,11 +78,11 @@ export function AlertasWidget({ alertas, onDismiss, onAdd }: AlertasWidgetProps)
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.45 }}
-            className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col h-full"
+            className="bg-gradient-to-b from-white to-slate-100 dark:from-slate-950 dark:to-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-[0_4px_20px_rgba(0,0,0,0.07)] p-5 flex flex-col h-full"
         >
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-slate-800">Alertas</h3>
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Alertas</h3>
                     {urgentes > 0 && (
                         <span className="text-[10px] font-bold bg-red-50 text-red-500 border border-red-100 rounded-full px-2 py-0.5">
                             {urgentes}
@@ -92,7 +92,7 @@ export function AlertasWidget({ alertas, onDismiss, onAdd }: AlertasWidgetProps)
 
                 <Dialog open={open} onOpenChange={setOpen}>
                     <DialogTrigger asChild>
-                        <button className="p-1 rounded-lg hover:bg-slate-100 transition-colors text-slate-400 hover:text-[#76D7B6]">
+                        <button className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-800 transition-colors text-slate-400 hover:text-accent">
                             <Plus className="h-3.5 w-3.5" />
                         </button>
                     </DialogTrigger>
@@ -166,11 +166,11 @@ export function AlertasWidget({ alertas, onDismiss, onAdd }: AlertasWidgetProps)
                     })
                 ) : (
                     <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-                        <div className="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center mb-3">
+                        <div className="h-12 w-12 rounded-full bg-slate-50 dark:bg-slate-900 flex items-center justify-center mb-3">
                             <AlertCircle className="h-6 w-6 text-slate-300" />
                         </div>
-                        <p className="text-sm font-medium text-slate-500">No hay alertas activas</p>
-                        <p className="text-[10px] text-slate-400 mt-1 max-w-[140px]">El sistema te notificará cuando haya novedades</p>
+                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">No hay alertas activas</p>
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500 dark:text-slate-400 mt-1 max-w-[140px]">El sistema te notificará cuando haya novedades</p>
                     </div>
                 )}
             </div>

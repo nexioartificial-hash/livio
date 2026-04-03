@@ -2,7 +2,7 @@ import { ShieldCheck } from "lucide-react";
 
 export default function Trust() {
     return (
-        <section className="container mx-auto px-4 py-12 md:py-24 bg-muted/30 rounded-3xl my-8">
+        <section id="trust" className="container mx-auto px-4 py-12 md:py-24 bg-muted/30 rounded-3xl my-8">
             <div className="flex flex-col md:flex-row gap-12 items-center">
                 <div className="flex-1 space-y-6">
                     <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">

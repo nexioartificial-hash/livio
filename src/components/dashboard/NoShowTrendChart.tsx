@@ -52,11 +52,11 @@ export function NoShowTrendChart({ data = mockData }: NoShowTrendChartProps) {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay: 0.2 }}
-            className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6"
+            className="bg-gradient-to-b from-white to-slate-100 dark:from-slate-950 dark:to-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-[0_4px_20px_rgba(0,0,0,0.07)] p-6"
         >
             <div className="mb-5">
-                <h3 className="text-sm font-bold text-slate-800">Trend No-Shows (7d)</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Porcentaje de ausentismo semanal</p>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Trend No-Shows (7d)</h3>
+                <p className="text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400 mt-0.5">Porcentaje de ausentismo semanal</p>
             </div>
 
             <div className="h-48">
