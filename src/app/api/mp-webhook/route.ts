@@ -87,6 +87,16 @@ export async function POST(req: Request) {
                     })
                     .eq('clinica_id', clinicId);
             }
+
+            await supabase.from('payment_history').insert({
+                clinic_id: clinicId,
+                event_type: `subscription_${preapproval.status}`,
+                mp_id: preapproval.id,
+                amount: preapproval.auto_recurring?.transaction_amount ?? null,
+                currency: preapproval.auto_recurring?.currency_id ?? 'ARS',
+                status: preapproval.status,
+                details: { payer_email: preapproval.payer_email, reason: preapproval.reason },
+            });
         }
 
         // --- Handle individual payment events (renewal payments) ---
@@ -122,6 +132,16 @@ export async function POST(req: Request) {
                         current_period_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
                     })
                     .eq('clinica_id', clinicId);
+
+                await supabase.from('payment_history').insert({
+                    clinic_id: clinicId,
+                    event_type: 'payment_approved',
+                    mp_id: String(payment.id),
+                    amount: payment.transaction_amount,
+                    currency: payment.currency_id ?? 'ARS',
+                    status: 'approved',
+                    details: { payer_email: payment.payer?.email, description: payment.description },
+                });
             }
         }
 

@@ -34,7 +34,8 @@ import {
     Utensils,
     HeartPulse,
     FileSpreadsheet,
-    Download
+    Download,
+    CreditCard
 } from "lucide-react";
 import {
     Tabs,
@@ -75,6 +76,7 @@ import { TratamientosTab } from "@/components/config/TratamientosTab";
 import { ObrasSocialesTab } from "@/components/config/ObrasSocialesTab";
 import { InventarioTab } from "@/components/config/InventarioTab";
 import WhatsAppBotTab from "@/components/config/WhatsAppBotTab";
+import { PaymentHistoryTab } from "@/components/config/PaymentHistoryTab";
 
 /**
  * Small component that reads OAuth redirect result from URL params.
@@ -280,7 +282,7 @@ export default function ConfigPage() {
             const [tRes, osRes, sRes] = await Promise.all([
                 supabase.from("tratamientos").select("id", { count: "exact" }).eq("clinic_id", clinicId),
                 supabase.from("clinica_obras_sociales").select("id", { count: "exact" }).eq("clinic_id", clinicId),
-                supabase.from("stock").select("id", { count: "exact" }).eq("clinic_id", clinicId)
+                supabase.from("inventario").select("id", { count: "exact" }).eq("clinic_id", clinicId)
             ]);
 
             // Fake states just for total count since we use real Tabs for deep render
@@ -503,7 +505,7 @@ export default function ConfigPage() {
             <Tabs defaultValue="clinica" className="w-full">
                 <TabsList className={cn(
                     "grid w-full bg-slate-100 dark:bg-slate-800 p-1",
-                    isSuperAdmin ? "grid-cols-6" : "grid-cols-5"
+                    isSuperAdmin ? "grid-cols-8" : "grid-cols-7"
                 )}>
                     <TabsTrigger value="clinica" className="data-[state=active]:bg-white dark:bg-slate-950 data-[state=active]:text-accent data-[state=active]:shadow-sm">Mi Clínica</TabsTrigger>
                     {isSuperAdmin && (
@@ -514,6 +516,9 @@ export default function ConfigPage() {
                     <TabsTrigger value="inventario" className="data-[state=active]:bg-white dark:bg-slate-950 data-[state=active]:text-accent data-[state=active]:shadow-sm">Inventario</TabsTrigger>
                     <TabsTrigger value="integraciones" className="data-[state=active]:bg-white dark:bg-slate-950 data-[state=active]:text-accent data-[state=active]:shadow-sm">Integraciones</TabsTrigger>
                     <TabsTrigger value="whatsapp-bot" className="data-[state=active]:bg-white dark:bg-slate-950 data-[state=active]:text-accent data-[state=active]:shadow-sm">WhatsApp Bot</TabsTrigger>
+                    <TabsTrigger value="pagos" className="data-[state=active]:bg-white dark:bg-slate-950 data-[state=active]:text-accent data-[state=active]:shadow-sm">
+                        <CreditCard className="h-4 w-4 mr-1" /> Pagos
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="clinica" className="mt-6 space-y-6">
@@ -829,6 +834,10 @@ export default function ConfigPage() {
 
                 <TabsContent value="whatsapp-bot" className="mt-6 data-[state=inactive]:hidden" forceMount>
                     {clinic?.id && <WhatsAppBotTab clinicId={clinic.id} />}
+                </TabsContent>
+
+                <TabsContent value="pagos" className="mt-6 data-[state=inactive]:hidden" forceMount>
+                    {clinic?.id && <PaymentHistoryTab clinicId={clinic.id} />}
                 </TabsContent>
             </Tabs >
 
