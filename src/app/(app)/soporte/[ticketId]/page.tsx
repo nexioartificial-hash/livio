@@ -1,5 +1,5 @@
 import { getTicketMessages } from "@/app/actions/soporte";
-import SoporteChat from "@/components/soporte/SoporteChat";
+import { SoporteChat } from "@/components/soporte/SoporteChat";
 import { redirect } from "next/navigation";
 
 export default async function TicketPage({
@@ -17,7 +17,7 @@ export default async function TicketPage({
   return (
     <SoporteChat
       ticket={result.ticket}
-      initialMessages={result.messages}
+      initialMessages={result.messages || []}
     />
   );
 }

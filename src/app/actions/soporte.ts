@@ -23,9 +23,9 @@ const TICKET_CATEGORIES = [
     "otro",
 ] as const;
 
-const TICKET_PRIORITIES = ["baja", "normal", "alta", "urgente"] as const;
+const TICKET_PRIORITIES = ["normal", "urgente"] as const;
 
-const TICKET_STATUSES = ["abierto", "en_progreso", "esperando_respuesta", "resuelto", "cerrado"] as const;
+const TICKET_STATUSES = ["abierto", "en_progreso", "resuelto", "cerrado"] as const;
 
 const createTicketSchema = z.object({
     subject: z.string().min(3, "El asunto debe tener al menos 3 caracteres").max(200, "El asunto no puede superar 200 caracteres"),
@@ -98,7 +98,7 @@ export async function createTicket(formData: {
     try {
         const parsed = createTicketSchema.safeParse(formData);
         if (!parsed.success) {
-            const firstError = parsed.error.errors[0]?.message ?? "Datos inválidos";
+            const firstError = parsed.error.issues[0]?.message ?? "Datos inválidos";
             return { error: firstError };
         }
 
@@ -174,7 +174,7 @@ export async function sendMessage(formData: {
     try {
         const parsed = sendMessageSchema.safeParse(formData);
         if (!parsed.success) {
-            const firstError = parsed.error.errors[0]?.message ?? "Datos inválidos";
+            const firstError = parsed.error.issues[0]?.message ?? "Datos inválidos";
             return { error: firstError };
         }
 
