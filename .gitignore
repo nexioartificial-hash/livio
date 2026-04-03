@@ -40,4 +40,28 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
+# build logs
+build-log*.txt
+build_log*.txt
+
+# test files in root
+test_format.js
+
+# media files
+*.mp4
+
+# claude
+.claude/
+
+certificates
+
+# playwright MCP logs
+.playwright-mcp/
+
+# temp screenshots
+*.png
+!public/**/*.png
+!src/**/*.png
+
+# debug files
+debug*.txt
