@@ -8,7 +8,18 @@ export interface ClinicContext {
   extraInstructions: string | null;
 }
 
-export function buildSystemPrompt(ctx: ClinicContext): string {
+export interface UpcomingAppointmentPrompt {
+  date: string;
+  time: string;
+  professional: string;
+  reason: string;
+}
+
+export function buildSystemPrompt(
+  ctx: ClinicContext,
+  sessionSummaries?: string[],
+  upcomingAppointments?: UpcomingAppointmentPrompt[]
+): string {
   const profList =
     ctx.professionals.length > 0
       ? ctx.professionals
@@ -19,6 +30,32 @@ export function buildSystemPrompt(ctx: ClinicContext): string {
   const patientLine = ctx.patientName
     ? `El paciente que te escribe se llama ${ctx.patientName}.`
     : "Este paciente todavía no está registrado. Pedile su nombre para registrarlo con registrar_paciente.";
+
+  // Build session memory section
+  let memorySection = "";
+  if (sessionSummaries && sessionSummaries.length > 0) {
+    const summaryLines = sessionSummaries
+      .map((s, i) => `${i + 1}. ${s}`)
+      .join("\n");
+    memorySection = `
+Conversaciones anteriores con este paciente (de más antigua a más reciente):
+${summaryLines}
+
+Usá esta información como contexto. No repitas lo que ya se habló salvo que el paciente pregunte.`;
+  }
+
+  // Build upcoming appointments section
+  let appointmentsSection = "";
+  if (upcomingAppointments && upcomingAppointments.length > 0) {
+    const appointmentLines = upcomingAppointments
+      .map((a) => `- ${a.date} ${a.time}hs con ${a.professional} (${a.reason})`)
+      .join("\n");
+    appointmentsSection = `
+Turnos próximos de este paciente:
+${appointmentLines}
+
+Si el paciente pregunta por sus turnos, usá esta información. También podés usar la herramienta mis_turnos para datos actualizados.`;
+  }
 
   return `Sos el asistente virtual por WhatsApp de ${ctx.clinicName}, una clínica dental.
 
@@ -47,7 +84,7 @@ Profesionales:
 ${profList}
 
 Paciente actual:
-${patientLine}
+${patientLine}${memorySection}${appointmentsSection}
 
 Herramientas disponibles:
 Tenés herramientas para consultar disponibilidad, agendar turnos, cancelar, reprogramar, ver turnos del paciente, info de la clínica, tratamientos y registrar pacientes nuevos. Usalas siempre que necesites datos reales.
