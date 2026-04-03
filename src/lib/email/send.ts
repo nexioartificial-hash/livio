@@ -8,6 +8,8 @@ import {
     verificationEmailHTML, verificationEmailText,
     welcomeEmailHTML, lockoutAlertHTML,
     passwordResetHTML, passwordChangedHTML,
+    supportTicketNotificationHTML, supportTicketNotificationText,
+    supportTicketReplyHTML, supportTicketReplyText,
 } from "./templates";
 
 const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy");
@@ -100,5 +102,41 @@ export async function sendPasswordChangedEmail(to: string, userName: string): Pr
         passwordChangedHTML(userName),
         undefined,
         [{ name: "type", value: "password-changed" }],
+    );
+}
+
+export async function sendSupportNotification(
+    ticketId: string,
+    subject: string,
+    category: string,
+    priority: string,
+    message: string,
+    clinicName: string,
+    userName: string,
+    userEmail: string,
+): Promise<SendResult> {
+    return send(
+        "soporte@liviodental.com",
+        `[Ticket #${ticketId.slice(0, 8)}] ${subject} — ${clinicName}`,
+        supportTicketNotificationHTML(ticketId, subject, category, priority, message, clinicName, userName, userEmail),
+        supportTicketNotificationText(ticketId, subject, category, priority, message, clinicName, userName, userEmail),
+        [{ name: "type", value: "support-notification" }],
+    );
+}
+
+export async function sendSupportReply(
+    to: string,
+    userName: string,
+    subject: string,
+    replyMessage: string,
+    ticketId: string,
+): Promise<SendResult> {
+    const ticketUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://liviodental.com"}/soporte/${ticketId}`;
+    return send(
+        to,
+        `Re: ${subject} — Livio Soporte`,
+        supportTicketReplyHTML(userName, subject, replyMessage, ticketUrl),
+        supportTicketReplyText(userName, subject, replyMessage, ticketUrl),
+        [{ name: "type", value: "support-reply" }],
     );
 }

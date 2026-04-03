@@ -249,6 +249,193 @@ export function getEmailProviderUrl(email: string): string | null {
     return providers[domain] || null;
 }
 
+// ─── Support Ticket Notification (internal — Livio receives) ─
+
+export function supportTicketNotificationHTML(
+    ticketId: string,
+    subject: string,
+    category: string,
+    priority: string,
+    message: string,
+    clinicName: string,
+    userName: string,
+    userEmail: string,
+): string {
+    const safeSubject = escapeHtml(subject);
+    const safeCategory = escapeHtml(category);
+    const safePriority = escapeHtml(priority);
+    const safeMessage = escapeHtml(message);
+    const safeClinic = escapeHtml(clinicName);
+    const safeName = escapeHtml(userName);
+    const safeEmail = escapeHtml(userEmail);
+    const shortId = escapeHtml(ticketId.slice(0, 8));
+    const priorityColor = priority.toLowerCase() === "urgente" ? "#DC2626" : "#6B7280";
+
+    return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background-color:#F1F5F9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#F1F5F9;">
+<tr><td align="center" style="padding:40px 16px;">
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:600px;background-color:#FFFFFF;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);overflow:hidden;">
+<!-- Header -->
+<tr><td style="background-color:#1F2429;padding:32px 40px;">
+<h1 style="margin:0;font-size:22px;font-weight:700;color:#82D9BC;letter-spacing:0.5px;">Nuevo Ticket de Soporte</h1>
+<p style="margin:8px 0 0;font-size:14px;color:#94A3B8;">${safeSubject}</p>
+</td></tr>
+<!-- Data table -->
+<tr><td style="padding:32px 40px 24px;">
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;">
+<tr>
+  <td style="padding:10px 16px 10px 0;font-size:13px;font-weight:600;color:#64748B;white-space:nowrap;vertical-align:top;">Ticket ID</td>
+  <td style="padding:10px 0;font-size:13px;color:#1E293B;font-family:monospace;">#${shortId}</td>
+</tr>
+<tr style="background-color:#F8FAFC;">
+  <td style="padding:10px 16px 10px 0;font-size:13px;font-weight:600;color:#64748B;white-space:nowrap;vertical-align:top;">Clínica</td>
+  <td style="padding:10px 0;font-size:13px;color:#1E293B;">${safeClinic}</td>
+</tr>
+<tr>
+  <td style="padding:10px 16px 10px 0;font-size:13px;font-weight:600;color:#64748B;white-space:nowrap;vertical-align:top;">Usuario</td>
+  <td style="padding:10px 0;font-size:13px;color:#1E293B;">${safeName}</td>
+</tr>
+<tr style="background-color:#F8FAFC;">
+  <td style="padding:10px 16px 10px 0;font-size:13px;font-weight:600;color:#64748B;white-space:nowrap;vertical-align:top;">Email</td>
+  <td style="padding:10px 0;font-size:13px;color:#1E293B;">${safeEmail}</td>
+</tr>
+<tr>
+  <td style="padding:10px 16px 10px 0;font-size:13px;font-weight:600;color:#64748B;white-space:nowrap;vertical-align:top;">Categoría</td>
+  <td style="padding:10px 0;font-size:13px;color:#1E293B;">${safeCategory}</td>
+</tr>
+<tr style="background-color:#F8FAFC;">
+  <td style="padding:10px 16px 10px 0;font-size:13px;font-weight:600;color:#64748B;white-space:nowrap;vertical-align:top;">Prioridad</td>
+  <td style="padding:10px 0;font-size:13px;font-weight:600;color:${priorityColor};">${safePriority}</td>
+</tr>
+</table>
+</td></tr>
+<!-- Message block -->
+<tr><td style="padding:0 40px 32px;">
+<p style="margin:0 0 10px;font-size:13px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:0.5px;">Mensaje</p>
+<div style="background-color:#f1f5f9;border-radius:8px;padding:20px;font-size:14px;color:#334155;line-height:1.7;white-space:pre-wrap;">${safeMessage}</div>
+</td></tr>
+<!-- Footer -->
+<tr><td style="padding:20px 40px;background-color:#F8FAFC;border-top:1px solid #E2E8F0;">
+<p style="margin:0;font-size:12px;color:#94A3B8;">Para responder este ticket, ingresá al panel de Supabase o al backoffice de Livio.</p>
+</td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+}
+
+export function supportTicketNotificationText(
+    ticketId: string,
+    subject: string,
+    category: string,
+    priority: string,
+    message: string,
+    clinicName: string,
+    userName: string,
+    userEmail: string,
+): string {
+    return `NUEVO TICKET DE SOPORTE — Livio
+================================
+
+Ticket ID:  #${ticketId.slice(0, 8)}
+Asunto:     ${subject}
+Clínica:    ${clinicName}
+Usuario:    ${userName}
+Email:      ${userEmail}
+Categoría:  ${category}
+Prioridad:  ${priority}
+
+MENSAJE
+-------
+${message}
+
+---
+Para responder este ticket, ingresá al panel de Supabase o al backoffice de Livio.`;
+}
+
+// ─── Support Ticket Reply (outbound — clinic receives) ───────
+
+export function supportTicketReplyHTML(
+    userName: string,
+    subject: string,
+    replyMessage: string,
+    ticketUrl: string,
+): string {
+    const safeName = escapeHtml(userName);
+    const safeSubject = escapeHtml(subject);
+    const safeReply = escapeHtml(replyMessage);
+    const logoUrl = "https://bjyqvqrtlahaiixicook.supabase.co/storage/v1/object/public/branding/logo-dark.png";
+
+    return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background-color:#F1F5F9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#F1F5F9;">
+<tr><td align="center" style="padding:40px 16px;">
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:560px;background-color:#FFFFFF;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);overflow:hidden;">
+<!-- Header -->
+<tr><td align="center" style="background-color:#1F2429;padding:32px 40px;">
+<img src="${logoUrl}" alt="Livio" width="120" height="auto" style="display:block;border:0;" />
+</td></tr>
+<!-- Body -->
+<tr><td style="padding:32px 40px 24px;">
+<p style="margin:0 0 16px;font-size:15px;color:#334155;line-height:1.6;">Hola <strong style="color:#1E293B;">${safeName}</strong>,</p>
+<p style="margin:0 0 24px;font-size:15px;color:#334155;line-height:1.6;">Tenemos una respuesta para tu consulta: <strong style="color:#1E293B;">${safeSubject}</strong></p>
+<!-- Reply block -->
+<div style="border-left:4px solid #82D9BC;background-color:#f0fdf4;border-radius:0 8px 8px 0;padding:20px 24px;margin-bottom:28px;font-size:14px;color:#334155;line-height:1.7;white-space:pre-wrap;">${safeReply}</div>
+<!-- CTA button -->
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr><td align="center">
+<table role="presentation" cellpadding="0" cellspacing="0"><tr>
+<td align="center" style="border-radius:8px;background-color:#82D9BC;">
+<a href="${ticketUrl}" target="_blank" style="display:inline-block;padding:14px 40px;font-size:15px;font-weight:600;color:#1F2429;text-decoration:none;border-radius:8px;">
+Ver en Livio
+</a>
+</td></tr></table>
+</td></tr></table>
+</td></tr>
+<!-- Footer -->
+<tr><td style="padding:24px 40px;background-color:#F8FAFC;border-top:1px solid #E2E8F0;">
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr><td align="center">
+<p style="margin:0 0 8px;font-size:13px;color:#64748B;line-height:1.5;">Si necesitas mas ayuda, responde este email o escribinos desde la app.</p>
+<p style="margin:0;font-size:12px;"><a href="https://liviodental.com" style="color:#82D9BC;text-decoration:none;">liviodental.com</a></p>
+</td></tr></table>
+</td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+}
+
+export function supportTicketReplyText(
+    userName: string,
+    subject: string,
+    replyMessage: string,
+    ticketUrl: string,
+): string {
+    return `Hola ${userName},
+
+Tenemos una respuesta para tu consulta: ${subject}
+
+---
+${replyMessage}
+---
+
+Para ver el ticket completo: ${ticketUrl}
+
+Si necesitas mas ayuda, responde este email o escribinos desde la app.
+
+---
+Livio — Gestión dental potenciada con IA
+https://liviodental.com`;
+}
+
 // ─── Email Masking ───────────────────────────────────────────
 
 export function maskEmail(email: string): string {
