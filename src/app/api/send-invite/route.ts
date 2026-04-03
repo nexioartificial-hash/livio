@@ -5,16 +5,42 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: Request) {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+  }
+
   const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321',
-      process.env.SUPABASE_SERVICE_ROLE_KEY || 'dummy-key'
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
   );
-  const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy');
+  const resend = new Resend(process.env.RESEND_API_KEY);
 
   try {
+    // Auth check: verify the caller is authenticated
+    const authHeader = request.headers.get('cookie') || '';
+    const { createClient: createServerClient } = await import('@/lib/supabase/server');
+    const supabaseUser = await createServerClient();
+    const { data: { user: caller }, error: authError } = await supabaseUser.auth.getUser();
+
+    if (authError || !caller) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
     const body = await request.json();
-    console.log('📬 [API] Payload recibido:', body);
     const { email, role, clinicId, clinicName, inviterName, inviterId, invitedName } = body;
+
+    // Verify caller is superadmin of the target clinic
+    if (clinicId) {
+      const { data: callerProfile } = await supabaseAdmin
+        .from('professional')
+        .select('role, clinic_id')
+        .eq('id', caller.id)
+        .maybeSingle();
+
+      if (!callerProfile || callerProfile.role !== 'superadmin' || callerProfile.clinic_id !== clinicId) {
+        return NextResponse.json({ error: 'No tenés permisos para invitar en esta clínica' }, { status: 403 });
+      }
+    }
 
     if (!email || !role) {
       return NextResponse.json(

@@ -1,6 +1,6 @@
 import { google } from 'googleapis';
 import { NextResponse, NextRequest } from 'next/server';
-import { buildOAuth2Client } from '@/lib/google';
+import { buildOAuth2Client } from '@/lib/integrations/google';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createHmac, timingSafeEqual } from 'crypto';
 

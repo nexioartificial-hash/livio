@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
-import { getOAuth2ClientForProfesional, turnoToGoogleEvent } from '@/lib/google';
+import { getOAuth2ClientForProfesional, turnoToGoogleEvent } from '@/lib/integrations/google';
 
 export async function POST(request: NextRequest) {
     // Require authenticated session

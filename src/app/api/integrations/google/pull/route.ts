@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
-import { getOAuth2ClientForProfesional } from '@/lib/google';
+import { getOAuth2ClientForProfesional } from '@/lib/integrations/google';
 
 // Allowed Google event ID characters
 const SAFE_EVENT_ID = /^[a-zA-Z0-9_\-]+$/;

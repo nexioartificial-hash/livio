@@ -1,6 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { WRITE_SCOPES } from '@/lib/google';
+import { WRITE_SCOPES } from '@/lib/integrations/google';
 import { createHmac } from 'crypto';
 
 function signState(payload: string): string {
