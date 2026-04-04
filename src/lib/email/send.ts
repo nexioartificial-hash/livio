@@ -10,6 +10,7 @@ import {
     passwordResetHTML, passwordChangedHTML,
     supportTicketNotificationHTML, supportTicketNotificationText,
     supportTicketReplyHTML, supportTicketReplyText,
+    dailyFinanceReportHTML, monthlyFinanceReportHTML,
 } from "./templates";
 
 const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy");
@@ -43,9 +44,10 @@ async function send(to: string, subject: string, html: string, text?: string, ta
         }
 
         return { success: true, messageId: data?.id };
-    } catch (err: any) {
-        console.error("[Email] Send failed:", err.message);
-        return { success: false, error: err.message };
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("[Email] Send failed:", message);
+        return { success: false, error: message };
     }
 }
 
@@ -138,5 +140,51 @@ export async function sendSupportReply(
         supportTicketReplyHTML(userName, subject, replyMessage, ticketUrl),
         supportTicketReplyText(userName, subject, replyMessage, ticketUrl),
         [{ name: "type", value: "support-reply" }],
+    );
+}
+
+export async function sendDailyFinanceReport(
+    to: string,
+    date: string,
+    mrr: string,
+    activeCount: number,
+    failedPayments: { clinic_name: string; amount: string; created_at: string }[],
+    cancelations: { clinic_name: string; canceled_at: string }[],
+    trialsExpiring: { clinic_name: string; trial_ends_at: string }[],
+    newCustomers: { clinic_name: string; amount: string; created_at: string }[],
+): Promise<SendResult> {
+    return send(
+        to,
+        `[Livio Finanzas] Reporte diario — ${date}`,
+        dailyFinanceReportHTML(date, mrr, activeCount, failedPayments, cancelations, trialsExpiring, newCustomers),
+        undefined,
+        [{ name: "type", value: "finance-daily" }],
+    );
+}
+
+export async function sendMonthlyFinanceReport(
+    to: string,
+    monthLabel: string,
+    mrrStart: string,
+    mrrEnd: string,
+    mrrChange: string,
+    arr: string,
+    churnRate: string,
+    trialConversion: string,
+    ltv: string,
+    totalRevenue: string,
+    failedCount: number,
+    startActive: number,
+    endActive: number,
+    cancelCount: number,
+    newPaidCount: number,
+    movements: { clinic_name: string; event_label: string; amount: string; date: string }[],
+): Promise<SendResult> {
+    return send(
+        to,
+        `[Livio Finanzas] Reporte mensual — ${monthLabel}`,
+        monthlyFinanceReportHTML(monthLabel, mrrStart, mrrEnd, mrrChange, arr, churnRate, trialConversion, ltv, totalRevenue, failedCount, startActive, endActive, cancelCount, newPaidCount, movements),
+        undefined,
+        [{ name: "type", value: "finance-monthly" }],
     );
 }
