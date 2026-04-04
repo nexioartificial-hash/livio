@@ -77,6 +77,7 @@ import { ObrasSocialesTab } from "@/components/config/ObrasSocialesTab";
 import { InventarioTab } from "@/components/config/InventarioTab";
 import WhatsAppBotTab from "@/components/config/WhatsAppBotTab";
 import { PaymentHistoryTab } from "@/components/config/PaymentHistoryTab";
+import { SubscriptionStatusCard } from "@/components/config/SubscriptionStatusCard";
 
 /**
  * Small component that reads OAuth redirect result from URL params.
@@ -836,7 +837,8 @@ export default function ConfigPage() {
                     {clinic?.id && <WhatsAppBotTab clinicId={clinic.id} />}
                 </TabsContent>
 
-                <TabsContent value="pagos" className="mt-6 data-[state=inactive]:hidden" forceMount>
+                <TabsContent value="pagos" className="mt-6 space-y-6 data-[state=inactive]:hidden" forceMount>
+                    <SubscriptionStatusCard />
                     {clinic?.id && <PaymentHistoryTab clinicId={clinic.id} />}
                 </TabsContent>
             </Tabs >
