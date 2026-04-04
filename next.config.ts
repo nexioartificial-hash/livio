@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const securityHeaders = [
     // Prevent clickjacking — deny all framing
@@ -24,7 +25,7 @@ const securityHeaders = [
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "img-src 'self' data: blob: https: http:",
             "font-src 'self' https://fonts.gstatic.com",
-            "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com https://graph.facebook.com https://api.mercadopago.com https://www.facebook.com",
+            "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com https://graph.facebook.com https://api.mercadopago.com https://www.facebook.com https://*.ingest.us.sentry.io",
             "frame-src 'self' https://accounts.google.com https://www.facebook.com https://web.facebook.com",
             "frame-ancestors 'none'",
             "base-uri 'self'",
@@ -42,4 +43,10 @@ const nextConfig: NextConfig = {
     ],
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+    org: process.env.SENTRY_ORG,
+    project: process.env.SENTRY_PROJECT,
+    silent: !process.env.CI,
+    widenClientFileUpload: true,
+    disableLogger: true,
+});
