@@ -443,3 +443,107 @@ export function maskEmail(email: string): string {
     if (local.length <= 2) return `${local[0]}***@${domain}`;
     return `${local[0]}${"*".repeat(local.length - 2)}${local.slice(-1)}@${domain}`;
 }
+
+// ─── Finance Report Templates ──────────────────────────────────
+
+export function dailyFinanceReportHTML(
+    date: string,
+    mrr: string,
+    activeCount: number,
+    failedPayments: { clinic_name: string; amount: string; created_at: string }[],
+    cancelations: { clinic_name: string; canceled_at: string }[],
+    trialsExpiring: { clinic_name: string; trial_ends_at: string }[],
+    newCustomers: { clinic_name: string; amount: string; created_at: string }[],
+): string {
+    const section = (title: string, rows: string[]) => {
+        if (rows.length === 0) return `<tr><td style="padding:16px 40px;"><h3 style="color:#1E293B;font-size:16px;margin:0 0 8px;">${title}</h3><p style="color:#94A3B8;margin:0;">Sin novedades</p></td></tr>`;
+        return `<tr><td style="padding:16px 40px;"><h3 style="color:#1E293B;font-size:16px;margin:0 0 12px;">${title}</h3><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #E2E8F0;border-radius:8px;overflow:hidden;"><tbody>${rows.join("")}</tbody></table></td></tr>`;
+    };
+
+    const failedRows = failedPayments.map((p) =>
+        `<tr style="border-bottom:1px solid #F1F5F9;"><td style="padding:8px 12px;font-size:14px;">${escapeHtml(p.clinic_name)}</td><td style="padding:8px 12px;font-size:14px;text-align:right;">${p.amount}</td></tr>`
+    );
+    const cancelRows = cancelations.map((c) =>
+        `<tr style="border-bottom:1px solid #F1F5F9;"><td style="padding:8px 12px;font-size:14px;">${escapeHtml(c.clinic_name)}</td><td style="padding:8px 12px;font-size:14px;text-align:right;">${c.canceled_at}</td></tr>`
+    );
+    const trialRows = trialsExpiring.map((t) =>
+        `<tr style="border-bottom:1px solid #F1F5F9;"><td style="padding:8px 12px;font-size:14px;">${escapeHtml(t.clinic_name)}</td><td style="padding:8px 12px;font-size:14px;text-align:right;">${t.trial_ends_at}</td></tr>`
+    );
+    const newRows = newCustomers.map((n) =>
+        `<tr style="border-bottom:1px solid #F1F5F9;"><td style="padding:8px 12px;font-size:14px;">${escapeHtml(n.clinic_name)}</td><td style="padding:8px 12px;font-size:14px;text-align:right;">${n.amount}</td></tr>`
+    );
+
+    const content = `
+<tr><td style="padding:24px 40px 0;">
+  <h2 style="color:#1E293B;font-size:20px;margin:0;">Reporte Diario de Finanzas</h2>
+  <p style="color:#64748B;font-size:14px;margin:4px 0 0;">${escapeHtml(date)}</p>
+</td></tr>
+<tr><td style="padding:16px 40px;">
+  <div style="background:#F0FDF9;border-radius:8px;padding:16px;text-align:center;">
+    <p style="color:#64748B;font-size:12px;margin:0;text-transform:uppercase;letter-spacing:1px;">MRR Actual</p>
+    <p style="color:#059669;font-size:28px;font-weight:700;margin:4px 0 0;">${mrr}</p>
+    <p style="color:#64748B;font-size:12px;margin:4px 0 0;">${activeCount} suscripciones activas</p>
+  </div>
+</td></tr>
+${section("\u{1F534} Pagos fallidos", failedRows)}
+${section("\u274C Cancelaciones", cancelRows)}
+${section("\u23F0 Trials por vencer", trialRows)}
+${section("\u{1F7E2} Nuevos clientes", newRows)}
+`;
+    return emailLayout(content, `Reporte diario Livio — MRR: ${mrr}`);
+}
+
+export function monthlyFinanceReportHTML(
+    monthLabel: string,
+    mrrStart: string,
+    mrrEnd: string,
+    mrrChange: string,
+    arr: string,
+    churnRate: string,
+    trialConversion: string,
+    ltv: string,
+    totalRevenue: string,
+    failedCount: number,
+    startActive: number,
+    endActive: number,
+    cancelCount: number,
+    newPaidCount: number,
+    movements: { clinic_name: string; event_label: string; amount: string; date: string }[],
+): string {
+    const kpiBlock = (label: string, value: string, color: string) =>
+        `<td style="padding:12px;text-align:center;width:33%;"><p style="color:#64748B;font-size:11px;margin:0;text-transform:uppercase;letter-spacing:1px;">${label}</p><p style="color:${color};font-size:22px;font-weight:700;margin:4px 0 0;">${value}</p></td>`;
+
+    const movementRows = movements.slice(0, 30).map((m) =>
+        `<tr style="border-bottom:1px solid #F1F5F9;"><td style="padding:8px 12px;font-size:13px;">${m.date}</td><td style="padding:8px 12px;font-size:13px;">${escapeHtml(m.clinic_name)}</td><td style="padding:8px 12px;font-size:13px;">${escapeHtml(m.event_label)}</td><td style="padding:8px 12px;font-size:13px;text-align:right;">${m.amount}</td></tr>`
+    );
+
+    const content = `
+<tr><td style="padding:24px 40px 0;">
+  <h2 style="color:#1E293B;font-size:20px;margin:0;">Reporte Mensual de Finanzas</h2>
+  <p style="color:#64748B;font-size:14px;margin:4px 0 0;">${escapeHtml(monthLabel)}</p>
+</td></tr>
+<tr><td style="padding:16px 40px;">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#F0FDF9;border-radius:8px;">
+    <tr>${kpiBlock("MRR", mrrEnd, "#059669")}${kpiBlock("ARR", arr, "#059669")}${kpiBlock("Variación MRR", mrrChange, mrrChange.startsWith("-") ? "#DC2626" : "#059669")}</tr>
+  </table>
+</td></tr>
+<tr><td style="padding:0 40px 16px;">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#F8FAFC;border-radius:8px;">
+    <tr>${kpiBlock("Churn Rate", churnRate, "#DC2626")}${kpiBlock("Trial → Paid", trialConversion, "#2563EB")}${kpiBlock("LTV", ltv, "#7C3AED")}</tr>
+  </table>
+</td></tr>
+<tr><td style="padding:0 40px 16px;">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#F8FAFC;border-radius:8px;">
+    <tr>${kpiBlock("Total Facturado", totalRevenue, "#1E293B")}${kpiBlock("Pagos Fallidos", String(failedCount), failedCount > 0 ? "#DC2626" : "#059669")}${kpiBlock("Activas", `${startActive} → ${endActive}`, "#1E293B")}</tr>
+  </table>
+</td></tr>
+${movementRows.length > 0 ? `<tr><td style="padding:16px 40px;">
+  <h3 style="color:#1E293B;font-size:16px;margin:0 0 12px;">Movimientos del mes</h3>
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #E2E8F0;border-radius:8px;overflow:hidden;">
+    <thead><tr style="background:#F8FAFC;"><th style="padding:8px 12px;font-size:12px;text-align:left;color:#64748B;">Fecha</th><th style="padding:8px 12px;font-size:12px;text-align:left;color:#64748B;">Clínica</th><th style="padding:8px 12px;font-size:12px;text-align:left;color:#64748B;">Evento</th><th style="padding:8px 12px;font-size:12px;text-align:right;color:#64748B;">Monto</th></tr></thead>
+    <tbody>${movementRows.join("")}</tbody>
+  </table>
+</td></tr>` : ""}
+`;
+    return emailLayout(content, `Reporte mensual Livio — ${monthLabel}`);
+}
